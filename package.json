@@ -1,0 +1,21 @@
+{
+  "name": "reijin-summon",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "src/client",
+    "src/server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev -w src/server\" \"npm:dev -w src/client\"",
+    "dev:client": "npm run dev -w src/client",
+    "dev:server": "npm run dev -w src/server",
+    "build": "npm run build -w src/server && npm run build -w src/client",
+    "start": "npm run start -w src/server",
+    "typecheck": "npm run typecheck -w src/server && npm run typecheck -w src/client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "typescript": "^5.8.3"
+  }
+}
