@@ -10,6 +10,7 @@ export type BattleHudCallbacks = {
 type HudButton = {
   background: Phaser.GameObjects.Rectangle;
   label: Phaser.GameObjects.Text;
+  enabled: boolean;
 };
 
 const hudHeight = 132;
@@ -107,16 +108,34 @@ export class BattleHud {
       .text(x + buttonWidth / 2, y + buttonHeight / 2, label, titleStyle(15, "#f8fafc"))
       .setOrigin(0.5);
 
-    background.on("pointerover", () => background.setFillStyle(0x334155, 1));
+    background.on("pointerover", () => {
+      if (background.input?.enabled) {
+        background.setFillStyle(0x334155, 1);
+      }
+    });
     background.on("pointerout", () => background.setFillStyle(0x1e293b, 1));
-    background.on("pointerdown", onClick);
+    background.on("pointerdown", () => {
+      if (background.input?.enabled) {
+        onClick();
+      }
+    });
 
-    return { background, label: text };
+    return { background, label: text, enabled: true };
   }
 
   private setButtonEnabled(button: HudButton, enabled: boolean): void {
+    if (button.enabled === enabled) {
+      return;
+    }
+    button.enabled = enabled;
     button.background.setAlpha(enabled ? 1 : 0.45);
     button.label.setAlpha(enabled ? 1 : 0.6);
+    if (enabled) {
+      button.background.setInteractive({ useHandCursor: true });
+    } else {
+      button.background.disableInteractive();
+      button.background.setFillStyle(0x1e293b, 1);
+    }
   }
 }
 
