@@ -5,7 +5,11 @@ import { calculateSummonArea } from "./areaCalculator";
 import { completedElementalsForTeam } from "./elementalSystem";
 
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
-  return getSummonCooldown(state, team) === 0 && completedElementalsForTeam(state, team).length >= config.requiredElementalsToSummon;
+  return (
+    findLeader(state, team).currentHp > 0 &&
+    getSummonCooldown(state, team) === 0 &&
+    completedElementalsForTeam(state, team).length >= config.requiredElementalsToSummon
+  );
 }
 
 export function tryExecuteSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
@@ -47,6 +51,14 @@ export function tickSummonCooldowns(state: BattleState, deltaSeconds: number): v
 
 export function tickSummonedUnits(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
   for (const summoned of state.summonedUnits) {
+    if (summoned.currentHp <= 0) {
+      continue;
+    }
+    summoned.currentHp = Math.max(0, summoned.currentHp - summoned.healthDecayPerSecond * deltaSeconds);
+    if (summoned.currentHp <= 0) {
+      continue;
+    }
+
     const enemyLeader = findLeader(state, oppositeTeam(summoned.team));
     summoned.destination = { ...enemyLeader.position };
     const touchingLeader = distance(summoned.position, enemyLeader.position) <= config.contactSlowRadius;
@@ -55,7 +67,6 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     } else {
       summoned.position = moveTowards(summoned.position, summoned.destination, summoned.moveSpeed * deltaSeconds);
     }
-    summoned.currentHp = Math.max(0, summoned.currentHp - summoned.healthDecayPerSecond * deltaSeconds);
   }
   state.summonedUnits = state.summonedUnits.filter((summoned) => summoned.currentHp > 0);
 }
