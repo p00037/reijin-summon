@@ -14,7 +14,7 @@ export function planCpuCommands(state: BattleState, config: BattleConfig): Battl
     return [];
   }
 
-  if (countCompletedElementals(state, "Cpu") < config.maxElementalsPerTeam) {
+  if (countCpuElementalsIncludingPending(state) < config.maxElementalsPerTeam) {
     return [{ commandType: "BeginElementalBuild", team: "Cpu", unitId: firstAvailableUnit.unitId }];
   }
 
@@ -29,4 +29,11 @@ export function planCpuCommands(state: BattleState, config: BattleConfig): Battl
 
 function isActiveAliveCpuUnit(unit: UnitState): unit is UnitState & { unitId: CpuUnitId; team: "Cpu"; mode: "Active" } {
   return unit.team === "Cpu" && unit.unitId.startsWith("Cpu") && unit.mode === "Active" && isUnitAlive(unit);
+}
+
+function countCpuElementalsIncludingPending(state: BattleState): number {
+  return (
+    countCompletedElementals(state, "Cpu") +
+    state.units.filter((unit) => unit.team === "Cpu" && unit.mode === "BuildingElemental").length
+  );
 }

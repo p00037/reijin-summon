@@ -1,5 +1,5 @@
 import { createDefaultBattleConfig } from "../core/battleConfig";
-import { createDefaultBattleState, findLeader } from "../core/battleState";
+import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
 import type { BattleCommand, BattleConfig, BattleState, MatchResult, TeamId } from "../core/types";
 import { countCompletedElementals, removeDestroyedElementals, tickElementalBuilds, tryBeginElementalBuild } from "./elementalSystem";
 import { canSummon, tickSummonCooldowns, tickSummonedUnits, tryExecuteSummon } from "./summonSystem";
@@ -24,6 +24,9 @@ export class GameSession {
         applyMoveCommand(this.state, this.config, command);
         break;
       case "BeginElementalBuild":
+        if (findUnit(this.state, command.unitId).team !== command.team) {
+          return;
+        }
         tryBeginElementalBuild(this.state, this.config, command.unitId);
         break;
       case "Summon":
@@ -43,9 +46,9 @@ export class GameSession {
     tickElementalBuilds(this.state, this.config, deltaSeconds);
     tickMovement(this.state, this.config, deltaSeconds);
     tickLeaderHealing(this.state, this.config, deltaSeconds);
+    tickRespawns(this.state, deltaSeconds);
     tickCombat(this.state, this.config, deltaSeconds);
     tickSummonedUnits(this.state, this.config, deltaSeconds);
-    tickRespawns(this.state, deltaSeconds);
     removeDestroyedElementals(this.state);
     this.updateResult();
   }
