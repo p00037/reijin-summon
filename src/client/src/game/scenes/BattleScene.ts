@@ -1,0 +1,361 @@
+import Phaser from "phaser";
+import { planCpuCommands } from "../ai/cpuPlanner";
+import { findLeader, isUnitAlive } from "../core/battleState";
+import type {
+  BattleState,
+  ElementalState,
+  LeaderState,
+  PlayerUnitId,
+  SummonedUnitState,
+  TeamId,
+  UnitState,
+  Vec2
+} from "../core/types";
+import { GameSession } from "../rules/gameSession";
+import { BattleHud } from "../ui/battleHud";
+
+const maxFrameDeltaSeconds = 1 / 20;
+const selectionRadiusPx = 28;
+
+export class BattleScene extends Phaser.Scene {
+  private session!: GameSession;
+  private battlefield!: Phaser.GameObjects.Graphics;
+  private hud!: BattleHud;
+  private timerText!: Phaser.GameObjects.Text;
+  private resultText!: Phaser.GameObjects.Text;
+  private selectedUnitId: PlayerUnitId | null = null;
+  private cpuPlanTimerSeconds = 0;
+
+  constructor() {
+    super("BattleScene");
+  }
+
+  create(): void {
+    this.session = new GameSession();
+    this.selectedUnitId = null;
+    this.cpuPlanTimerSeconds = 0;
+    this.cameras.main.setBackgroundColor("#101827");
+
+    this.battlefield = this.add.graphics();
+    this.timerText = this.add.text(24, 18, "", textStyle(18, "#f8fafc"));
+    this.resultText = this.add.text(this.scale.width / 2, 22, "", textStyle(22, "#f8fafc")).setOrigin(0.5, 0);
+    this.hud = new BattleHud(this, {
+      onBuild: () => this.handleBuild(),
+      onSummon: () => this.handleSummon(),
+      onRetry: () => this.scene.restart()
+    });
+    this.hud.setStatus("Select a player unit, then click the field to move.");
+
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointer(pointer));
+    this.draw();
+  }
+
+  update(_time: number, deltaMs: number): void {
+    const deltaSeconds = Math.min(deltaMs / 1000, maxFrameDeltaSeconds);
+
+    if (this.session.state.result === "InProgress") {
+      this.cpuPlanTimerSeconds += deltaSeconds;
+      if (this.cpuPlanTimerSeconds >= 1) {
+        this.cpuPlanTimerSeconds = 0;
+        for (const command of planCpuCommands(this.session.state, this.session.config)) {
+          this.session.applyCommand(command);
+        }
+      }
+      this.session.tick(deltaSeconds);
+    }
+
+    this.draw();
+  }
+
+  private handlePointer(pointer: Phaser.Input.Pointer): void {
+    if (this.hud.contains(pointer.x, pointer.y) || this.session.state.result !== "InProgress") {
+      return;
+    }
+
+    const clickedUnit = this.findPlayerUnitNear(pointer.x, pointer.y);
+    if (clickedUnit) {
+      this.selectedUnitId = clickedUnit.unitId;
+      this.hud.setStatus(`${clickedUnit.unitType} selected.`);
+      return;
+    }
+
+    if (!this.selectedUnitId) {
+      this.hud.setStatus("Select a player unit first.");
+      return;
+    }
+
+    const unit = this.session.state.units.find((candidate) => candidate.unitId === this.selectedUnitId);
+    if (!unit || !isUnitAlive(unit)) {
+      this.hud.setStatus("That unit is waiting to respawn.");
+      return;
+    }
+
+    const targetPosition = this.screenToWorld(pointer.x, pointer.y);
+    this.session.applyCommand({
+      commandType: "MoveUnit",
+      team: "Player",
+      unitId: this.selectedUnitId,
+      targetPosition
+    });
+    this.hud.setStatus(`${unit.unitType} moving.`);
+  }
+
+  private handleBuild(): void {
+    if (this.session.state.result !== "InProgress") {
+      return;
+    }
+    if (!this.selectedUnitId) {
+      this.hud.setStatus("Select a player unit before building.");
+      return;
+    }
+
+    const unit = this.session.state.units.find((candidate) => candidate.unitId === this.selectedUnitId);
+    if (!unit || unit.mode !== "Active" || !isUnitAlive(unit)) {
+      this.hud.setStatus("Only active player units can build.");
+      return;
+    }
+
+    this.session.applyCommand({
+      commandType: "BeginElementalBuild",
+      team: "Player",
+      unitId: this.selectedUnitId
+    });
+    this.hud.setStatus(`${unit.unitType} is building an elemental.`);
+  }
+
+  private handleSummon(): void {
+    if (this.session.state.result !== "InProgress") {
+      return;
+    }
+    if (!this.session.canSummon("Player")) {
+      this.hud.setStatus(this.summonBlockerText());
+      return;
+    }
+
+    this.session.applyCommand({ commandType: "Summon", team: "Player" });
+    this.hud.setStatus("Summoned unit deployed.");
+  }
+
+  private summonBlockerText(): string {
+    const completed = this.session.countCompletedElementals("Player");
+    const required = this.session.config.requiredElementalsToSummon;
+    if (completed < required) {
+      return `Need ${required - completed} more elemental${required - completed === 1 ? "" : "s"} to summon.`;
+    }
+    const cooldown = this.session.state.playerSummonCooldownSeconds;
+    if (cooldown > 0) {
+      return `Summon cooldown: ${cooldown.toFixed(1)}s.`;
+    }
+    return "Cannot summon while the leader is defeated.";
+  }
+
+  private findPlayerUnitNear(x: number, y: number): (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null {
+    let nearest: (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null = null;
+    let nearestDistanceSq = selectionRadiusPx * selectionRadiusPx;
+    for (const unit of this.session.state.units) {
+      if (!isPlayerUnit(unit) || !isUnitAlive(unit)) {
+        continue;
+      }
+      const screen = this.worldToScreen(unit.position);
+      const distanceSq = Phaser.Math.Distance.Squared(x, y, screen.x, screen.y);
+      if (distanceSq <= nearestDistanceSq) {
+        nearest = unit;
+        nearestDistanceSq = distanceSq;
+      }
+    }
+    return nearest;
+  }
+
+  private draw(): void {
+    const state = this.session.state;
+    this.battlefield.clear();
+    this.drawField();
+    this.drawArea("Player");
+    this.drawArea("Cpu");
+    this.drawLeaders(state.leaders);
+    this.drawElementals(state.elementals);
+    this.drawSummonedUnits(state.summonedUnits);
+    this.drawUnits(state.units);
+    this.drawAttackEvents(state);
+
+    this.timerText.setText(`Time ${Math.ceil(state.remainingSeconds)}s`);
+    this.resultText.setText(resultLabel(state.result));
+    this.hud.update(state, this.selectedUnitId);
+  }
+
+  private drawField(): void {
+    const bounds = this.fieldBounds();
+    this.battlefield.fillStyle(0x111c31, 1);
+    this.battlefield.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    this.battlefield.lineStyle(1, 0x334155, 1);
+    this.battlefield.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+    const centerX = bounds.x + bounds.width / 2;
+    this.battlefield.lineStyle(2, 0x475569, 0.7);
+    this.battlefield.lineBetween(centerX, bounds.y, centerX, bounds.y + bounds.height);
+    for (let offset = -3; offset <= 3; offset += 1) {
+      const y = bounds.y + bounds.height / 2 + offset * (bounds.height / 7);
+      this.battlefield.lineStyle(1, 0x1f2a44, 0.9);
+      this.battlefield.lineBetween(bounds.x, y, bounds.x + bounds.width, y);
+    }
+  }
+
+  private drawArea(team: TeamId): void {
+    const leader = findLeader(this.session.state, team);
+    const points = [
+      leader.position,
+      ...this.session.state.elementals
+        .filter((elemental) => elemental.team === team && elemental.isComplete && elemental.currentHp > 0)
+        .map((elemental) => elemental.position)
+    ];
+    if (points.length < 2) {
+      return;
+    }
+
+    const ordered = orderPoints(points);
+    const color = team === "Player" ? 0x38bdf8 : 0xfb7185;
+    this.battlefield.lineStyle(2, color, 0.55);
+    for (let index = 0; index < ordered.length; index += 1) {
+      const current = this.worldToScreen(ordered[index]);
+      const next = this.worldToScreen(ordered[(index + 1) % ordered.length]);
+      this.battlefield.lineBetween(current.x, current.y, next.x, next.y);
+    }
+  }
+
+  private drawLeaders(leaders: LeaderState[]): void {
+    for (const leader of leaders) {
+      const screen = this.worldToScreen(leader.position);
+      const color = leader.team === "Player" ? 0x3b82f6 : 0xef4444;
+      this.battlefield.fillStyle(color, 1);
+      this.battlefield.fillCircle(screen.x, screen.y, 22);
+      this.battlefield.lineStyle(3, 0xf8fafc, 0.9);
+      this.battlefield.strokeCircle(screen.x, screen.y, 22);
+      this.drawHpBar(screen.x - 30, screen.y - 38, 60, leader.currentHp / leader.maxHp, color);
+    }
+  }
+
+  private drawElementals(elementals: ElementalState[]): void {
+    for (const elemental of elementals) {
+      const screen = this.worldToScreen(elemental.position);
+      const color = elemental.team === "Player" ? 0x7dd3fc : 0xfda4af;
+      this.battlefield.fillStyle(color, 0.9);
+      this.battlefield.fillTriangle(screen.x, screen.y - 15, screen.x - 14, screen.y + 12, screen.x + 14, screen.y + 12);
+      this.drawHpBar(screen.x - 18, screen.y + 18, 36, elemental.currentHp / elemental.maxHp, color);
+    }
+  }
+
+  private drawSummonedUnits(summonedUnits: SummonedUnitState[]): void {
+    for (const summoned of summonedUnits) {
+      const screen = this.worldToScreen(summoned.position);
+      const color = summoned.team === "Player" ? 0x22d3ee : 0xfb7185;
+      this.battlefield.fillStyle(color, 0.55);
+      this.battlefield.fillCircle(screen.x, screen.y, 24);
+      this.battlefield.lineStyle(2, color, 1);
+      this.battlefield.strokeCircle(screen.x, screen.y, 30);
+      this.drawHpBar(screen.x - 28, screen.y + 34, 56, summoned.currentHp / summoned.maxHp, color);
+    }
+  }
+
+  private drawUnits(units: UnitState[]): void {
+    for (const unit of units) {
+      const screen = this.worldToScreen(unit.position);
+      const isSelected = unit.unitId === this.selectedUnitId;
+      const color = unit.team === "Player" ? 0x60a5fa : 0xf87171;
+      const alpha = unit.mode === "Defeated" ? 0.28 : 1;
+
+      if (isSelected) {
+        this.battlefield.lineStyle(3, 0xfacc15, 1);
+        this.battlefield.strokeCircle(screen.x, screen.y, 24);
+      }
+
+      this.battlefield.fillStyle(color, alpha);
+      if (unit.unitType === "Melee") {
+        this.battlefield.fillCircle(screen.x, screen.y, 14);
+      } else if (unit.unitType === "Speed") {
+        this.battlefield.fillTriangle(screen.x, screen.y - 15, screen.x - 13, screen.y + 12, screen.x + 13, screen.y + 12);
+      } else {
+        this.battlefield.fillRect(screen.x - 13, screen.y - 13, 26, 26);
+      }
+
+      if (unit.mode === "BuildingElemental") {
+        this.battlefield.lineStyle(2, 0xfacc15, 0.95);
+        this.battlefield.strokeCircle(screen.x, screen.y, 20);
+      }
+      this.drawHpBar(screen.x - 20, screen.y + 21, 40, unit.currentHp / unit.stats.maxHp, color);
+    }
+  }
+
+  private drawAttackEvents(state: BattleState): void {
+    this.battlefield.lineStyle(2, 0xf8fafc, 0.8);
+    for (const event of state.recentAttackEvents) {
+      const origin = this.worldToScreen(event.origin);
+      const target = this.worldToScreen(event.targetPosition);
+      this.battlefield.lineBetween(origin.x, origin.y, target.x, target.y);
+    }
+  }
+
+  private drawHpBar(x: number, y: number, width: number, ratio: number, color: number): void {
+    const clampedRatio = Phaser.Math.Clamp(ratio, 0, 1);
+    this.battlefield.fillStyle(0x020617, 0.9);
+    this.battlefield.fillRect(x, y, width, 5);
+    this.battlefield.fillStyle(color, 1);
+    this.battlefield.fillRect(x, y, width * clampedRatio, 5);
+  }
+
+  private worldToScreen(position: Vec2): Vec2 {
+    const bounds = this.fieldBounds();
+    const { battlefieldMin, battlefieldMax } = this.session.config;
+    return {
+      x: Phaser.Math.Linear(bounds.x, bounds.x + bounds.width, (position.x - battlefieldMin.x) / (battlefieldMax.x - battlefieldMin.x)),
+      y: Phaser.Math.Linear(bounds.y + bounds.height, bounds.y, (position.y - battlefieldMin.y) / (battlefieldMax.y - battlefieldMin.y))
+    };
+  }
+
+  private screenToWorld(x: number, y: number): Vec2 {
+    const bounds = this.fieldBounds();
+    const { battlefieldMin, battlefieldMax } = this.session.config;
+    const normalizedX = Phaser.Math.Clamp((x - bounds.x) / bounds.width, 0, 1);
+    const normalizedY = Phaser.Math.Clamp((bounds.y + bounds.height - y) / bounds.height, 0, 1);
+    return {
+      x: Phaser.Math.Linear(battlefieldMin.x, battlefieldMax.x, normalizedX),
+      y: Phaser.Math.Linear(battlefieldMin.y, battlefieldMax.y, normalizedY)
+    };
+  }
+
+  private fieldBounds(): Phaser.Geom.Rectangle {
+    return new Phaser.Geom.Rectangle(34, 56, this.scale.width - 68, this.hud.top - 76);
+  }
+}
+
+function textStyle(fontSize: number, color: string): Phaser.Types.GameObjects.Text.TextStyle {
+  return {
+    color,
+    fontFamily: "Arial, sans-serif",
+    fontSize: `${fontSize}px`
+  };
+}
+
+function isPlayerUnit(unit: UnitState): unit is UnitState & { unitId: PlayerUnitId; team: "Player" } {
+  return unit.team === "Player" && unit.unitId.startsWith("Player");
+}
+
+function orderPoints(points: Vec2[]): Vec2[] {
+  const center = points.reduce(
+    (sum, point) => ({ x: sum.x + point.x / points.length, y: sum.y + point.y / points.length }),
+    { x: 0, y: 0 }
+  );
+  return [...points].sort((a, b) => Math.atan2(a.y - center.y, a.x - center.x) - Math.atan2(b.y - center.y, b.x - center.x));
+}
+
+function resultLabel(result: BattleState["result"]): string {
+  switch (result) {
+    case "PlayerWin":
+      return "Player Victory";
+    case "CpuWin":
+      return "CPU Victory";
+    case "Draw":
+      return "Draw";
+    case "InProgress":
+      return "";
+  }
+}
