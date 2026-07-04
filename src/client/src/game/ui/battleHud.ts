@@ -12,8 +12,8 @@ type HudButton = {
   label: Phaser.GameObjects.Text;
 };
 
-const hudHeight = 122;
-const buttonWidth = 150;
+const hudHeight = 132;
+const buttonWidth = 88;
 const buttonHeight = 38;
 
 export class BattleHud {
@@ -24,8 +24,11 @@ export class BattleHud {
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly statusText: Phaser.GameObjects.Text;
   private readonly unitText: Phaser.GameObjects.Text;
+  private readonly cooldownText: Phaser.GameObjects.Text;
   private readonly playerText: Phaser.GameObjects.Text;
   private readonly cpuText: Phaser.GameObjects.Text;
+  private readonly timeText: Phaser.GameObjects.Text;
+  private readonly resultText: Phaser.GameObjects.Text;
   private readonly buildButton: HudButton;
   private readonly summonButton: HudButton;
   private readonly retryButton: HudButton;
@@ -40,15 +43,18 @@ export class BattleHud {
       .setOrigin(0, 0)
       .setStrokeStyle(1, 0x334155, 1);
 
-    this.titleText = scene.add.text(24, this.top + 16, "Battle Control", titleStyle(18, "#f8fafc"));
-    this.statusText = scene.add.text(24, this.top + 46, "Select a player unit.", titleStyle(14, "#cbd5e1"));
-    this.unitText = scene.add.text(24, this.top + 78, "Selected: none", titleStyle(14, "#93c5fd"));
-    this.playerText = scene.add.text(430, this.top + 18, "", titleStyle(14, "#bfdbfe"));
-    this.cpuText = scene.add.text(430, this.top + 48, "", titleStyle(14, "#fecaca"));
+    this.titleText = scene.add.text(24, this.top + 10, "Battle Control", titleStyle(17, "#f8fafc"));
+    this.statusText = scene.add.text(24, this.top + 34, "Status: Select a player unit.", titleStyle(13, "#cbd5e1"));
+    this.unitText = scene.add.text(24, this.top + 58, "Selected: none", titleStyle(13, "#93c5fd"));
+    this.cooldownText = scene.add.text(24, this.top + 82, "", titleStyle(13, "#fde68a"));
+    this.playerText = scene.add.text(330, this.top + 18, "", titleStyle(13, "#bfdbfe"));
+    this.cpuText = scene.add.text(330, this.top + 42, "", titleStyle(13, "#fecaca"));
+    this.timeText = scene.add.text(330, this.top + 66, "", titleStyle(13, "#f8fafc"));
+    this.resultText = scene.add.text(330, this.top + 90, "", titleStyle(13, "#cbd5e1"));
 
-    this.buildButton = this.createButton(width - 498, this.top + 68, "Build", callbacks.onBuild);
-    this.summonButton = this.createButton(width - 332, this.top + 68, "Summon", callbacks.onSummon);
-    this.retryButton = this.createButton(width - 166, this.top + 68, "Retry", callbacks.onRetry);
+    this.buildButton = this.createButton(width - 306, this.top + 48, "Build", callbacks.onBuild);
+    this.summonButton = this.createButton(width - 202, this.top + 48, "Summon", callbacks.onSummon);
+    this.retryButton = this.createButton(width - 98, this.top + 48, "Retry", callbacks.onRetry);
   }
 
   contains(x: number, y: number): boolean {
@@ -56,14 +62,17 @@ export class BattleHud {
   }
 
   setStatus(message: string): void {
-    this.statusText.setText(message);
+    this.statusText.setText(`Status: ${message}`);
   }
 
   update(state: BattleState, selectedUnitId: PlayerUnitId | null): void {
     const selectedUnit = selectedUnitId ? state.units.find((unit) => unit.unitId === selectedUnitId) : null;
     this.unitText.setText(`Selected: ${formatSelectedUnit(selectedUnit)}`);
-    this.playerText.setText(`Player HP ${leaderHp(state, "Player")}  Elementals ${countElementals(state, "Player")}`);
-    this.cpuText.setText(`CPU HP ${leaderHp(state, "Cpu")}  Elementals ${countElementals(state, "Cpu")}`);
+    this.cooldownText.setText(`Summon CD: ${state.playerSummonCooldownSeconds.toFixed(1)}s`);
+    this.playerText.setText(`Player HP: ${leaderHp(state, "Player")}  Elem: ${countElementals(state, "Player")}`);
+    this.cpuText.setText(`CPU HP: ${leaderHp(state, "Cpu")}  Elem: ${countElementals(state, "Cpu")}`);
+    this.timeText.setText(`Time: ${Math.ceil(state.remainingSeconds)}s`);
+    this.resultText.setText(`Result: ${formatResult(state.result)}`);
 
     const canUseUnit = Boolean(selectedUnit && selectedUnit.mode === "Active" && selectedUnit.currentHp > 0 && state.result === "InProgress");
     this.setButtonEnabled(this.buildButton, canUseUnit);
@@ -75,8 +84,11 @@ export class BattleHud {
     this.titleText.destroy();
     this.statusText.destroy();
     this.unitText.destroy();
+    this.cooldownText.destroy();
     this.playerText.destroy();
     this.cpuText.destroy();
+    this.timeText.destroy();
+    this.resultText.destroy();
     this.buildButton.background.destroy();
     this.buildButton.label.destroy();
     this.summonButton.background.destroy();
@@ -136,4 +148,17 @@ function leaderHp(state: BattleState, team: "Player" | "Cpu"): string {
 
 function countElementals(state: BattleState, team: "Player" | "Cpu"): number {
   return state.elementals.filter((elemental) => elemental.team === team && elemental.isComplete && elemental.currentHp > 0).length;
+}
+
+function formatResult(result: BattleState["result"]): string {
+  switch (result) {
+    case "PlayerWin":
+      return "Player victory";
+    case "CpuWin":
+      return "CPU victory";
+    case "Draw":
+      return "Draw";
+    case "InProgress":
+      return "In progress";
+  }
 }

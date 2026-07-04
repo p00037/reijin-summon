@@ -21,8 +21,6 @@ export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
-  private timerText!: Phaser.GameObjects.Text;
-  private resultText!: Phaser.GameObjects.Text;
   private selectedUnitId: PlayerUnitId | null = null;
   private cpuPlanTimerSeconds = 0;
 
@@ -37,14 +35,12 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#101827");
 
     this.battlefield = this.add.graphics();
-    this.timerText = this.add.text(24, 18, "", textStyle(18, "#f8fafc"));
-    this.resultText = this.add.text(this.scale.width / 2, 22, "", textStyle(22, "#f8fafc")).setOrigin(0.5, 0);
     this.hud = new BattleHud(this, {
       onBuild: () => this.handleBuild(),
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
-    this.hud.setStatus("Select a player unit, then click the field to move.");
+    this.hud.setStatus("Select unit, then click field.");
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointer(pointer));
     this.draw();
@@ -178,8 +174,6 @@ export class BattleScene extends Phaser.Scene {
     this.drawUnits(state.units);
     this.drawAttackEvents(state);
 
-    this.timerText.setText(`Time ${Math.ceil(state.remainingSeconds)}s`);
-    this.resultText.setText(resultLabel(state.result));
     this.hud.update(state, this.selectedUnitId);
   }
 
@@ -327,14 +321,6 @@ export class BattleScene extends Phaser.Scene {
   }
 }
 
-function textStyle(fontSize: number, color: string): Phaser.Types.GameObjects.Text.TextStyle {
-  return {
-    color,
-    fontFamily: "Arial, sans-serif",
-    fontSize: `${fontSize}px`
-  };
-}
-
 function isPlayerUnit(unit: UnitState): unit is UnitState & { unitId: PlayerUnitId; team: "Player" } {
   return unit.team === "Player" && unit.unitId.startsWith("Player");
 }
@@ -345,17 +331,4 @@ function orderPoints(points: Vec2[]): Vec2[] {
     { x: 0, y: 0 }
   );
   return [...points].sort((a, b) => Math.atan2(a.y - center.y, a.x - center.x) - Math.atan2(b.y - center.y, b.x - center.x));
-}
-
-function resultLabel(result: BattleState["result"]): string {
-  switch (result) {
-    case "PlayerWin":
-      return "Player Victory";
-    case "CpuWin":
-      return "CPU Victory";
-    case "Draw":
-      return "Draw";
-    case "InProgress":
-      return "";
-  }
 }
