@@ -1,5 +1,5 @@
 import { findUnit, isUnitAlive } from "../core/battleState";
-import type { BattleConfig, BattleState, ElementalId, TeamId, UnitId } from "../core/types";
+import type { BattleConfig, BattleState, ElementalId, ElementalState, TeamId, UnitId } from "../core/types";
 
 const elementalIds: ElementalId[] = [
   "Elemental1",
@@ -63,14 +63,16 @@ export function countCompletedElementals(state: BattleState, team: TeamId): numb
   return state.elementals.filter((elemental) => elemental.team === team && elemental.isComplete && elemental.currentHp > 0).length;
 }
 
-export function completedElementalsForTeam(state: BattleState, team: TeamId) {
+export function completedElementalsForTeam(state: BattleState, team: TeamId): ElementalState[] {
   return state.elementals.filter((elemental) => elemental.team === team && elemental.isComplete && elemental.currentHp > 0);
 }
 
 function nextAvailableElementalId(state: BattleState): ElementalId | null {
   const used = new Set<ElementalId>();
   for (const elemental of state.elementals) {
-    used.add(elemental.elementalId);
+    if (elemental.currentHp > 0) {
+      used.add(elemental.elementalId);
+    }
   }
   for (const unit of state.units) {
     if (unit.pendingElementalId) {
