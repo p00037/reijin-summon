@@ -90,7 +90,7 @@ function createUnit(
     position: { ...spawnPosition },
     spawnPosition: { ...spawnPosition },
     destination: { ...spawnPosition },
-    stats,
+    stats: { ...stats },
     currentHp: stats.maxHp,
     mode: "Active",
     buildTimerSeconds: 0,

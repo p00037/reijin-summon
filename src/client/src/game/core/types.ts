@@ -1,12 +1,14 @@
 export type TeamId = "Player" | "Cpu";
 export type UnitType = "Melee" | "Speed" | "Ranged";
-export type UnitId =
+export type PlayerUnitId =
   | "PlayerMelee"
   | "PlayerSpeed"
-  | "PlayerRanged"
+  | "PlayerRanged";
+export type CpuUnitId =
   | "CpuMelee"
   | "CpuSpeed"
   | "CpuRanged";
+export type UnitId = PlayerUnitId | CpuUnitId;
 export type LeaderId = "Player" | "Cpu";
 export type ElementalId =
   | "Elemental1"
@@ -61,8 +63,10 @@ export type BattleConfig = {
 };
 
 export type BattleCommand =
-  | { commandType: "MoveUnit"; team: TeamId; unitId: UnitId; targetPosition: Vec2 }
-  | { commandType: "BeginElementalBuild"; team: TeamId; unitId: UnitId }
+  | { commandType: "MoveUnit"; team: "Player"; unitId: PlayerUnitId; targetPosition: Vec2 }
+  | { commandType: "MoveUnit"; team: "Cpu"; unitId: CpuUnitId; targetPosition: Vec2 }
+  | { commandType: "BeginElementalBuild"; team: "Player"; unitId: PlayerUnitId }
+  | { commandType: "BeginElementalBuild"; team: "Cpu"; unitId: CpuUnitId }
   | { commandType: "Summon"; team: TeamId };
 
 export type LeaderState = {
