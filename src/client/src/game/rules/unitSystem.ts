@@ -43,6 +43,8 @@ export function tickMovement(state: BattleState, config: BattleConfig, deltaSeco
 }
 
 export function tickCombat(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
+  state.recentAttackEvents = [];
+
   for (const unit of state.units) {
     if (unit.mode !== "Defeated" && unit.currentHp <= 0) {
       defeatUnit(unit, config);
@@ -126,6 +128,10 @@ function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitSta
     state.summonedUnits.some(
       (candidate) =>
         candidate.team === enemyTeam && candidate.currentHp > 0 && distanceSq(unit.position, candidate.position) <= contactRadiusSq
+    ) ||
+    state.elementals.some(
+      (candidate) =>
+        candidate.team === enemyTeam && candidate.currentHp > 0 && distanceSq(unit.position, candidate.position) <= contactRadiusSq
     )
   );
 }
@@ -133,26 +139,25 @@ function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitSta
 function findAttackTarget(state: BattleState, attacker: UnitState): AttackTarget | null {
   const enemyTeam = oppositeTeam(attacker.team);
   const rangeSq = attacker.stats.attackRange * attacker.stats.attackRange;
-  const groups: AttackTarget[][] = [
-    state.units
+  const enemyLeader = findLeader(state, enemyTeam);
+  const targets: AttackTarget[] = [
+    ...state.units
       .filter((unit) => unit.team === enemyTeam && isUnitAlive(unit))
-      .map((unit) => ({ kind: "Unit", position: unit.position, target: unit })),
-    state.elementals
+      .map((unit): AttackTarget => ({ kind: "Unit", position: unit.position, target: unit })),
+    ...state.elementals
       .filter((elemental) => elemental.team === enemyTeam && elemental.currentHp > 0)
-      .map((elemental) => ({ kind: "Elemental", position: elemental.position, target: elemental })),
-    state.summonedUnits
+      .map((elemental): AttackTarget => ({ kind: "Elemental", position: elemental.position, target: elemental })),
+    ...state.summonedUnits
       .filter((summonedUnit) => summonedUnit.team === enemyTeam && summonedUnit.currentHp > 0)
-      .map((summonedUnit) => ({ kind: "SummonedUnit", position: summonedUnit.position, target: summonedUnit })),
-    [{ kind: "Leader", position: findLeader(state, enemyTeam).position, target: findLeader(state, enemyTeam) }]
+      .map((summonedUnit): AttackTarget => ({
+        kind: "SummonedUnit",
+        position: summonedUnit.position,
+        target: summonedUnit
+      })),
+    { kind: "Leader", position: enemyLeader.position, target: enemyLeader }
   ];
 
-  for (const group of groups) {
-    const nearest = nearestInRange(attacker.position, group, rangeSq);
-    if (nearest) {
-      return nearest;
-    }
-  }
-  return null;
+  return nearestInRange(attacker.position, targets, rangeSq);
 }
 
 function nearestInRange(position: Vec2, targets: AttackTarget[], rangeSq: number): AttackTarget | null {
