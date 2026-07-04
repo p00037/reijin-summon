@@ -1,129 +1,129 @@
-# Local COM Battle MVP Design
+# ローカルCOM戦MVP設計
 
-## Goal
+## 目的
 
-Build the first playable browser MVP for the project by migrating the Unity MVP's local player-versus-CPU battle loop to TypeScript and Phaser. The MVP focuses on a local COM match. Online play and Colyseus synchronization remain outside this milestone, aside from preserving the existing starter server.
+Unity版MVPのローカルプレイヤー対CPUのバトルループをTypeScript + Phaserへ移植し、最初に遊べるブラウザ版MVPを作成する。今回のMVPはローカルCOM戦に集中する。オンライン対戦とColyseus同期はこのマイルストーンの範囲外とし、既存のスターターサーバは維持するにとどめる。
 
-## Source Material
+## 参照資料
 
 - `docs/deep-research-report.md`
 - `docs/phaser-migration-spec.md`
-- Unity reference project at `C:\10.Github\TheEternalWheel`
+- Unity参照プロジェクト: `C:\10.Github\TheEternalWheel`
 
-The implementation will use original names, abstract visuals, and local rule references only. It will not copy original arcade assets, ROMs, audio, character art, logos, or protected presentation material.
+実装では独自名称、抽象ビジュアル、ローカルルール参照のみを使う。元アーケード作品のアセット、ROM、音声、キャラクターアート、ロゴ、保護された表現物はコピーしない。
 
-## Scope
+## スコープ
 
-The playable MVP includes:
+プレイ可能なMVPに含めるもの:
 
-- Title/start flow for `The Eternal Wheel MVP`.
-- A 960x540 Phaser battle scene with a two-sided 2D battlefield.
-- Player and CPU leaders.
-- Three normal units per side: melee, speed, and ranged.
-- Player unit selection and click-to-move commands.
-- Elemental building from a selected player unit.
-- Summoning when enough completed elementals exist and cooldown permits.
-- CPU planning on a simple one-second cadence.
-- Normal unit combat, direct leader damage, respawn, leader healing area, elemental damage/removal, summoned unit movement, contact damage, health decay, and match result.
-- HUD for player HP, CPU HP, time, selected unit, summon status, cooldown, result, build, summon, and retry.
+- `The Eternal Wheel MVP` のタイトル/開始フロー。
+- 960x540のPhaserバトルシーンと、左右に分かれた2D戦場。
+- プレイヤー側とCPU側のリーダー。
+- 各陣営3体の通常ユニット: 近接、速度、遠距離。
+- プレイヤーユニットの選択とクリック移動。
+- 選択中ユニットによるエレメンタル生成。
+- 完成済みエレメンタル数とクールダウン条件を満たした召喚。
+- 1秒間隔の単純なCPU計画。
+- 通常ユニット戦闘、リーダーへの直接ダメージ、復活、リーダー周辺回復、エレメンタルへのダメージ/除去、召喚ユニットの移動、接触ダメージ、HP自然減少、勝敗判定。
+- プレイヤーHP、CPU HP、残り時間、選択中ユニット、召喚状態、クールダウン、結果、生成、召喚、リトライを表示するHUD。
 
-The MVP does not include:
+MVPに含めないもの:
 
-- Online matchmaking or synchronized multiplayer.
-- Persistent progression, card collection, account state, or scenario unlocks.
-- Production art, animation polish, sound, or original IP assets.
-- Server-authoritative simulation.
+- オンラインマッチングや同期型マルチプレイ。
+- 永続進行、カード収集、アカウント状態、シナリオ解放。
+- 製品品質のアート、アニメーション演出、サウンド、元IPのアセット。
+- サーバ権威型シミュレーション。
 
-## Architecture
+## アーキテクチャ
 
-The client will own the MVP. Game rules will be pure TypeScript modules under `src/client/src/game`, and Phaser will consume those modules for input and rendering.
+MVPはクライアント側に閉じる。ゲームルールは `src/client/src/game` 配下の純TypeScriptモジュールとして実装し、Phaserは入力と描画のためにそれらを利用する。
 
-Core modules:
+コアモジュール:
 
-- `core/types.ts`: ids, commands, state interfaces, and battle event shapes.
-- `core/battleConfig.ts`: default tuning values from the migration spec and Unity reference.
-- `core/battleState.ts`: default battle state factory and lookup helpers.
-- `core/vector.ts`: distance, move-towards, clamp, and world coordinate helpers.
+- `core/types.ts`: ID、コマンド、状態インターフェース、バトルイベントの型。
+- `core/battleConfig.ts`: 移行仕様とUnity参照実装に基づく既定チューニング値。
+- `core/battleState.ts`: 既定バトル状態の生成と参照ヘルパー。
+- `core/vector.ts`: 距離、目標方向への移動、クランプ、ワールド座標ヘルパー。
 
-Rule modules:
+ルールモジュール:
 
-- `rules/areaCalculator.ts`: convex hull and polygon area for summon area.
-- `rules/unitSystem.ts`: movement, contact slow, attacks, leader healing, defeats, and respawns.
-- `rules/elementalSystem.ts`: build start, build progress, elemental completion, and removal.
-- `rules/summonSystem.ts`: summon eligibility, cooldowns, summoned unit creation, movement, collision damage, and decay.
-- `rules/gameSession.ts`: command application, fixed order ticking, and result calculation.
+- `rules/areaCalculator.ts`: 召喚領域用の凸包と多角形面積。
+- `rules/unitSystem.ts`: 移動、接触減速、攻撃、リーダー回復、撃破、復活。
+- `rules/elementalSystem.ts`: 生成開始、生成進行、エレメンタル完成、除去。
+- `rules/summonSystem.ts`: 召喚可否、クールダウン、召喚ユニット生成、移動、接触ダメージ、HP自然減少。
+- `rules/gameSession.ts`: コマンド適用、固定順序のTick処理、勝敗判定。
 
-AI module:
+AIモジュール:
 
-- `ai/cpuPlanner.ts`: issue CPU commands every second. It summons first if possible, otherwise builds elementals until capped, otherwise sends active units toward the player leader.
+- `ai/cpuPlanner.ts`: CPUコマンドを1秒ごとに発行する。召喚可能なら召喚を最優先し、そうでなければ上限までエレメンタルを生成し、それ以外ではアクティブなユニットをプレイヤーリーダーへ向かわせる。
 
-Scene/UI modules:
+シーン/UIモジュール:
 
-- `scenes/TitleScene.ts`: title screen and start button.
-- `scenes/BattleScene.ts`: owns `GameSession`, maps Phaser pointer input to battle commands, runs CPU planning, ticks the game, and renders abstract pieces.
-- `ui/battleHud.ts`: lightweight DOM or Phaser text/buttons for HUD actions.
+- `scenes/TitleScene.ts`: タイトル画面と開始ボタン。
+- `scenes/BattleScene.ts`: `GameSession` を所有し、Phaserのポインター入力をバトルコマンドへ変換し、CPU計画を実行し、ゲームをTickし、抽象的な駒を描画する。
+- `ui/battleHud.ts`: HUD操作用の軽量なDOMまたはPhaserテキスト/ボタン。
 
-The existing server workspace remains buildable but is not part of the gameplay path for this MVP.
+既存のサーバワークスペースはビルド可能なまま残すが、このMVPのゲームプレイ経路には含めない。
 
-## Data Flow
+## データフロー
 
-1. `TitleScene` starts `BattleScene`.
-2. `BattleScene` creates a `GameSession` using the default config.
-3. Pointer input creates `BattleCommand` values:
-   - select a player unit by clicking near it;
-   - click the battlefield to move the selected unit;
-   - press build to start elemental building with the selected unit;
-   - press summon to execute player summon.
-4. Every frame, `BattleScene` ticks the session with `deltaSeconds`.
-5. Every one second, `BattleScene` asks `CpuPlanner` for CPU commands and applies them.
-6. `BattleScene` reads state and redraws leaders, units, elementals, summoned units, HP bars, area lines, and attack events.
-7. When result changes from `InProgress`, input commands stop mutating battle state and the HUD shows the result with retry.
+1. `TitleScene` が `BattleScene` を開始する。
+2. `BattleScene` が既定設定で `GameSession` を作成する。
+3. ポインター入力から `BattleCommand` を作成する:
+   - プレイヤーユニットの近くをクリックして選択する。
+   - 戦場をクリックして選択中ユニットを移動する。
+   - 生成ボタンで選択中ユニットのエレメンタル生成を開始する。
+   - 召喚ボタンでプレイヤー召喚を実行する。
+4. 毎フレーム、`BattleScene` が `deltaSeconds` でセッションをTickする。
+5. 1秒ごとに、`BattleScene` が `CpuPlanner` へCPUコマンドを問い合わせて適用する。
+6. `BattleScene` が状態を読み取り、リーダー、ユニット、エレメンタル、召喚ユニット、HPバー、領域線、攻撃イベントを再描画する。
+7. 結果が `InProgress` 以外になったら入力コマンドは状態を変更せず、HUDに結果とリトライを表示する。
 
-## Visual Direction
+## ビジュアル方針
 
-The MVP uses readable abstract sprites, not finished art. The battlefield should feel like a tactical board:
+MVPでは完成アートではなく、読みやすい抽象スプライトを使う。戦場は戦術ボードとして把握しやすい見た目にする。
 
-- Dark neutral background with a lighter rectangular battlefield.
-- Player side and CPU side differentiated by position and accent color.
-- Leaders as larger symbols.
-- Normal units as small type-coded pieces.
-- Elementals as smaller amber points connected by an area outline.
-- Summoned units as larger high-contrast pieces.
-- HP bars above pieces, scaled consistently.
+- 暗めのニュートラル背景と、少し明るい長方形の戦場。
+- プレイヤー側とCPU側は位置とアクセントカラーで区別する。
+- リーダーは通常ユニットより大きな記号として表示する。
+- 通常ユニットは種別が分かる小さな駒として表示する。
+- エレメンタルは小さな琥珀色の点として表示し、領域アウトラインで接続する。
+- 召喚ユニットは大きめでコントラストの高い駒として表示する。
+- HPバーは各駒の上に一貫したスケールで表示する。
 
-No decorative landing page is needed. The first useful screen is the title/start flow, followed by the battle.
+装飾的なランディングページは不要。最初の有用な画面はタイトル/開始フローで、その後すぐバトルへ進む。
 
-## Error Handling And Edge Cases
+## エラー処理と境界条件
 
-- Commands after match end are ignored.
-- Move targets are clamped to battlefield bounds.
-- Only active, alive units can move or build.
-- Building is canceled by movement, defeat, or elemental destruction rules where applicable.
-- Summon commands fail silently when requirements are unmet, but HUD status should explain current blockers.
-- Destroyed elementals are removed during the tick.
-- Defeated normal units respawn after the configured delay.
-- If time expires, remaining leader HP determines the result; equal HP is a draw.
+- 試合終了後のコマンドは無視する。
+- 移動目標は戦場範囲内にクランプする。
+- アクティブかつ生存中のユニットだけが移動または生成できる。
+- 移動、撃破、エレメンタル破壊に関するルールに応じて、生成中状態はキャンセルされる。
+- 条件未達の召喚コマンドは状態を変えずに失敗する。ただしHUDには現在の阻害要因を表示する。
+- 破壊されたエレメンタルはTick中に除去する。
+- 撃破された通常ユニットは設定された遅延後に復活する。
+- 時間切れ時は残りリーダーHPで勝敗を決め、同値なら引き分けにする。
 
-## Testing
+## テスト
 
-Pure rule tests will cover the highest-risk behavior before production implementation:
+本実装前に、リスクの高い挙動を純ルールテストで押さえる。
 
-- Area calculation for simple triangles and interior points.
-- Default state and config values.
-- Unit movement and battlefield clamping.
-- Elemental build completion and build cancellation.
-- Summon eligibility, cooldown, HP calculation, and summoned unit contact damage.
-- CPU planner command priority.
-- Game session result calculation.
+- 単純な三角形と内側点を含む面積計算。
+- 既定状態と設定値。
+- ユニット移動と戦場範囲クランプ。
+- エレメンタル生成完了と生成キャンセル。
+- 召喚可否、クールダウン、HP計算、召喚ユニットの接触ダメージ。
+- CPU計画のコマンド優先順位。
+- ゲームセッションの勝敗判定。
 
-Phaser UI will be verified with typecheck/build and a local manual play pass. Automated scene tests are not required for this MVP because the rule layer holds the critical behavior.
+Phaser UIは型チェック/ビルドとローカル手動プレイで確認する。重要挙動はルール層に集約するため、このMVPでは自動シーンテストは必須にしない。
 
-## Acceptance Criteria
+## 受け入れ条件
 
-- `npm run build` succeeds from the repository root.
-- Browser MVP starts from the client and enters the battle scene.
-- Player can select each friendly unit, move it, build elementals, summon, and retry.
-- CPU builds/summons/attacks without manual input.
-- HP, cooldown, timer, selected unit, blockers, and result are visible.
-- Player win, CPU win, and draw are representable by the game session.
-- Rule modules have focused tests for the critical behaviors listed above.
+- リポジトリルートで `npm run build` が成功する。
+- ブラウザMVPがクライアントから起動し、バトルシーンに入れる。
+- プレイヤーが各味方ユニットを選択し、移動、エレメンタル生成、召喚、リトライを実行できる。
+- CPUが手動入力なしで生成、召喚、攻撃を行う。
+- HP、クールダウン、タイマー、選択中ユニット、阻害要因、結果が表示される。
+- `GameSession` 上でプレイヤー勝利、CPU勝利、引き分けを表現できる。
+- ルールモジュールに、上記の重要挙動を対象にした焦点の絞られたテストがある。
