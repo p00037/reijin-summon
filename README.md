@@ -27,6 +27,15 @@ npm.cmd run dev
 - Server: http://localhost:2567
 - Health check: http://localhost:2567/health
 
+ローカルCOM戦MVPだけを確認する場合は、クライアント単体で起動できます。
+サーバーは不要です。
+
+```powershell
+npm.cmd run dev:client
+```
+
+- Client: http://localhost:5173
+
 ## Build
 
 ```powershell
