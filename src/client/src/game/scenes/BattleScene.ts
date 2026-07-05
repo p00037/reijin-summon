@@ -11,20 +11,30 @@ import type {
   UnitState,
   Vec2
 } from "../core/types";
-import { rangedAnimationKey, rangedAnimationKeyForUnit, rangedFrameStart } from "../render/unitAnimation";
+import {
+  rangedAnimationKey,
+  rangedAnimationKeyForUnit,
+  rangedFrameStart,
+  speedAnimationKey,
+  speedAnimationKeyForUnit,
+  speedFrameStart
+} from "../render/unitAnimation";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 
 const maxFrameDeltaSeconds = 1 / 20;
 const selectionRadiusPx = 28;
 const rangedTextureKey = "ranged-mermaid";
+const speedTextureKey = "speed-shark";
 const rangedSpriteDisplaySize = 52;
+const speedSpriteDisplaySize = 52;
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
   private rangedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
+  private speedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private selectedUnitId: PlayerUnitId | null = null;
   private cpuPlanTimerSeconds = 0;
 
@@ -39,18 +49,27 @@ export class BattleScene extends Phaser.Scene {
       margin: 1,
       spacing: 0
     });
+    this.load.spritesheet(speedTextureKey, "/assets/units/shark.png", {
+      frameWidth: 280,
+      frameHeight: 280,
+      margin: 1,
+      spacing: 0
+    });
   }
 
   create(): void {
     this.session = new GameSession();
     this.rangedUnitSprites = new Map();
+    this.speedUnitSprites = new Map();
     this.selectedUnitId = null;
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
 
     this.battlefield = this.add.graphics();
     this.createRangedAnimations();
+    this.createSpeedAnimations();
     this.createRangedUnitSprites();
+    this.createSpeedUnitSprites();
     this.hud = new BattleHud(this, {
       onBuild: () => this.handleBuild(),
       onSummon: () => this.handleSummon(),
@@ -274,6 +293,7 @@ export class BattleScene extends Phaser.Scene {
       const alpha = unit.mode === "Defeated" ? 0.28 : 1;
 
       this.updateRangedUnitSprite(unit, screen, alpha);
+      this.updateSpeedUnitSprite(unit, screen, alpha);
 
       if (isSelected) {
         this.battlefield.lineStyle(3, 0xfacc15, 1);
@@ -283,7 +303,7 @@ export class BattleScene extends Phaser.Scene {
       if (unit.unitType === "Melee") {
         this.battlefield.fillStyle(color, alpha);
         this.battlefield.fillCircle(screen.x, screen.y, 14);
-      } else if (unit.unitType === "Speed") {
+      } else if (unit.unitType === "Speed" && !this.speedUnitSprites.has(unit.unitId)) {
         this.battlefield.fillStyle(color, alpha);
         this.battlefield.fillTriangle(screen.x, screen.y - 15, screen.x - 13, screen.y + 12, screen.x + 13, screen.y + 12);
       }
@@ -304,6 +324,14 @@ export class BattleScene extends Phaser.Scene {
     this.ensureRangedAnimation("defeated", 4, 0);
   }
 
+  private createSpeedAnimations(): void {
+    this.ensureSpeedAnimation("idle", 4, -1);
+    this.ensureSpeedAnimation("walk", 4, -1);
+    this.ensureSpeedAnimation("attack", 4, 0);
+    this.ensureSpeedAnimation("damage", 2, 0);
+    this.ensureSpeedAnimation("defeated", 4, 0);
+  }
+
   private ensureRangedAnimation(name: Parameters<typeof rangedAnimationKey>[0], frameCount: number, repeat: number): void {
     const key = rangedAnimationKey(name);
     if (this.anims.exists(key)) {
@@ -314,6 +342,21 @@ export class BattleScene extends Phaser.Scene {
     this.anims.create({
       key,
       frames: this.anims.generateFrameNumbers(rangedTextureKey, { start, end: start + frameCount - 1 }),
+      frameRate: 7,
+      repeat
+    });
+  }
+
+  private ensureSpeedAnimation(name: Parameters<typeof speedAnimationKey>[0], frameCount: number, repeat: number): void {
+    const key = speedAnimationKey(name);
+    if (this.anims.exists(key)) {
+      return;
+    }
+
+    const start = speedFrameStart(name);
+    this.anims.create({
+      key,
+      frames: this.anims.generateFrameNumbers(speedTextureKey, { start, end: start + frameCount - 1 }),
       frameRate: 7,
       repeat
     });
@@ -334,6 +377,21 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  private createSpeedUnitSprites(): void {
+    for (const unit of this.session.state.units) {
+      if (unit.unitType !== "Speed") {
+        continue;
+      }
+
+      const sprite = this.add.sprite(0, 0, speedTextureKey, speedFrameStart("idle"));
+      sprite.setDisplaySize(speedSpriteDisplaySize, speedSpriteDisplaySize);
+      sprite.setDepth(1);
+      sprite.setFlipX(unit.team === "Cpu");
+      sprite.play("speed-idle");
+      this.speedUnitSprites.set(unit.unitId, sprite);
+    }
+  }
+
   private updateRangedUnitSprite(unit: UnitState, screen: Vec2, alpha: number): void {
     const sprite = this.rangedUnitSprites.get(unit.unitId);
     if (!sprite) {
@@ -343,6 +401,36 @@ export class BattleScene extends Phaser.Scene {
     const key = rangedAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
     const currentKey = sprite.anims.currentAnim?.key;
     const currentAttackOrDamage = currentKey === "ranged-attack" || currentKey === "ranged-damage";
+
+    sprite.setPosition(screen.x, screen.y);
+    sprite.setAlpha(alpha);
+    sprite.setFlipX(unit.team === "Cpu");
+
+    if (unit.mode === "Defeated") {
+      if (currentKey !== key) {
+        sprite.play(key);
+      }
+      return;
+    }
+
+    if (currentAttackOrDamage && sprite.anims.isPlaying) {
+      return;
+    }
+
+    if (currentKey !== key || !sprite.anims.isPlaying) {
+      sprite.play(key);
+    }
+  }
+
+  private updateSpeedUnitSprite(unit: UnitState, screen: Vec2, alpha: number): void {
+    const sprite = this.speedUnitSprites.get(unit.unitId);
+    if (!sprite) {
+      return;
+    }
+
+    const key = speedAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
+    const currentKey = sprite.anims.currentAnim?.key;
+    const currentAttackOrDamage = currentKey === "speed-attack" || currentKey === "speed-damage";
 
     sprite.setPosition(screen.x, screen.y);
     sprite.setAlpha(alpha);

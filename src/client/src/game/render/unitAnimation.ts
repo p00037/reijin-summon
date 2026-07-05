@@ -8,6 +8,12 @@ export type RangedAnimationKey =
   | "ranged-attack"
   | "ranged-damage"
   | "ranged-defeated";
+export type SpeedAnimationKey =
+  | "speed-idle"
+  | "speed-walk"
+  | "speed-attack"
+  | "speed-damage"
+  | "speed-defeated";
 
 const frameStarts: Record<RangedAnimationName, number> = {
   idle: 0,
@@ -26,17 +32,37 @@ export function rangedAnimationKey(animation: RangedAnimationName): RangedAnimat
 }
 
 export function rangedAnimationKeyForUnit(unit: UnitState, recentAttackEvents: AttackEvent[]): RangedAnimationKey {
+  return animationKeyForUnit(unit, recentAttackEvents, "ranged");
+}
+
+export function speedFrameStart(animation: RangedAnimationName): number {
+  return frameStarts[animation];
+}
+
+export function speedAnimationKey(animation: RangedAnimationName): SpeedAnimationKey {
+  return `speed-${animation}`;
+}
+
+export function speedAnimationKeyForUnit(unit: UnitState, recentAttackEvents: AttackEvent[]): SpeedAnimationKey {
+  return animationKeyForUnit(unit, recentAttackEvents, "speed");
+}
+
+function animationKeyForUnit<TPrefix extends "ranged" | "speed">(
+  unit: UnitState,
+  recentAttackEvents: AttackEvent[],
+  prefix: TPrefix
+): `${TPrefix}-${RangedAnimationName}` {
   if (unit.mode === "Defeated" || unit.currentHp <= 0) {
-    return "ranged-defeated";
+    return `${prefix}-defeated`;
   }
 
   if (recentAttackEvents.some((event) => event.attackerUnitId === unit.unitId)) {
-    return "ranged-attack";
+    return `${prefix}-attack`;
   }
 
   if (distanceSq(unit.position, unit.destination) > 0.01) {
-    return "ranged-walk";
+    return `${prefix}-walk`;
   }
 
-  return "ranged-idle";
+  return `${prefix}-idle`;
 }

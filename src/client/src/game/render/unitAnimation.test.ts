@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { rangedAnimationKeyForUnit, rangedFrameStart } from "./unitAnimation";
+import { rangedAnimationKeyForUnit, rangedFrameStart, speedAnimationKeyForUnit, speedFrameStart } from "./unitAnimation";
 import type { UnitState } from "../core/types";
 
 const rangedUnit = {
@@ -25,6 +25,20 @@ const rangedUnit = {
   pendingElementalId: null
 } satisfies UnitState;
 
+const speedUnit = {
+  ...rangedUnit,
+  unitId: "PlayerSpeed",
+  unitType: "Speed",
+  stats: {
+    maxHp: 250,
+    moveSpeed: 5.5 / 3,
+    attackDamage: 30,
+    attackRange: 1,
+    attackIntervalSeconds: 0.8
+  },
+  currentHp: 250
+} satisfies UnitState;
+
 test("Rangedユニットは状態からモーションキーを選ぶ", () => {
   assert.equal(rangedAnimationKeyForUnit(rangedUnit, []), "ranged-idle");
   assert.equal(
@@ -44,4 +58,22 @@ test("mermaid.pngの行構成に対応する開始フレームを返す", () => 
   assert.equal(rangedFrameStart("attack"), 8);
   assert.equal(rangedFrameStart("damage"), 12);
   assert.equal(rangedFrameStart("defeated"), 16);
+});
+
+test("Speedユニットは状態からshark用モーションキーを選ぶ", () => {
+  assert.equal(speedAnimationKeyForUnit(speedUnit, []), "speed-idle");
+  assert.equal(speedAnimationKeyForUnit({ ...speedUnit, destination: { x: 1, y: 0 } }, []), "speed-walk");
+  assert.equal(
+    speedAnimationKeyForUnit(speedUnit, [{ attackerUnitId: "PlayerSpeed", origin: { x: 0, y: 0 }, targetPosition: { x: 1, y: 0 } }]),
+    "speed-attack"
+  );
+  assert.equal(speedAnimationKeyForUnit({ ...speedUnit, mode: "Defeated", currentHp: 0 }, []), "speed-defeated");
+});
+
+test("shark.pngの行構成に対応する開始フレームを返す", () => {
+  assert.equal(speedFrameStart("idle"), 0);
+  assert.equal(speedFrameStart("walk"), 4);
+  assert.equal(speedFrameStart("attack"), 8);
+  assert.equal(speedFrameStart("damage"), 12);
+  assert.equal(speedFrameStart("defeated"), 16);
 });
