@@ -11,16 +11,20 @@ import type {
   UnitState,
   Vec2
 } from "../core/types";
+import { rangedAnimationKey, rangedAnimationKeyForUnit, rangedFrameStart } from "../render/unitAnimation";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 
 const maxFrameDeltaSeconds = 1 / 20;
 const selectionRadiusPx = 28;
+const rangedTextureKey = "ranged-mermaid";
+const rangedSpriteDisplaySize = 52;
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
+  private rangedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private selectedUnitId: PlayerUnitId | null = null;
   private cpuPlanTimerSeconds = 0;
 
@@ -28,13 +32,25 @@ export class BattleScene extends Phaser.Scene {
     super("BattleScene");
   }
 
+  preload(): void {
+    this.load.spritesheet(rangedTextureKey, "/assets/units/mermaid.png", {
+      frameWidth: 280,
+      frameHeight: 280,
+      margin: 1,
+      spacing: 0
+    });
+  }
+
   create(): void {
     this.session = new GameSession();
+    this.rangedUnitSprites = new Map();
     this.selectedUnitId = null;
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
 
     this.battlefield = this.add.graphics();
+    this.createRangedAnimations();
+    this.createRangedUnitSprites();
     this.hud = new BattleHud(this, {
       onBuild: () => this.handleBuild(),
       onSummon: () => this.handleSummon(),
@@ -257,18 +273,19 @@ export class BattleScene extends Phaser.Scene {
       const color = unit.team === "Player" ? 0x60a5fa : 0xf87171;
       const alpha = unit.mode === "Defeated" ? 0.28 : 1;
 
+      this.updateRangedUnitSprite(unit, screen, alpha);
+
       if (isSelected) {
         this.battlefield.lineStyle(3, 0xfacc15, 1);
         this.battlefield.strokeCircle(screen.x, screen.y, 24);
       }
 
-      this.battlefield.fillStyle(color, alpha);
       if (unit.unitType === "Melee") {
+        this.battlefield.fillStyle(color, alpha);
         this.battlefield.fillCircle(screen.x, screen.y, 14);
       } else if (unit.unitType === "Speed") {
+        this.battlefield.fillStyle(color, alpha);
         this.battlefield.fillTriangle(screen.x, screen.y - 15, screen.x - 13, screen.y + 12, screen.x + 13, screen.y + 12);
-      } else {
-        this.battlefield.fillRect(screen.x - 13, screen.y - 13, 26, 26);
       }
 
       if (unit.mode === "BuildingElemental") {
@@ -276,6 +293,74 @@ export class BattleScene extends Phaser.Scene {
         this.battlefield.strokeCircle(screen.x, screen.y, 20);
       }
       this.drawHpBar(screen.x - 20, screen.y + 21, 40, unit.currentHp / unit.stats.maxHp, color);
+    }
+  }
+
+  private createRangedAnimations(): void {
+    this.ensureRangedAnimation("idle", 4, -1);
+    this.ensureRangedAnimation("walk", 4, -1);
+    this.ensureRangedAnimation("attack", 4, 0);
+    this.ensureRangedAnimation("damage", 2, 0);
+    this.ensureRangedAnimation("defeated", 4, 0);
+  }
+
+  private ensureRangedAnimation(name: Parameters<typeof rangedAnimationKey>[0], frameCount: number, repeat: number): void {
+    const key = rangedAnimationKey(name);
+    if (this.anims.exists(key)) {
+      return;
+    }
+
+    const start = rangedFrameStart(name);
+    this.anims.create({
+      key,
+      frames: this.anims.generateFrameNumbers(rangedTextureKey, { start, end: start + frameCount - 1 }),
+      frameRate: 7,
+      repeat
+    });
+  }
+
+  private createRangedUnitSprites(): void {
+    for (const unit of this.session.state.units) {
+      if (unit.unitType !== "Ranged") {
+        continue;
+      }
+
+      const sprite = this.add.sprite(0, 0, rangedTextureKey, rangedFrameStart("idle"));
+      sprite.setDisplaySize(rangedSpriteDisplaySize, rangedSpriteDisplaySize);
+      sprite.setDepth(1);
+      sprite.setFlipX(unit.team === "Cpu");
+      sprite.play("ranged-idle");
+      this.rangedUnitSprites.set(unit.unitId, sprite);
+    }
+  }
+
+  private updateRangedUnitSprite(unit: UnitState, screen: Vec2, alpha: number): void {
+    const sprite = this.rangedUnitSprites.get(unit.unitId);
+    if (!sprite) {
+      return;
+    }
+
+    const key = rangedAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
+    const currentKey = sprite.anims.currentAnim?.key;
+    const currentAttackOrDamage = currentKey === "ranged-attack" || currentKey === "ranged-damage";
+
+    sprite.setPosition(screen.x, screen.y);
+    sprite.setAlpha(alpha);
+    sprite.setFlipX(unit.team === "Cpu");
+
+    if (unit.mode === "Defeated") {
+      if (currentKey !== key) {
+        sprite.play(key);
+      }
+      return;
+    }
+
+    if (currentAttackOrDamage && sprite.anims.isPlaying) {
+      return;
+    }
+
+    if (currentKey !== key || !sprite.anims.isPlaying) {
+      sprite.play(key);
     }
   }
 
