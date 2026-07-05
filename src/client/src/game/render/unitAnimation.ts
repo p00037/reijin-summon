@@ -14,6 +14,12 @@ export type SpeedAnimationKey =
   | "speed-attack"
   | "speed-damage"
   | "speed-defeated";
+export type MeleeAnimationKey =
+  | "melee-idle"
+  | "melee-walk"
+  | "melee-attack"
+  | "melee-damage"
+  | "melee-defeated";
 
 const frameStarts: Record<RangedAnimationName, number> = {
   idle: 0,
@@ -47,7 +53,19 @@ export function speedAnimationKeyForUnit(unit: UnitState, recentAttackEvents: At
   return animationKeyForUnit(unit, recentAttackEvents, "speed");
 }
 
-function animationKeyForUnit<TPrefix extends "ranged" | "speed">(
+export function meleeFrameStart(animation: RangedAnimationName): number {
+  return frameStarts[animation];
+}
+
+export function meleeAnimationKey(animation: RangedAnimationName): MeleeAnimationKey {
+  return `melee-${animation}`;
+}
+
+export function meleeAnimationKeyForUnit(unit: UnitState, recentAttackEvents: AttackEvent[]): MeleeAnimationKey {
+  return animationKeyForUnit(unit, recentAttackEvents, "melee");
+}
+
+function animationKeyForUnit<TPrefix extends "ranged" | "speed" | "melee">(
   unit: UnitState,
   recentAttackEvents: AttackEvent[],
   prefix: TPrefix

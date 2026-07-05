@@ -12,6 +12,9 @@ import type {
   Vec2
 } from "../core/types";
 import {
+  meleeAnimationKey,
+  meleeAnimationKeyForUnit,
+  meleeFrameStart,
   rangedAnimationKey,
   rangedAnimationKeyForUnit,
   rangedFrameStart,
@@ -24,8 +27,10 @@ import { BattleHud } from "../ui/battleHud";
 
 const maxFrameDeltaSeconds = 1 / 20;
 const selectionRadiusPx = 28;
+const meleeTextureKey = "melee-octopus";
 const rangedTextureKey = "ranged-mermaid";
 const speedTextureKey = "speed-shark";
+const meleeSpriteDisplaySize = 52;
 const rangedSpriteDisplaySize = 52;
 const speedSpriteDisplaySize = 52;
 
@@ -33,6 +38,7 @@ export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
+  private meleeUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private rangedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private speedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private selectedUnitId: PlayerUnitId | null = null;
@@ -43,6 +49,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.load.spritesheet(meleeTextureKey, "/assets/units/octopus.png", {
+      frameWidth: 280,
+      frameHeight: 280,
+      margin: 1,
+      spacing: 0
+    });
     this.load.spritesheet(rangedTextureKey, "/assets/units/mermaid.png", {
       frameWidth: 280,
       frameHeight: 280,
@@ -59,6 +71,7 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     this.session = new GameSession();
+    this.meleeUnitSprites = new Map();
     this.rangedUnitSprites = new Map();
     this.speedUnitSprites = new Map();
     this.selectedUnitId = null;
@@ -66,8 +79,10 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#101827");
 
     this.battlefield = this.add.graphics();
+    this.createMeleeAnimations();
     this.createRangedAnimations();
     this.createSpeedAnimations();
+    this.createMeleeUnitSprites();
     this.createRangedUnitSprites();
     this.createSpeedUnitSprites();
     this.hud = new BattleHud(this, {
@@ -292,6 +307,7 @@ export class BattleScene extends Phaser.Scene {
       const color = unit.team === "Player" ? 0x60a5fa : 0xf87171;
       const alpha = unit.mode === "Defeated" ? 0.28 : 1;
 
+      this.updateMeleeUnitSprite(unit, screen, alpha);
       this.updateRangedUnitSprite(unit, screen, alpha);
       this.updateSpeedUnitSprite(unit, screen, alpha);
 
@@ -300,7 +316,7 @@ export class BattleScene extends Phaser.Scene {
         this.battlefield.strokeCircle(screen.x, screen.y, 24);
       }
 
-      if (unit.unitType === "Melee") {
+      if (unit.unitType === "Melee" && !this.meleeUnitSprites.has(unit.unitId)) {
         this.battlefield.fillStyle(color, alpha);
         this.battlefield.fillCircle(screen.x, screen.y, 14);
       } else if (unit.unitType === "Speed" && !this.speedUnitSprites.has(unit.unitId)) {
@@ -324,6 +340,14 @@ export class BattleScene extends Phaser.Scene {
     this.ensureRangedAnimation("defeated", 4, 0);
   }
 
+  private createMeleeAnimations(): void {
+    this.ensureMeleeAnimation("idle", 4, -1);
+    this.ensureMeleeAnimation("walk", 4, -1);
+    this.ensureMeleeAnimation("attack", 4, 0);
+    this.ensureMeleeAnimation("damage", 2, 0);
+    this.ensureMeleeAnimation("defeated", 4, 0);
+  }
+
   private createSpeedAnimations(): void {
     this.ensureSpeedAnimation("idle", 4, -1);
     this.ensureSpeedAnimation("walk", 4, -1);
@@ -342,6 +366,21 @@ export class BattleScene extends Phaser.Scene {
     this.anims.create({
       key,
       frames: this.anims.generateFrameNumbers(rangedTextureKey, { start, end: start + frameCount - 1 }),
+      frameRate: 7,
+      repeat
+    });
+  }
+
+  private ensureMeleeAnimation(name: Parameters<typeof meleeAnimationKey>[0], frameCount: number, repeat: number): void {
+    const key = meleeAnimationKey(name);
+    if (this.anims.exists(key)) {
+      return;
+    }
+
+    const start = meleeFrameStart(name);
+    this.anims.create({
+      key,
+      frames: this.anims.generateFrameNumbers(meleeTextureKey, { start, end: start + frameCount - 1 }),
       frameRate: 7,
       repeat
     });
@@ -377,6 +416,21 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  private createMeleeUnitSprites(): void {
+    for (const unit of this.session.state.units) {
+      if (unit.unitType !== "Melee") {
+        continue;
+      }
+
+      const sprite = this.add.sprite(0, 0, meleeTextureKey, meleeFrameStart("idle"));
+      sprite.setDisplaySize(meleeSpriteDisplaySize, meleeSpriteDisplaySize);
+      sprite.setDepth(1);
+      sprite.setFlipX(unit.team === "Cpu");
+      sprite.play("melee-idle");
+      this.meleeUnitSprites.set(unit.unitId, sprite);
+    }
+  }
+
   private createSpeedUnitSprites(): void {
     for (const unit of this.session.state.units) {
       if (unit.unitType !== "Speed") {
@@ -401,6 +455,36 @@ export class BattleScene extends Phaser.Scene {
     const key = rangedAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
     const currentKey = sprite.anims.currentAnim?.key;
     const currentAttackOrDamage = currentKey === "ranged-attack" || currentKey === "ranged-damage";
+
+    sprite.setPosition(screen.x, screen.y);
+    sprite.setAlpha(alpha);
+    sprite.setFlipX(unit.team === "Cpu");
+
+    if (unit.mode === "Defeated") {
+      if (currentKey !== key) {
+        sprite.play(key);
+      }
+      return;
+    }
+
+    if (currentAttackOrDamage && sprite.anims.isPlaying) {
+      return;
+    }
+
+    if (currentKey !== key || !sprite.anims.isPlaying) {
+      sprite.play(key);
+    }
+  }
+
+  private updateMeleeUnitSprite(unit: UnitState, screen: Vec2, alpha: number): void {
+    const sprite = this.meleeUnitSprites.get(unit.unitId);
+    if (!sprite) {
+      return;
+    }
+
+    const key = meleeAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
+    const currentKey = sprite.anims.currentAnim?.key;
+    const currentAttackOrDamage = currentKey === "melee-attack" || currentKey === "melee-damage";
 
     sprite.setPosition(screen.x, screen.y);
     sprite.setAlpha(alpha);

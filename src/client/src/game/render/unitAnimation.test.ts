@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { rangedAnimationKeyForUnit, rangedFrameStart, speedAnimationKeyForUnit, speedFrameStart } from "./unitAnimation";
+import {
+  meleeAnimationKeyForUnit,
+  meleeFrameStart,
+  rangedAnimationKeyForUnit,
+  rangedFrameStart,
+  speedAnimationKeyForUnit,
+  speedFrameStart
+} from "./unitAnimation";
 import type { UnitState } from "../core/types";
 
 const rangedUnit = {
@@ -37,6 +44,20 @@ const speedUnit = {
     attackIntervalSeconds: 0.8
   },
   currentHp: 250
+} satisfies UnitState;
+
+const meleeUnit = {
+  ...rangedUnit,
+  unitId: "PlayerMelee",
+  unitType: "Melee",
+  stats: {
+    maxHp: 350,
+    moveSpeed: 3.5 / 3,
+    attackDamage: 45,
+    attackRange: 1.25,
+    attackIntervalSeconds: 1.2
+  },
+  currentHp: 350
 } satisfies UnitState;
 
 test("Rangedユニットは状態からモーションキーを選ぶ", () => {
@@ -76,4 +97,22 @@ test("shark.pngの行構成に対応する開始フレームを返す", () => {
   assert.equal(speedFrameStart("attack"), 8);
   assert.equal(speedFrameStart("damage"), 12);
   assert.equal(speedFrameStart("defeated"), 16);
+});
+
+test("Meleeユニットは状態からoctopus用モーションキーを選ぶ", () => {
+  assert.equal(meleeAnimationKeyForUnit(meleeUnit, []), "melee-idle");
+  assert.equal(meleeAnimationKeyForUnit({ ...meleeUnit, destination: { x: 1, y: 0 } }, []), "melee-walk");
+  assert.equal(
+    meleeAnimationKeyForUnit(meleeUnit, [{ attackerUnitId: "PlayerMelee", origin: { x: 0, y: 0 }, targetPosition: { x: 1, y: 0 } }]),
+    "melee-attack"
+  );
+  assert.equal(meleeAnimationKeyForUnit({ ...meleeUnit, mode: "Defeated", currentHp: 0 }, []), "melee-defeated");
+});
+
+test("octopus.pngの行構成に対応する開始フレームを返す", () => {
+  assert.equal(meleeFrameStart("idle"), 0);
+  assert.equal(meleeFrameStart("walk"), 4);
+  assert.equal(meleeFrameStart("attack"), 8);
+  assert.equal(meleeFrameStart("damage"), 12);
+  assert.equal(meleeFrameStart("defeated"), 16);
 });
