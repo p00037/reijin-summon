@@ -34,6 +34,9 @@ const summonedFrameStarts: Record<SummonedAnimationName, number> = {
   walk: 0,
   attack: 4
 };
+const defaultAnimationFrameRate = 7;
+const idleAnimationFrameRate = 4;
+const summonedAttackAnimationFrameRate = 5;
 
 export function rangedFrameStart(animation: RangedAnimationName): number {
   return frameStarts[animation];
@@ -41,6 +44,10 @@ export function rangedFrameStart(animation: RangedAnimationName): number {
 
 export function rangedAnimationKey(animation: RangedAnimationName): RangedAnimationKey {
   return `ranged-${animation}`;
+}
+
+export function rangedAnimationFrameRate(animation: RangedAnimationName): number {
+  return animationFrameRate(animation);
 }
 
 export function rangedAnimationKeyForUnit(unit: UnitState, recentAttackEvents: AttackEvent[]): RangedAnimationKey {
@@ -55,6 +62,10 @@ export function speedAnimationKey(animation: RangedAnimationName): SpeedAnimatio
   return `speed-${animation}`;
 }
 
+export function speedAnimationFrameRate(animation: RangedAnimationName): number {
+  return animationFrameRate(animation);
+}
+
 export function speedAnimationKeyForUnit(unit: UnitState, recentAttackEvents: AttackEvent[]): SpeedAnimationKey {
   return animationKeyForUnit(unit, recentAttackEvents, "speed");
 }
@@ -65,6 +76,10 @@ export function meleeFrameStart(animation: RangedAnimationName): number {
 
 export function meleeAnimationKey(animation: RangedAnimationName): MeleeAnimationKey {
   return `melee-${animation}`;
+}
+
+export function meleeAnimationFrameRate(animation: RangedAnimationName): number {
+  return animationFrameRate(animation);
 }
 
 export function meleeAnimationKeyForUnit(unit: UnitState, recentAttackEvents: AttackEvent[]): MeleeAnimationKey {
@@ -79,12 +94,20 @@ export function summonedAnimationKey(animation: SummonedAnimationName): Summoned
   return `summoned-${animation}`;
 }
 
+export function summonedAnimationFrameRate(animation: SummonedAnimationName): number {
+  return animation === "attack" ? summonedAttackAnimationFrameRate : defaultAnimationFrameRate;
+}
+
 export function summonedAnimationKeyForUnit(
   summoned: SummonedUnitState,
   enemyLeader: LeaderState,
   contactRadius: number
 ): SummonedAnimationKey {
   return distance(summoned.position, enemyLeader.position) <= contactRadius ? "summoned-attack" : "summoned-walk";
+}
+
+function animationFrameRate(animation: RangedAnimationName): number {
+  return animation === "idle" ? idleAnimationFrameRate : defaultAnimationFrameRate;
 }
 
 function animationKeyForUnit<TPrefix extends "ranged" | "speed" | "melee">(

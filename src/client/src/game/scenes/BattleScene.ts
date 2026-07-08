@@ -13,15 +13,19 @@ import type {
 } from "../core/types";
 import {
   meleeAnimationKey,
+  meleeAnimationFrameRate,
   meleeAnimationKeyForUnit,
   meleeFrameStart,
   rangedAnimationKey,
+  rangedAnimationFrameRate,
   rangedAnimationKeyForUnit,
   rangedFrameStart,
   speedAnimationKey,
+  speedAnimationFrameRate,
   speedAnimationKeyForUnit,
   speedFrameStart,
   summonedAnimationKey,
+  summonedAnimationFrameRate,
   summonedAnimationKeyForUnit,
   summonedFrameStart
 } from "../render/unitAnimation";
@@ -385,7 +389,7 @@ export class BattleScene extends Phaser.Scene {
     this.anims.create({
       key,
       frames: this.anims.generateFrameNumbers(rangedTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: 7,
+      frameRate: rangedAnimationFrameRate(name),
       repeat
     });
   }
@@ -400,7 +404,7 @@ export class BattleScene extends Phaser.Scene {
     this.anims.create({
       key,
       frames: this.anims.generateFrameNumbers(meleeTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: 7,
+      frameRate: meleeAnimationFrameRate(name),
       repeat
     });
   }
@@ -415,7 +419,7 @@ export class BattleScene extends Phaser.Scene {
     this.anims.create({
       key,
       frames: this.anims.generateFrameNumbers(speedTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: 7,
+      frameRate: speedAnimationFrameRate(name),
       repeat
     });
   }
@@ -430,7 +434,7 @@ export class BattleScene extends Phaser.Scene {
     this.anims.create({
       key,
       frames: this.anims.generateFrameNumbers(summonedTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: 7,
+      frameRate: summonedAnimationFrameRate(name),
       repeat
     });
   }
