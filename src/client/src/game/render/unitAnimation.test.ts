@@ -6,9 +6,11 @@ import {
   rangedAnimationKeyForUnit,
   rangedFrameStart,
   speedAnimationKeyForUnit,
-  speedFrameStart
+  speedFrameStart,
+  summonedAnimationKeyForUnit,
+  summonedFrameStart
 } from "./unitAnimation";
-import type { UnitState } from "../core/types";
+import type { LeaderState, SummonedUnitState, UnitState } from "../core/types";
 
 const rangedUnit = {
   unitId: "PlayerRanged",
@@ -59,6 +61,26 @@ const meleeUnit = {
   },
   currentHp: 350
 } satisfies UnitState;
+
+const cpuLeader = {
+  leaderId: "Cpu",
+  team: "Cpu",
+  position: { x: 7, y: 0 },
+  maxHp: 1000,
+  currentHp: 1000
+} satisfies LeaderState;
+
+const summonedUnit = {
+  summonedUnitId: 1,
+  team: "Player",
+  position: { x: 0, y: 0 },
+  destination: { x: 7, y: 0 },
+  maxHp: 1200,
+  currentHp: 1200,
+  attackDamage: 100,
+  moveSpeed: 1,
+  healthDecayPerSecond: 10
+} satisfies SummonedUnitState;
 
 test("Rangedユニットは状態からモーションキーを選ぶ", () => {
   assert.equal(rangedAnimationKeyForUnit(rangedUnit, []), "ranged-idle");
@@ -115,4 +137,17 @@ test("octopus.pngの行構成に対応する開始フレームを返す", () => 
   assert.equal(meleeFrameStart("attack"), 8);
   assert.equal(meleeFrameStart("damage"), 12);
   assert.equal(meleeFrameStart("defeated"), 16);
+});
+
+test("召喚獣は敵リーダーに接触中だけattackモーションを選ぶ", () => {
+  assert.equal(summonedAnimationKeyForUnit(summonedUnit, cpuLeader, 0.45), "summoned-walk");
+  assert.equal(
+    summonedAnimationKeyForUnit({ ...summonedUnit, position: { x: 6.8, y: 0 } }, cpuLeader, 0.45),
+    "summoned-attack"
+  );
+});
+
+test("seiryuu.pngの行構成に対応する開始フレームを返す", () => {
+  assert.equal(summonedFrameStart("walk"), 0);
+  assert.equal(summonedFrameStart("attack"), 4);
 });

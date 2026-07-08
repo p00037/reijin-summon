@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { planCpuCommands } from "../ai/cpuPlanner";
-import { findLeader, isUnitAlive } from "../core/battleState";
+import { findLeader, isUnitAlive, oppositeTeam } from "../core/battleState";
 import type {
   BattleState,
   ElementalState,
@@ -20,7 +20,10 @@ import {
   rangedFrameStart,
   speedAnimationKey,
   speedAnimationKeyForUnit,
-  speedFrameStart
+  speedFrameStart,
+  summonedAnimationKey,
+  summonedAnimationKeyForUnit,
+  summonedFrameStart
 } from "../render/unitAnimation";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
@@ -30,9 +33,11 @@ const selectionRadiusPx = 28;
 const meleeTextureKey = "melee-octopus";
 const rangedTextureKey = "ranged-mermaid";
 const speedTextureKey = "speed-shark";
+const summonedTextureKey = "summoned-seiryuu";
 const meleeSpriteDisplaySize = 52;
 const rangedSpriteDisplaySize = 52;
 const speedSpriteDisplaySize = 52;
+const summonedSpriteDisplaySize = 92;
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
@@ -41,6 +46,7 @@ export class BattleScene extends Phaser.Scene {
   private meleeUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private rangedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private speedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
+  private summonedUnitSprites = new Map<number, Phaser.GameObjects.Sprite>();
   private selectedUnitId: PlayerUnitId | null = null;
   private cpuPlanTimerSeconds = 0;
 
@@ -67,6 +73,12 @@ export class BattleScene extends Phaser.Scene {
       margin: 1,
       spacing: 0
     });
+    this.load.spritesheet(summonedTextureKey, "/assets/units/seiryuu.png", {
+      frameWidth: 442,
+      frameHeight: 442,
+      margin: 0,
+      spacing: 0
+    });
   }
 
   create(): void {
@@ -74,6 +86,7 @@ export class BattleScene extends Phaser.Scene {
     this.meleeUnitSprites = new Map();
     this.rangedUnitSprites = new Map();
     this.speedUnitSprites = new Map();
+    this.summonedUnitSprites = new Map();
     this.selectedUnitId = null;
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
@@ -82,6 +95,7 @@ export class BattleScene extends Phaser.Scene {
     this.createMeleeAnimations();
     this.createRangedAnimations();
     this.createSpeedAnimations();
+    this.createSummonedAnimations();
     this.createMeleeUnitSprites();
     this.createRangedUnitSprites();
     this.createSpeedUnitSprites();
@@ -289,11 +303,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private drawSummonedUnits(summonedUnits: SummonedUnitState[]): void {
+    this.destroyRemovedSummonedSprites(summonedUnits);
     for (const summoned of summonedUnits) {
       const screen = this.worldToScreen(summoned.position);
       const color = summoned.team === "Player" ? 0x22d3ee : 0xfb7185;
-      this.battlefield.fillStyle(color, 0.55);
-      this.battlefield.fillCircle(screen.x, screen.y, 24);
+      this.updateSummonedUnitSprite(summoned, screen);
       this.battlefield.lineStyle(2, color, 1);
       this.battlefield.strokeCircle(screen.x, screen.y, 30);
       this.drawHpBar(screen.x - 28, screen.y + 34, 56, summoned.currentHp / summoned.maxHp, color);
@@ -356,6 +370,11 @@ export class BattleScene extends Phaser.Scene {
     this.ensureSpeedAnimation("defeated", 4, 0);
   }
 
+  private createSummonedAnimations(): void {
+    this.ensureSummonedAnimation("walk", 4, -1);
+    this.ensureSummonedAnimation("attack", 4, 0);
+  }
+
   private ensureRangedAnimation(name: Parameters<typeof rangedAnimationKey>[0], frameCount: number, repeat: number): void {
     const key = rangedAnimationKey(name);
     if (this.anims.exists(key)) {
@@ -396,6 +415,21 @@ export class BattleScene extends Phaser.Scene {
     this.anims.create({
       key,
       frames: this.anims.generateFrameNumbers(speedTextureKey, { start, end: start + frameCount - 1 }),
+      frameRate: 7,
+      repeat
+    });
+  }
+
+  private ensureSummonedAnimation(name: Parameters<typeof summonedAnimationKey>[0], frameCount: number, repeat: number): void {
+    const key = summonedAnimationKey(name);
+    if (this.anims.exists(key)) {
+      return;
+    }
+
+    const start = summonedFrameStart(name);
+    this.anims.create({
+      key,
+      frames: this.anims.generateFrameNumbers(summonedTextureKey, { start, end: start + frameCount - 1 }),
       frameRate: 7,
       repeat
     });
@@ -533,6 +567,44 @@ export class BattleScene extends Phaser.Scene {
 
     if (currentKey !== key || !sprite.anims.isPlaying) {
       sprite.play(key);
+    }
+  }
+
+  private updateSummonedUnitSprite(summoned: SummonedUnitState, screen: Vec2): void {
+    let sprite = this.summonedUnitSprites.get(summoned.summonedUnitId);
+    if (!sprite) {
+      sprite = this.add.sprite(0, 0, summonedTextureKey, summonedFrameStart("walk"));
+      sprite.setDisplaySize(summonedSpriteDisplaySize, summonedSpriteDisplaySize);
+      sprite.setDepth(1);
+      sprite.play("summoned-walk");
+      this.summonedUnitSprites.set(summoned.summonedUnitId, sprite);
+    }
+
+    const enemyLeader = findLeader(this.session.state, oppositeTeam(summoned.team));
+    const key = summonedAnimationKeyForUnit(summoned, enemyLeader, this.session.config.contactSlowRadius);
+    const currentKey = sprite.anims.currentAnim?.key;
+    const currentAttack = currentKey === "summoned-attack";
+
+    sprite.setPosition(screen.x, screen.y);
+    sprite.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
+    sprite.setFlipX(summoned.team === "Cpu");
+
+    if (currentAttack && sprite.anims.isPlaying) {
+      return;
+    }
+
+    if (currentKey !== key || !sprite.anims.isPlaying) {
+      sprite.play(key);
+    }
+  }
+
+  private destroyRemovedSummonedSprites(summonedUnits: SummonedUnitState[]): void {
+    const activeIds = new Set(summonedUnits.map((summoned) => summoned.summonedUnitId));
+    for (const [id, sprite] of this.summonedUnitSprites) {
+      if (!activeIds.has(id)) {
+        sprite.destroy();
+        this.summonedUnitSprites.delete(id);
+      }
     }
   }
 

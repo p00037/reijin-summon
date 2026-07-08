@@ -1,5 +1,5 @@
-import type { AttackEvent, UnitState } from "../core/types";
-import { distanceSq } from "../core/vector";
+import type { AttackEvent, LeaderState, SummonedUnitState, UnitState } from "../core/types";
+import { distance, distanceSq } from "../core/vector";
 
 export type RangedAnimationName = "idle" | "walk" | "attack" | "damage" | "defeated";
 export type RangedAnimationKey =
@@ -20,6 +20,8 @@ export type MeleeAnimationKey =
   | "melee-attack"
   | "melee-damage"
   | "melee-defeated";
+export type SummonedAnimationName = "walk" | "attack";
+export type SummonedAnimationKey = "summoned-walk" | "summoned-attack";
 
 const frameStarts: Record<RangedAnimationName, number> = {
   idle: 0,
@@ -27,6 +29,10 @@ const frameStarts: Record<RangedAnimationName, number> = {
   attack: 8,
   damage: 12,
   defeated: 16
+};
+const summonedFrameStarts: Record<SummonedAnimationName, number> = {
+  walk: 0,
+  attack: 4
 };
 
 export function rangedFrameStart(animation: RangedAnimationName): number {
@@ -63,6 +69,22 @@ export function meleeAnimationKey(animation: RangedAnimationName): MeleeAnimatio
 
 export function meleeAnimationKeyForUnit(unit: UnitState, recentAttackEvents: AttackEvent[]): MeleeAnimationKey {
   return animationKeyForUnit(unit, recentAttackEvents, "melee");
+}
+
+export function summonedFrameStart(animation: SummonedAnimationName): number {
+  return summonedFrameStarts[animation];
+}
+
+export function summonedAnimationKey(animation: SummonedAnimationName): SummonedAnimationKey {
+  return `summoned-${animation}`;
+}
+
+export function summonedAnimationKeyForUnit(
+  summoned: SummonedUnitState,
+  enemyLeader: LeaderState,
+  contactRadius: number
+): SummonedAnimationKey {
+  return distance(summoned.position, enemyLeader.position) <= contactRadius ? "summoned-attack" : "summoned-walk";
 }
 
 function animationKeyForUnit<TPrefix extends "ranged" | "speed" | "melee">(
