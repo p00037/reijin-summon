@@ -1,4 +1,4 @@
-import type { AttackEvent, LeaderState, SummonedUnitState, UnitState } from "../core/types";
+import type { AttackEvent, LeaderState, SummonedUnitState, TeamId, UnitState, Vec2 } from "../core/types";
 import { distance, distanceSq } from "../core/vector";
 
 export type RangedAnimationName = "idle" | "walk" | "attack" | "damage" | "defeated";
@@ -104,6 +104,14 @@ export function summonedAnimationKeyForUnit(
   contactRadius: number
 ): SummonedAnimationKey {
   return distance(summoned.position, enemyLeader.position) <= contactRadius ? "summoned-attack" : "summoned-walk";
+}
+
+export function spriteFlipXForMovement(team: TeamId, position: Vec2, destination: Vec2): boolean {
+  const deltaX = destination.x - position.x;
+  if (Math.abs(deltaX) > 0.01) {
+    return deltaX < 0;
+  }
+  return team === "Cpu";
 }
 
 function animationFrameRate(animation: RangedAnimationName): number {

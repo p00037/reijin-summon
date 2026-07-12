@@ -24,6 +24,7 @@ import {
   speedAnimationFrameRate,
   speedAnimationKeyForUnit,
   speedFrameStart,
+  spriteFlipXForMovement,
   summonedAnimationKey,
   summonedAnimationFrameRate,
   summonedAnimationKeyForUnit,
@@ -448,7 +449,7 @@ export class BattleScene extends Phaser.Scene {
       const sprite = this.add.sprite(0, 0, rangedTextureKey, rangedFrameStart("idle"));
       sprite.setDisplaySize(rangedSpriteDisplaySize, rangedSpriteDisplaySize);
       sprite.setDepth(1);
-      sprite.setFlipX(unit.team === "Cpu");
+      sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
       sprite.play("ranged-idle");
       this.rangedUnitSprites.set(unit.unitId, sprite);
     }
@@ -463,7 +464,7 @@ export class BattleScene extends Phaser.Scene {
       const sprite = this.add.sprite(0, 0, meleeTextureKey, meleeFrameStart("idle"));
       sprite.setDisplaySize(meleeSpriteDisplaySize, meleeSpriteDisplaySize);
       sprite.setDepth(1);
-      sprite.setFlipX(unit.team === "Cpu");
+      sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
       sprite.play("melee-idle");
       this.meleeUnitSprites.set(unit.unitId, sprite);
     }
@@ -478,7 +479,7 @@ export class BattleScene extends Phaser.Scene {
       const sprite = this.add.sprite(0, 0, speedTextureKey, speedFrameStart("idle"));
       sprite.setDisplaySize(speedSpriteDisplaySize, speedSpriteDisplaySize);
       sprite.setDepth(1);
-      sprite.setFlipX(unit.team === "Cpu");
+      sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
       sprite.play("speed-idle");
       this.speedUnitSprites.set(unit.unitId, sprite);
     }
@@ -496,7 +497,7 @@ export class BattleScene extends Phaser.Scene {
 
     sprite.setPosition(screen.x, screen.y);
     sprite.setAlpha(alpha);
-    sprite.setFlipX(unit.team === "Cpu");
+    sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
 
     if (unit.mode === "Defeated") {
       if (currentKey !== key) {
@@ -526,7 +527,7 @@ export class BattleScene extends Phaser.Scene {
 
     sprite.setPosition(screen.x, screen.y);
     sprite.setAlpha(alpha);
-    sprite.setFlipX(unit.team === "Cpu");
+    sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
 
     if (unit.mode === "Defeated") {
       if (currentKey !== key) {
@@ -556,7 +557,7 @@ export class BattleScene extends Phaser.Scene {
 
     sprite.setPosition(screen.x, screen.y);
     sprite.setAlpha(alpha);
-    sprite.setFlipX(unit.team === "Cpu");
+    sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
 
     if (unit.mode === "Defeated") {
       if (currentKey !== key) {
@@ -591,7 +592,7 @@ export class BattleScene extends Phaser.Scene {
 
     sprite.setPosition(screen.x, screen.y);
     sprite.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
-    sprite.setFlipX(summoned.team === "Cpu");
+    sprite.setFlipX(spriteFlipXForMovement(summoned.team, summoned.position, summoned.destination));
 
     if (currentAttack && sprite.anims.isPlaying) {
       return;
