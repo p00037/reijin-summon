@@ -42,7 +42,7 @@ const summonedTextureKey = "summoned-seiryuu";
 const meleeSpriteDisplaySize = 52;
 const rangedSpriteDisplaySize = 52;
 const speedSpriteDisplaySize = 52;
-const summonedSpriteDisplaySize = 92;
+const summonedSpriteDisplaySize = 108;
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
@@ -585,8 +585,13 @@ export class BattleScene extends Phaser.Scene {
       this.summonedUnitSprites.set(summoned.summonedUnitId, sprite);
     }
 
-    const enemyLeader = findLeader(this.session.state, oppositeTeam(summoned.team));
-    const key = summonedAnimationKeyForUnit(summoned, enemyLeader, this.session.config.contactSlowRadius);
+    const enemyTeam = oppositeTeam(summoned.team);
+    const enemyTargets = [
+      findLeader(this.session.state, enemyTeam),
+      ...this.session.state.units.filter((unit) => unit.team === enemyTeam && isUnitAlive(unit)),
+      ...this.session.state.summonedUnits.filter((candidate) => candidate.team === enemyTeam && candidate.currentHp > 0)
+    ];
+    const key = summonedAnimationKeyForUnit(summoned, enemyTargets, this.session.config.contactSlowRadius);
     const currentKey = sprite.anims.currentAnim?.key;
     const currentAttack = currentKey === "summoned-attack";
 

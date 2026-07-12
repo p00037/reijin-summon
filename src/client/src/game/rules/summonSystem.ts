@@ -1,5 +1,5 @@
-import { findLeader, getSummonCooldown, oppositeTeam, setSummonCooldown } from "../core/battleState";
-import type { BattleConfig, BattleState, TeamId } from "../core/types";
+import { findLeader, getSummonCooldown, isUnitAlive, oppositeTeam, setSummonCooldown } from "../core/battleState";
+import type { BattleConfig, BattleState, SummonedUnitState, TeamId, UnitState } from "../core/types";
 import { distance, moveTowards } from "../core/vector";
 import { calculateSummonArea } from "./areaCalculator";
 import { completedElementalsForTeam } from "./elementalSystem";
@@ -62,11 +62,43 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     const enemyLeader = findLeader(state, oppositeTeam(summoned.team));
     summoned.destination = { ...enemyLeader.position };
     const touchingLeader = distance(summoned.position, enemyLeader.position) <= config.contactSlowRadius;
+    const touchingUnits = enemyUnitsInContact(state, config, summoned);
+    const touchingSummonedUnits = enemySummonedUnitsInContact(state, config, summoned);
+    for (const target of touchingUnits) {
+      target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage * deltaSeconds);
+    }
+    for (const target of touchingSummonedUnits) {
+      target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage * deltaSeconds);
+    }
+
     if (touchingLeader) {
       enemyLeader.currentHp = Math.max(0, enemyLeader.currentHp - summoned.attackDamage * deltaSeconds);
     } else {
-      summoned.position = moveTowards(summoned.position, summoned.destination, summoned.moveSpeed * deltaSeconds);
+      const speedMultiplier = touchingUnits.length > 0 || touchingSummonedUnits.length > 0 ? config.contactSlowMultiplier : 1;
+      summoned.position = moveTowards(summoned.position, summoned.destination, summoned.moveSpeed * speedMultiplier * deltaSeconds);
     }
   }
   state.summonedUnits = state.summonedUnits.filter((summoned) => summoned.currentHp > 0);
+}
+
+function enemyUnitsInContact(state: BattleState, config: BattleConfig, summoned: SummonedUnitState): UnitState[] {
+  const enemyTeam = oppositeTeam(summoned.team);
+  return state.units.filter(
+    (unit) => unit.team === enemyTeam && isUnitAlive(unit) && distance(summoned.position, unit.position) <= config.contactSlowRadius
+  );
+}
+
+function enemySummonedUnitsInContact(
+  state: BattleState,
+  config: BattleConfig,
+  summoned: SummonedUnitState
+): SummonedUnitState[] {
+  const enemyTeam = oppositeTeam(summoned.team);
+  return state.summonedUnits.filter(
+    (candidate) =>
+      candidate.team === enemyTeam &&
+      candidate.summonedUnitId !== summoned.summonedUnitId &&
+      candidate.currentHp > 0 &&
+      distance(summoned.position, candidate.position) <= config.contactSlowRadius
+  );
 }

@@ -182,6 +182,67 @@ test("非接触の召喚ユニットは敵リーダーへ移動する", () => {
   assert.deepEqual(state.summonedUnits[0].destination, { x: 7, y: 0 });
 });
 
+test("召喚ユニットは接触した敵通常ユニットへ継続ダメージを与え、移動速度が低下する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const enemyUnit = state.units.find((unit) => unit.unitId === "CpuMelee");
+  assert.ok(enemyUnit);
+  enemyUnit.position = { x: -5.8, y: 0 };
+  enemyUnit.destination = { x: -5.8, y: 0 };
+  state.summonedUnits.push({
+    summonedUnitId: 1,
+    team: "Player",
+    position: { x: -6, y: 0 },
+    destination: { x: 7, y: 0 },
+    maxHp: 100,
+    currentHp: 100,
+    attackDamage: 90,
+    moveSpeed: 1,
+    healthDecayPerSecond: 10
+  });
+
+  tickSummonedUnits(state, config, 1);
+
+  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 90);
+  assert.equal(Number(state.summonedUnits[0].position.x.toFixed(2)), -5.67);
+});
+
+test("召喚ユニット同士は接触中に互いへ継続ダメージを与え、移動速度が低下する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.summonedUnits.push(
+    {
+      summonedUnitId: 1,
+      team: "Player",
+      position: { x: 0, y: 0 },
+      destination: { x: 7, y: 0 },
+      maxHp: 100,
+      currentHp: 100,
+      attackDamage: 30,
+      moveSpeed: 1,
+      healthDecayPerSecond: 10
+    },
+    {
+      summonedUnitId: 2,
+      team: "Cpu",
+      position: { x: 0.2, y: 0 },
+      destination: { x: -7, y: 0 },
+      maxHp: 100,
+      currentHp: 100,
+      attackDamage: 40,
+      moveSpeed: 1,
+      healthDecayPerSecond: 10
+    }
+  );
+
+  tickSummonedUnits(state, config, 1);
+
+  assert.equal(state.summonedUnits[0].currentHp, 50);
+  assert.equal(state.summonedUnits[1].currentHp, 60);
+  assert.equal(Number(state.summonedUnits[0].position.x.toFixed(2)), 0.33);
+  assert.equal(Number(state.summonedUnits[1].position.x.toFixed(2)), -0.13);
+});
+
 function addCompletedPlayerElementals(state: ReturnType<typeof createDefaultBattleState>): void {
   state.elementals.push(
     { elementalId: "Elemental1", team: "Player", position: { x: -5, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },

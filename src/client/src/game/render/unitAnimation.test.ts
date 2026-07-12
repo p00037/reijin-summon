@@ -144,10 +144,14 @@ test("octopus.pngの行構成に対応する開始フレームを返す", () => 
   assert.equal(meleeFrameStart("defeated"), 16);
 });
 
-test("召喚獣は敵リーダーに接触中だけattackモーションを選ぶ", () => {
-  assert.equal(summonedAnimationKeyForUnit(summonedUnit, cpuLeader, 0.45), "summoned-walk");
+test("召喚獣は敵ターゲットに接触中だけattackモーションを選ぶ", () => {
+  assert.equal(summonedAnimationKeyForUnit(summonedUnit, [cpuLeader], 0.45), "summoned-walk");
   assert.equal(
-    summonedAnimationKeyForUnit({ ...summonedUnit, position: { x: 6.8, y: 0 } }, cpuLeader, 0.45),
+    summonedAnimationKeyForUnit({ ...summonedUnit, position: { x: 6.8, y: 0 } }, [cpuLeader], 0.45),
+    "summoned-attack"
+  );
+  assert.equal(
+    summonedAnimationKeyForUnit(summonedUnit, [{ position: { x: 0.2, y: 0 } }], 0.45),
     "summoned-attack"
   );
 });
