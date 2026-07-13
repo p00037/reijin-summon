@@ -3,6 +3,7 @@ import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive, oppositeTeam } from "../core/battleState";
 import type {
   BattleState,
+  ElementalId,
   ElementalState,
   LeaderState,
   PlayerUnitId,
@@ -39,15 +40,21 @@ const meleeTextureKey = "melee-octopus";
 const rangedTextureKey = "ranged-mermaid";
 const speedTextureKey = "speed-shark";
 const summonedTextureKey = "summoned-seiryuu";
+const summonerTextureKey = "summoner";
+const elementalTextureKey = "elemental-crystal";
 const meleeSpriteDisplaySize = 52;
 const rangedSpriteDisplaySize = 52;
 const speedSpriteDisplaySize = 52;
 const summonedSpriteDisplaySize = 108;
+const summonerSpriteDisplaySize = 64;
+const elementalSpriteDisplaySize = 44;
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
+  private leaderSprites = new Map<TeamId, Phaser.GameObjects.Image>();
+  private elementalSprites = new Map<ElementalId, Phaser.GameObjects.Image>();
   private meleeUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private rangedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private speedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
@@ -84,10 +91,14 @@ export class BattleScene extends Phaser.Scene {
       margin: 0,
       spacing: 0
     });
+    this.load.image(summonerTextureKey, "/assets/summoners/summoner.png");
+    this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
   }
 
   create(): void {
     this.session = new GameSession();
+    this.leaderSprites = new Map();
+    this.elementalSprites = new Map();
     this.meleeUnitSprites = new Map();
     this.rangedUnitSprites = new Map();
     this.speedUnitSprites = new Map();
@@ -101,6 +112,7 @@ export class BattleScene extends Phaser.Scene {
     this.createRangedAnimations();
     this.createSpeedAnimations();
     this.createSummonedAnimations();
+    this.createLeaderSprites();
     this.createMeleeUnitSprites();
     this.createRangedUnitSprites();
     this.createSpeedUnitSprites();
@@ -289,20 +301,23 @@ export class BattleScene extends Phaser.Scene {
     for (const leader of leaders) {
       const screen = this.worldToScreen(leader.position);
       const color = leader.team === "Player" ? 0x3b82f6 : 0xef4444;
-      this.battlefield.fillStyle(color, 1);
-      this.battlefield.fillCircle(screen.x, screen.y, 22);
+      this.updateLeaderSprite(leader, screen);
+      this.battlefield.lineStyle(3, color, 0.75);
+      this.battlefield.strokeCircle(screen.x, screen.y, 28);
       this.battlefield.lineStyle(3, 0xf8fafc, 0.9);
-      this.battlefield.strokeCircle(screen.x, screen.y, 22);
+      this.battlefield.strokeCircle(screen.x, screen.y, 25);
       this.drawHpBar(screen.x - 30, screen.y - 38, 60, leader.currentHp / leader.maxHp, color);
     }
   }
 
   private drawElementals(elementals: ElementalState[]): void {
+    this.destroyRemovedElementalSprites(elementals);
     for (const elemental of elementals) {
       const screen = this.worldToScreen(elemental.position);
       const color = elemental.team === "Player" ? 0x7dd3fc : 0xfda4af;
-      this.battlefield.fillStyle(color, 0.9);
-      this.battlefield.fillTriangle(screen.x, screen.y - 15, screen.x - 14, screen.y + 12, screen.x + 14, screen.y + 12);
+      this.updateElementalSprite(elemental, screen);
+      this.battlefield.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
+      this.battlefield.strokeCircle(screen.x, screen.y, 18);
       this.drawHpBar(screen.x - 18, screen.y + 18, 36, elemental.currentHp / elemental.maxHp, color);
     }
   }
@@ -482,6 +497,51 @@ export class BattleScene extends Phaser.Scene {
       sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
       sprite.play("speed-idle");
       this.speedUnitSprites.set(unit.unitId, sprite);
+    }
+  }
+
+  private createLeaderSprites(): void {
+    for (const leader of this.session.state.leaders) {
+      const sprite = this.add.image(0, 0, summonerTextureKey);
+      sprite.setDisplaySize(summonerSpriteDisplaySize, summonerSpriteDisplaySize);
+      sprite.setDepth(1);
+      sprite.setFlipX(leader.team === "Cpu");
+      this.leaderSprites.set(leader.team, sprite);
+    }
+  }
+
+  private updateLeaderSprite(leader: LeaderState, screen: Vec2): void {
+    const sprite = this.leaderSprites.get(leader.team);
+    if (!sprite) {
+      return;
+    }
+
+    sprite.setPosition(screen.x, screen.y);
+    sprite.setAlpha(leader.currentHp > 0 ? 1 : 0.35);
+    sprite.setFlipX(leader.team === "Cpu");
+  }
+
+  private updateElementalSprite(elemental: ElementalState, screen: Vec2): void {
+    let sprite = this.elementalSprites.get(elemental.elementalId);
+    if (!sprite) {
+      sprite = this.add.image(0, 0, elementalTextureKey);
+      sprite.setDisplaySize(elementalSpriteDisplaySize, elementalSpriteDisplaySize);
+      sprite.setDepth(1);
+      this.elementalSprites.set(elemental.elementalId, sprite);
+    }
+
+    sprite.setPosition(screen.x, screen.y);
+    sprite.setAlpha(elemental.isComplete ? 1 : 0.55);
+    sprite.setTint(elemental.team === "Player" ? 0x7dd3fc : 0xfda4af);
+  }
+
+  private destroyRemovedElementalSprites(elementals: ElementalState[]): void {
+    const activeIds = new Set(elementals.map((elemental) => elemental.elementalId));
+    for (const [id, sprite] of this.elementalSprites) {
+      if (!activeIds.has(id)) {
+        sprite.destroy();
+        this.elementalSprites.delete(id);
+      }
     }
   }
 
