@@ -4,12 +4,68 @@ import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findUnit } from "../core/battleState";
 import type { BattleState, ElementalId, TeamId } from "../core/types";
 import {
+  canPlaceElementalAtUnit,
   completedElementalsForTeam,
   countCompletedElementals,
   removeDestroyedElementals,
   tickElementalBuilds,
   tryBeginElementalBuild
 } from "./elementalSystem";
+
+test("alive elementals from either team block placement within or on the placement radius", () => {
+  const config = createDefaultBattleConfig();
+
+  for (const team of ["Player", "Cpu"] as const) {
+    const state = createDefaultBattleState(config);
+    const unit = findUnit(state, "PlayerMelee");
+    unit.position = { x: 0, y: 0 };
+    addElementalAt(state, "Elemental1", team, 120, {
+      x: config.elementalPlacementRadius,
+      y: 0
+    });
+
+    assert.equal(canPlaceElementalAtUnit(state, config, "PlayerMelee"), false);
+    assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), false);
+    assert.equal(unit.pendingElementalId, null);
+  }
+});
+
+test("alive elementals outside the placement radius allow placement", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  unit.position = { x: 0, y: 0 };
+  addElementalAt(state, "Elemental1", "Cpu", 120, {
+    x: config.elementalPlacementRadius + 0.001,
+    y: 0
+  });
+
+  assert.equal(canPlaceElementalAtUnit(state, config, "PlayerMelee"), true);
+});
+
+test("destroyed elementals do not block placement", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  unit.position = { x: 0, y: 0 };
+  addElementalAt(state, "Elemental1", "Cpu", 0, { x: 0, y: 0 });
+
+  assert.equal(canPlaceElementalAtUnit(state, config, "PlayerMelee"), true);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
+});
+
+test("another living unit building an elemental reserves its position", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const melee = findUnit(state, "PlayerMelee");
+  const speed = findUnit(state, "PlayerSpeed");
+  speed.position = { ...melee.position };
+
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
+  assert.equal(canPlaceElementalAtUnit(state, config, "PlayerMelee"), false);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), false);
+  assert.equal(melee.pendingElementalId, null);
+});
 
 test("active units can begin elemental builds", () => {
   const config = createDefaultBattleConfig();
@@ -90,6 +146,11 @@ test("both teams can build six elementals without exhausting shared ids", () => 
   assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
   assert.equal(tryBeginElementalBuild(state, config, "PlayerRanged"), true);
   tickElementalBuilds(state, config, config.elementalBuildSeconds);
+  for (const unit of state.units) {
+    if (unit.team === "Player") {
+      unit.position.y += 1;
+    }
+  }
   assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
   assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
   assert.equal(tryBeginElementalBuild(state, config, "PlayerRanged"), true);
@@ -164,10 +225,20 @@ test("partial ticks do not complete builds until enough time accumulates", () =>
 });
 
 function addElemental(state: BattleState, elementalId: ElementalId, team: TeamId, currentHp: number): void {
+  addElementalAt(state, elementalId, team, currentHp, { x: 0, y: 0 });
+}
+
+function addElementalAt(
+  state: BattleState,
+  elementalId: ElementalId,
+  team: TeamId,
+  currentHp: number,
+  position: { x: number; y: number }
+): void {
   state.elementals.push({
     elementalId,
     team,
-    position: { x: 0, y: 0 },
+    position,
     maxHp: 120,
     currentHp,
     isComplete: true

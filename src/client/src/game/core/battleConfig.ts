@@ -29,6 +29,7 @@ export function createDefaultBattleConfig(): BattleConfig {
     matchDurationSeconds: 180,
     leaderMaxHp: 1000,
     elementalBuildSeconds: 5,
+    elementalPlacementRadius: 0.45,
     maxElementalsPerTeam: 6,
     summonGaugeSecondsAtMaxElementals: 45,
     summonedUnitMinHpMultiplier: 3,

@@ -44,6 +44,7 @@ export type BattleConfig = {
   matchDurationSeconds: number;
   leaderMaxHp: number;
   elementalBuildSeconds: number;
+  elementalPlacementRadius: number;
   maxElementalsPerTeam: number;
   summonGaugeSecondsAtMaxElementals: number;
   summonedUnitMinHpMultiplier: number;
