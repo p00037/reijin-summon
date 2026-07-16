@@ -59,9 +59,11 @@ test("elemental cap includes pending builds", () => {
   addElemental(state, "Elemental1", "Player", 120);
   addElemental(state, "Elemental2", "Player", 120);
   addElemental(state, "Elemental3", "Player", 120);
+  addElemental(state, "Elemental4", "Player", 120);
+  addElemental(state, "Elemental5", "Player", 120);
 
   assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
-  assert.equal(findUnit(state, "PlayerMelee").pendingElementalId, "Elemental4");
+  assert.equal(findUnit(state, "PlayerMelee").pendingElementalId, "Elemental6");
   assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), false);
   assert.equal(findUnit(state, "PlayerSpeed").pendingElementalId, null);
 });
@@ -75,6 +77,30 @@ test("multiple pending builds receive sequential elemental ids", () => {
 
   assert.equal(findUnit(state, "PlayerMelee").pendingElementalId, "Elemental1");
   assert.equal(findUnit(state, "PlayerSpeed").pendingElementalId, "Elemental2");
+});
+
+test("both teams can build six elementals without exhausting shared ids", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  for (let index = 1; index <= 6; index += 1) {
+    addElemental(state, `Elemental${index}` as ElementalId, "Cpu", 120);
+  }
+
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerRanged"), true);
+  tickElementalBuilds(state, config, config.elementalBuildSeconds);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerRanged"), true);
+  tickElementalBuilds(state, config, config.elementalBuildSeconds);
+
+  assert.equal(countCompletedElementals(state, "Cpu"), 6);
+  assert.equal(countCompletedElementals(state, "Player"), 6);
+  assert.deepEqual(
+    completedElementalsForTeam(state, "Player").map((elemental) => elemental.elementalId),
+    ["Elemental7", "Elemental8", "Elemental9", "Elemental10", "Elemental11", "Elemental12"]
+  );
 });
 
 test("destroyed elementals are excluded from completed queries and removed", () => {

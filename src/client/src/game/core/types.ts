@@ -18,7 +18,11 @@ export type ElementalId =
   | "Elemental5"
   | "Elemental6"
   | "Elemental7"
-  | "Elemental8";
+  | "Elemental8"
+  | "Elemental9"
+  | "Elemental10"
+  | "Elemental11"
+  | "Elemental12";
 export type CommandType = "MoveUnit" | "BeginElementalBuild" | "Summon";
 export type MatchResult = "InProgress" | "PlayerWin" | "CpuWin" | "Draw";
 export type UnitMode = "Active" | "BuildingElemental" | "Defeated";
@@ -41,8 +45,7 @@ export type BattleConfig = {
   leaderMaxHp: number;
   elementalBuildSeconds: number;
   maxElementalsPerTeam: number;
-  requiredElementalsToSummon: number;
-  summonCooldownSeconds: number;
+  summonGaugeSecondsAtMaxElementals: number;
   summonedUnitMinHpMultiplier: number;
   summonedUnitMaxHpMultiplier: number;
   summonedUnitHpPerAreaMultiplier: number;
@@ -122,8 +125,8 @@ export type AttackEvent = {
 
 export type BattleState = {
   remainingSeconds: number;
-  playerSummonCooldownSeconds: number;
-  cpuSummonCooldownSeconds: number;
+  playerSummonGauge: number;
+  cpuSummonGauge: number;
   result: MatchResult;
   leaders: LeaderState[];
   units: UnitState[];

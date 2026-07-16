@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findLeader } from "../core/battleState";
-import { canSummon, tryExecuteSummon, tickSummonCooldowns, tickSummonedUnits } from "./summonSystem";
+import type { ElementalId } from "../core/types";
+import { canSummon, tryExecuteSummon, tickSummonGauges, tickSummonedUnits } from "./summonSystem";
 
 test("完成済みエレメンタルが2つあれば召喚できる", () => {
   const config = createDefaultBattleConfig();
@@ -11,10 +12,11 @@ test("完成済みエレメンタルが2つあれば召喚できる", () => {
     { elementalId: "Elemental1", team: "Player", position: { x: -5, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
     { elementalId: "Elemental2", team: "Player", position: { x: -4, y: 1 }, maxHp: 120, currentHp: 120, isComplete: true }
   );
+  state.playerSummonGauge = 1;
 
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
   assert.equal(state.summonedUnits.length, 1);
-  assert.equal(state.playerSummonCooldownSeconds, 30);
+  assert.equal(state.playerSummonGauge, 0);
   assert.deepEqual(state.summonedUnits[0].destination, { x: 0, y: 4.1 });
   assert.equal(Number(state.summonedUnits[0].moveSpeed.toFixed(2)), 0.9);
 });
@@ -43,9 +45,11 @@ test("召喚ユニットは接触した敵リーダーへ継続ダメージを�
 test("クールダウンは0未満にならない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
-  state.playerSummonCooldownSeconds = 1;
-  tickSummonCooldowns(state, 2);
-  assert.equal(state.playerSummonCooldownSeconds, 0);
+  state.elementals.push({
+    elementalId: "Elemental1", team: "Player", position: { x: 0, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true
+  });
+  tickSummonGauges(state, config, 45);
+  assert.equal(Number(state.playerSummonGauge.toFixed(6)), Number((1 / 6).toFixed(6)));
 });
 
 test("完成済みエレメンタルが不足していると召喚できない", () => {
@@ -69,7 +73,7 @@ test("クールダウン中は召喚できない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   addCompletedPlayerElementals(state);
-  state.playerSummonCooldownSeconds = 1;
+  state.playerSummonGauge = 0.99;
 
   assert.equal(canSummon(state, config, "Player"), false);
   assert.equal(tryExecuteSummon(state, config, "Player"), false);
@@ -115,6 +119,7 @@ test("召喚HP倍率は最小値と最大値にクランプされる", () => {
     { elementalId: "Elemental1", team: "Player", position: { x: -7, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
     { elementalId: "Elemental2", team: "Player", position: { x: -7, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true }
   );
+  minState.playerSummonGauge = 1;
 
   assert.equal(tryExecuteSummon(minState, config, "Player"), true);
   assert.equal(minState.summonedUnits[0].maxHp, 1050);
@@ -124,6 +129,7 @@ test("召喚HP倍率は最小値と最大値にクランプされる", () => {
     { elementalId: "Elemental1", team: "Player", position: { x: -7, y: 100 }, maxHp: 120, currentHp: 120, isComplete: true },
     { elementalId: "Elemental2", team: "Player", position: { x: 100, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true }
   );
+  maxState.playerSummonGauge = 1;
 
   assert.equal(tryExecuteSummon(maxState, config, "Player"), true);
   assert.equal(maxState.summonedUnits[0].maxHp, 3500);
@@ -135,7 +141,7 @@ test("2回の召喚は連番IDを割り当てる", () => {
   addCompletedPlayerElementals(state);
 
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
-  state.playerSummonCooldownSeconds = 0;
+  state.playerSummonGauge = 1;
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
 
   assert.deepEqual(
@@ -248,9 +254,40 @@ test("召喚ユニット同士は接触中に互いへ継続ダメージを与�
   assert.equal(Number(state.summonedUnits[1].position.x.toFixed(2)), -0.13);
 });
 
+test("6個のエレメントで召喚ゲージが45秒で満タンになる", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const elementalIds: ElementalId[] = [
+    "Elemental1", "Elemental2", "Elemental3", "Elemental4", "Elemental5", "Elemental6"
+  ];
+  state.elementals.push(...elementalIds.map((elementalId, index) => ({
+    elementalId,
+    team: "Player" as const,
+    position: { x: index, y: 0 },
+    maxHp: 120,
+    currentHp: 120,
+    isComplete: true
+  })));
+
+  tickSummonGauges(state, config, 45);
+
+  assert.equal(state.playerSummonGauge, 1);
+  assert.equal(canSummon(state, config, "Player"), true);
+});
+
+test("エレメントが0個なら召喚ゲージは増えない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+
+  tickSummonGauges(state, config, 300);
+
+  assert.equal(state.playerSummonGauge, 0);
+});
+
 function addCompletedPlayerElementals(state: ReturnType<typeof createDefaultBattleState>): void {
   state.elementals.push(
     { elementalId: "Elemental1", team: "Player", position: { x: -5, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
     { elementalId: "Elemental2", team: "Player", position: { x: -4, y: 1 }, maxHp: 120, currentHp: 120, isComplete: true }
   );
+  state.playerSummonGauge = 1;
 }

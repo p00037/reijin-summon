@@ -9,7 +9,11 @@ const elementalIds: ElementalId[] = [
   "Elemental5",
   "Elemental6",
   "Elemental7",
-  "Elemental8"
+  "Elemental8",
+  "Elemental9",
+  "Elemental10",
+  "Elemental11",
+  "Elemental12"
 ];
 
 export function tryBeginElementalBuild(state: BattleState, config: BattleConfig, unitId: UnitId): boolean {

@@ -3,8 +3,8 @@ import type { BattleConfig, BattleState, LeaderState, TeamId, UnitId, UnitState,
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
     remainingSeconds: config.matchDurationSeconds,
-    playerSummonCooldownSeconds: 0,
-    cpuSummonCooldownSeconds: 0,
+    playerSummonGauge: 0,
+    cpuSummonGauge: 0,
     result: "InProgress",
     leaders: [
       createLeader("Player", config.playerLeaderPosition, config.leaderMaxHp),
@@ -53,15 +53,15 @@ export function oppositeTeam(team: TeamId): TeamId {
   return team === "Player" ? "Cpu" : "Player";
 }
 
-export function getSummonCooldown(state: BattleState, team: TeamId): number {
-  return team === "Player" ? state.playerSummonCooldownSeconds : state.cpuSummonCooldownSeconds;
+export function getSummonGauge(state: BattleState, team: TeamId): number {
+  return team === "Player" ? state.playerSummonGauge : state.cpuSummonGauge;
 }
 
-export function setSummonCooldown(state: BattleState, team: TeamId, seconds: number): void {
+export function setSummonGauge(state: BattleState, team: TeamId, gauge: number): void {
   if (team === "Player") {
-    state.playerSummonCooldownSeconds = seconds;
+    state.playerSummonGauge = gauge;
   } else {
-    state.cpuSummonCooldownSeconds = seconds;
+    state.cpuSummonGauge = gauge;
   }
 }
 

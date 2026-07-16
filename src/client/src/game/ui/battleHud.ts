@@ -25,7 +25,9 @@ export class BattleHud {
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly statusText: Phaser.GameObjects.Text;
   private readonly unitText: Phaser.GameObjects.Text;
-  private readonly cooldownText: Phaser.GameObjects.Text;
+  private readonly summonGaugeText: Phaser.GameObjects.Text;
+  private readonly summonGaugeBackground: Phaser.GameObjects.Rectangle;
+  private readonly summonGaugeFill: Phaser.GameObjects.Rectangle;
   private readonly playerText: Phaser.GameObjects.Text;
   private readonly cpuText: Phaser.GameObjects.Text;
   private readonly timeText: Phaser.GameObjects.Text;
@@ -47,7 +49,9 @@ export class BattleHud {
     this.titleText = scene.add.text(24, this.top + 10, "Battle Control", titleStyle(17, "#f8fafc"));
     this.statusText = scene.add.text(24, this.top + 34, "Status: Select a player unit.", titleStyle(13, "#cbd5e1"));
     this.unitText = scene.add.text(24, this.top + 58, "Selected: none", titleStyle(13, "#93c5fd"));
-    this.cooldownText = scene.add.text(24, this.top + 82, "", titleStyle(13, "#fde68a"));
+    this.summonGaugeText = scene.add.text(24, this.top + 82, "", titleStyle(13, "#fde68a"));
+    this.summonGaugeBackground = scene.add.rectangle(126, this.top + 92, 160, 10, 0x020617, 1).setOrigin(0, 0.5);
+    this.summonGaugeFill = scene.add.rectangle(126, this.top + 92, 0, 8, 0xfacc15, 1).setOrigin(0, 0.5);
     this.playerText = scene.add.text(330, this.top + 18, "", titleStyle(13, "#bfdbfe"));
     this.cpuText = scene.add.text(330, this.top + 42, "", titleStyle(13, "#fecaca"));
     this.timeText = scene.add.text(330, this.top + 66, "", titleStyle(13, "#f8fafc"));
@@ -69,7 +73,9 @@ export class BattleHud {
   update(state: BattleState, selectedUnitId: PlayerUnitId | null): void {
     const selectedUnit = selectedUnitId ? state.units.find((unit) => unit.unitId === selectedUnitId) : null;
     this.unitText.setText(`Selected: ${formatSelectedUnit(selectedUnit)}`);
-    this.cooldownText.setText(`Summon CD: ${state.playerSummonCooldownSeconds.toFixed(1)}s`);
+    const summonGauge = Phaser.Math.Clamp(state.playerSummonGauge, 0, 1);
+    this.summonGaugeText.setText(`Summon: ${Math.floor(summonGauge * 100)}%`);
+    this.summonGaugeFill.width = 158 * summonGauge;
     this.playerText.setText(`Player HP: ${leaderHp(state, "Player")}  Elem: ${countElementals(state, "Player")}`);
     this.cpuText.setText(`CPU HP: ${leaderHp(state, "Cpu")}  Elem: ${countElementals(state, "Cpu")}`);
     this.timeText.setText(`Time: ${Math.ceil(state.remainingSeconds)}s`);
@@ -85,7 +91,9 @@ export class BattleHud {
     this.titleText.destroy();
     this.statusText.destroy();
     this.unitText.destroy();
-    this.cooldownText.destroy();
+    this.summonGaugeText.destroy();
+    this.summonGaugeBackground.destroy();
+    this.summonGaugeFill.destroy();
     this.playerText.destroy();
     this.cpuText.destroy();
     this.timeText.destroy();

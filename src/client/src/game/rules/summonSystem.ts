@@ -1,4 +1,4 @@
-import { findLeader, getSummonCooldown, isUnitAlive, oppositeTeam, setSummonCooldown } from "../core/battleState";
+import { findLeader, getSummonGauge, isUnitAlive, oppositeTeam, setSummonGauge } from "../core/battleState";
 import type { BattleConfig, BattleState, SummonedUnitState, TeamId, UnitState } from "../core/types";
 import { distance, moveTowards } from "../core/vector";
 import { calculateSummonArea } from "./areaCalculator";
@@ -9,8 +9,7 @@ const summonedUnitSpeedMultiplier = 1.2;
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
   return (
     findLeader(state, team).currentHp > 0 &&
-    getSummonCooldown(state, team) === 0 &&
-    completedElementalsForTeam(state, team).length >= config.requiredElementalsToSummon
+    getSummonGauge(state, team) >= 1
   );
 }
 
@@ -43,13 +42,19 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
     healthDecayPerSecond: meleeStats.maxHp * config.summonedUnitMinHpMultiplier * config.summonedUnitHealthDecayMinimumHpFactorPerSecond
   });
   state.nextSummonedUnitId += 1;
-  setSummonCooldown(state, team, config.summonCooldownSeconds);
+  setSummonGauge(state, team, 0);
   return true;
 }
 
-export function tickSummonCooldowns(state: BattleState, deltaSeconds: number): void {
-  state.playerSummonCooldownSeconds = Math.max(0, state.playerSummonCooldownSeconds - deltaSeconds);
-  state.cpuSummonCooldownSeconds = Math.max(0, state.cpuSummonCooldownSeconds - deltaSeconds);
+export function tickSummonGauges(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
+  for (const team of ["Player", "Cpu"] as const) {
+    const elementalCount = completedElementalsForTeam(state, team).length;
+    if (elementalCount === 0) {
+      continue;
+    }
+    const gaugePerSecond = elementalCount / config.maxElementalsPerTeam / config.summonGaugeSecondsAtMaxElementals;
+    setSummonGauge(state, team, Math.min(1, getSummonGauge(state, team) + gaugePerSecond * deltaSeconds));
+  }
 }
 
 export function tickSummonedUnits(state: BattleState, config: BattleConfig, deltaSeconds: number): void {

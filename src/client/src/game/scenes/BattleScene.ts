@@ -215,16 +215,13 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private summonBlockerText(): string {
-    const completed = this.session.countCompletedElementals("Player");
-    const required = this.session.config.requiredElementalsToSummon;
-    if (completed < required) {
-      return `Need ${required - completed} more elemental${required - completed === 1 ? "" : "s"} to summon.`;
+    if (findLeader(this.session.state, "Player").currentHp <= 0) {
+      return "Cannot summon while the leader is defeated.";
     }
-    const cooldown = this.session.state.playerSummonCooldownSeconds;
-    if (cooldown > 0) {
-      return `Summon cooldown: ${cooldown.toFixed(1)}s.`;
+    if (this.session.countCompletedElementals("Player") === 0) {
+      return "Build an elemental to charge the summon gauge.";
     }
-    return "Cannot summon while the leader is defeated.";
+    return `Summon gauge: ${Math.floor(this.session.state.playerSummonGauge * 100)}%.`;
   }
 
   private findPlayerUnitNear(x: number, y: number): (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null {
