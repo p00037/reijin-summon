@@ -31,6 +31,7 @@ import {
   summonedAnimationKeyForUnit,
   summonedFrameStart
 } from "../render/unitAnimation";
+import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 
@@ -190,6 +191,10 @@ export class BattleScene extends Phaser.Scene {
     const unit = this.session.state.units.find((candidate) => candidate.unitId === this.selectedUnitId);
     if (!unit || unit.mode !== "Active" || !isUnitAlive(unit)) {
       this.hud.setStatus("Only active player units can build.");
+      return;
+    }
+    if (!canPlaceElementalAtUnit(this.session.state, this.session.config, this.selectedUnitId)) {
+      this.hud.setStatus("Too close to another elemental.");
       return;
     }
 
