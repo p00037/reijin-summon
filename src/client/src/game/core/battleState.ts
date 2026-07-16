@@ -11,12 +11,12 @@ export function createDefaultBattleState(config: BattleConfig): BattleState {
       createLeader("Cpu", config.cpuLeaderPosition, config.leaderMaxHp)
     ],
     units: [
-      createUnit("PlayerMelee", "Player", "Melee", { x: -5, y: 1.5 }, config),
-      createUnit("PlayerSpeed", "Player", "Speed", { x: -5, y: 0 }, config),
-      createUnit("PlayerRanged", "Player", "Ranged", { x: -5, y: -1.5 }, config),
-      createUnit("CpuMelee", "Cpu", "Melee", { x: 5, y: 1.5 }, config),
-      createUnit("CpuSpeed", "Cpu", "Speed", { x: 5, y: 0 }, config),
-      createUnit("CpuRanged", "Cpu", "Ranged", { x: 5, y: -1.5 }, config)
+      createUnit("PlayerMelee", "Player", "Melee", { x: -2.4, y: -3 }, config),
+      createUnit("PlayerSpeed", "Player", "Speed", { x: 0, y: -3 }, config),
+      createUnit("PlayerRanged", "Player", "Ranged", { x: 2.4, y: -3 }, config),
+      createUnit("CpuMelee", "Cpu", "Melee", { x: -2.4, y: 3 }, config),
+      createUnit("CpuSpeed", "Cpu", "Speed", { x: 0, y: 3 }, config),
+      createUnit("CpuRanged", "Cpu", "Ranged", { x: 2.4, y: 3 }, config)
     ],
     elementals: [],
     summonedUnits: [],

@@ -15,7 +15,8 @@ test("完成済みエレメンタルが2つあれば召喚できる", () => {
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
   assert.equal(state.summonedUnits.length, 1);
   assert.equal(state.playerSummonCooldownSeconds, 30);
-  assert.deepEqual(state.summonedUnits[0].destination, { x: 7, y: 0 });
+  assert.deepEqual(state.summonedUnits[0].destination, { x: 0, y: 4.1 });
+  assert.equal(Number(state.summonedUnits[0].moveSpeed.toFixed(2)), 0.9);
 });
 
 test("召喚ユニットは接触した敵リーダーへ継続ダメージを与える", () => {
@@ -24,8 +25,8 @@ test("召喚ユニットは接触した敵リーダーへ継続ダメージを�
   state.summonedUnits.push({
     summonedUnitId: 1,
     team: "Player",
-    position: { x: 7, y: 0 },
-    destination: { x: 7, y: 0 },
+    position: { x: 0, y: 4.1 },
+    destination: { x: 0, y: 4.1 },
     maxHp: 100,
     currentHp: 100,
     attackDamage: 135,
@@ -155,8 +156,8 @@ test("召喚ユニットの位置と目的地はリーダー位置のコピー�
   playerLeader.position.x = 123;
   cpuLeader.position.x = 456;
 
-  assert.deepEqual(summoned.position, { x: -7, y: 0 });
-  assert.deepEqual(summoned.destination, { x: 7, y: 0 });
+  assert.deepEqual(summoned.position, { x: 0, y: -4.1 });
+  assert.deepEqual(summoned.destination, { x: 0, y: 4.1 });
   assert.notEqual(summoned.position, playerLeader.position);
   assert.notEqual(summoned.destination, cpuLeader.position);
 });
@@ -164,6 +165,7 @@ test("召喚ユニットの位置と目的地はリーダー位置のコピー�
 test("非接触の召喚ユニットは敵リーダーへ移動する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
+  findLeader(state, "Cpu").position = { x: 7, y: 0 };
   state.summonedUnits.push({
     summonedUnitId: 1,
     team: "Player",
@@ -185,6 +187,7 @@ test("非接触の召喚ユニットは敵リーダーへ移動する", () => {
 test("召喚ユニットは接触した敵通常ユニットへ継続ダメージを与え、移動速度が低下する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
+  findLeader(state, "Cpu").position = { x: 7, y: 0 };
   const enemyUnit = state.units.find((unit) => unit.unitId === "CpuMelee");
   assert.ok(enemyUnit);
   enemyUnit.position = { x: -5.8, y: 0 };
@@ -210,6 +213,8 @@ test("召喚ユニットは接触した敵通常ユニットへ継続ダメー�
 test("召喚ユニット同士は接触中に互いへ継続ダメージを与え、移動速度が低下する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
+  findLeader(state, "Player").position = { x: -7, y: 0 };
+  findLeader(state, "Cpu").position = { x: 7, y: 0 };
   state.summonedUnits.push(
     {
       summonedUnitId: 1,

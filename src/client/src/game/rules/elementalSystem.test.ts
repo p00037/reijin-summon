@@ -116,7 +116,7 @@ test("completed elemental positions are copied from units", () => {
   unit.position.x = 99;
   unit.position.y = 99;
 
-  assert.deepEqual(state.elementals[0].position, { x: -5, y: 1.5 });
+  assert.deepEqual(state.elementals[0].position, { x: -2.4, y: -3 });
 });
 
 test("partial ticks do not complete builds until enough time accumulates", () => {

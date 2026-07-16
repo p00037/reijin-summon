@@ -48,6 +48,7 @@ const speedSpriteDisplaySize = 52;
 const summonedSpriteDisplaySize = 108;
 const summonerSpriteDisplaySize = 64;
 const elementalSpriteDisplaySize = 44;
+const battlefieldAspectRatio = 1.4;
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
@@ -265,13 +266,13 @@ export class BattleScene extends Phaser.Scene {
     this.battlefield.lineStyle(1, 0x334155, 1);
     this.battlefield.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-    const centerX = bounds.x + bounds.width / 2;
+    const centerY = bounds.y + bounds.height / 2;
     this.battlefield.lineStyle(2, 0x475569, 0.7);
-    this.battlefield.lineBetween(centerX, bounds.y, centerX, bounds.y + bounds.height);
+    this.battlefield.lineBetween(bounds.x, centerY, bounds.x + bounds.width, centerY);
     for (let offset = -3; offset <= 3; offset += 1) {
-      const y = bounds.y + bounds.height / 2 + offset * (bounds.height / 7);
+      const x = bounds.x + bounds.width / 2 + offset * (bounds.width / 7);
       this.battlefield.lineStyle(1, 0x1f2a44, 0.9);
-      this.battlefield.lineBetween(bounds.x, y, bounds.x + bounds.width, y);
+      this.battlefield.lineBetween(x, bounds.y, x, bounds.y + bounds.height);
     }
   }
 
@@ -716,7 +717,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private fieldBounds(): Phaser.Geom.Rectangle {
-    return new Phaser.Geom.Rectangle(34, 56, this.scale.width - 68, this.hud.top - 76);
+    const verticalPadding = 20;
+    const availableHeight = this.hud.top - verticalPadding * 2;
+    const availableWidth = this.scale.width - 68;
+    const height = Math.min(availableHeight, availableWidth / battlefieldAspectRatio);
+    const width = height * battlefieldAspectRatio;
+    return new Phaser.Geom.Rectangle((this.scale.width - width) / 2, verticalPadding, width, height);
   }
 }
 

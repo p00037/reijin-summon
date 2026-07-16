@@ -20,13 +20,15 @@ test("移動コマンドは生成中を解除し、目標を戦場内にクラ�
 
   assert.equal(unit.mode, "Active");
   assert.equal(unit.pendingElementalId, null);
-  assert.deepEqual(unit.destination, { x: 7.5, y: -4.5 });
+  assert.deepEqual(unit.destination, { x: 6.3, y: -4.5 });
 });
 
 test("ユニットは目標へ移動する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
+  unit.position = { x: -5, y: 1.5 };
+  unit.destination = { x: -5, y: 1.5 };
 
   applyMoveCommand(state, config, {
     commandType: "MoveUnit",
@@ -43,9 +45,13 @@ test("攻撃範囲内の敵リーダーへ直接ダメージを与える", () =>
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
-  unit.position = { x: 6.4, y: 0 };
-  unit.destination = { x: 6.4, y: 0 };
+  unit.position = { x: 0, y: 3 };
+  unit.destination = { x: 0, y: 3 };
   unit.attackTimerSeconds = 0;
+  for (const enemy of state.units.filter((candidate) => candidate.team === "Cpu")) {
+    enemy.currentHp = 0;
+    enemy.mode = "Defeated";
+  }
 
   tickCombat(state, config, 1.2);
 
@@ -127,6 +133,8 @@ test("combat clears stale attack events before processing", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
+  unit.position = { x: -5, y: 1.5 };
+  unit.destination = { x: -5, y: 1.5 };
   unit.attackTimerSeconds = 5;
   state.recentAttackEvents.push({
     attackerUnitId: "PlayerMelee",
@@ -143,6 +151,8 @@ test("movement is slowed near a live enemy elemental", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
+  unit.position = { x: -5, y: 1.5 };
+  unit.destination = { x: -5, y: 1.5 };
   applyMoveCommand(state, config, {
     commandType: "MoveUnit",
     team: "Player",
@@ -160,7 +170,7 @@ test("movement is slowed near a live enemy elemental", () => {
 
   tickMovement(state, config, 1);
 
-  assert.equal(Number(unit.position.x.toFixed(2)), -4.61);
+  assert.equal(Number(unit.position.x.toFixed(2)), -4.83);
 });
 
 test("allies and defeated enemies do not slow movement", () => {
@@ -168,6 +178,8 @@ test("allies and defeated enemies do not slow movement", () => {
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
   const enemyUnit = findUnit(state, "CpuMelee");
+  unit.position = { x: -5, y: 1.5 };
+  unit.destination = { x: -5, y: 1.5 };
   enemyUnit.mode = "Defeated";
   enemyUnit.currentHp = 0;
   enemyUnit.position = { ...unit.position };
@@ -188,7 +200,7 @@ test("allies and defeated enemies do not slow movement", () => {
 
   tickMovement(state, config, 1);
 
-  assert.equal(Number(unit.position.x.toFixed(2)), -4);
+  assert.equal(Number(unit.position.x.toFixed(2)), -4.5);
 });
 
 test("attack timer gates combat damage", () => {
@@ -196,6 +208,7 @@ test("attack timer gates combat damage", () => {
   const state = createDefaultBattleState(config);
   const attacker = findUnit(state, "PlayerMelee");
   const enemy = findUnit(state, "CpuMelee");
+  findUnit(state, "PlayerRanged").attackTimerSeconds = 10;
   attacker.position = { x: 0, y: 0 };
   attacker.destination = { x: 0, y: 0 };
   attacker.attackTimerSeconds = 0.5;

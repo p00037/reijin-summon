@@ -4,6 +4,8 @@ import { distance, moveTowards } from "../core/vector";
 import { calculateSummonArea } from "./areaCalculator";
 import { completedElementalsForTeam } from "./elementalSystem";
 
+const summonedUnitSpeedMultiplier = 1.2;
+
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
   return (
     findLeader(state, team).currentHp > 0 &&
@@ -22,6 +24,7 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   const elementals = completedElementalsForTeam(state, team);
   const area = calculateSummonArea([leader.position, ...elementals.map((elemental) => elemental.position)]);
   const meleeStats = config.statsByType.Melee;
+  const speedStats = config.statsByType.Speed;
   const hpMultiplier = Math.min(
     config.summonedUnitMaxHpMultiplier,
     Math.max(config.summonedUnitMinHpMultiplier, config.summonedUnitMinHpMultiplier + area * config.summonedUnitHpPerAreaMultiplier)
@@ -36,7 +39,7 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
     maxHp,
     currentHp: maxHp,
     attackDamage: meleeStats.attackDamage * config.summonedUnitAttackDamageMultiplier,
-    moveSpeed: meleeStats.moveSpeed,
+    moveSpeed: speedStats.moveSpeed * summonedUnitSpeedMultiplier,
     healthDecayPerSecond: meleeStats.maxHp * config.summonedUnitMinHpMultiplier * config.summonedUnitHealthDecayMinimumHpFactorPerSecond
   });
   state.nextSummonedUnitId += 1;
