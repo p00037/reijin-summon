@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  battleStatusOverlayDepth,
+  cardImageDepth,
   cardTintForTeam,
   summonedCardPresentation,
   unitCardPresentation
@@ -35,4 +37,8 @@ test("summoned card uses the specified static image presentation", () => {
 test("card tint distinguishes player and CPU teams", () => {
   assert.equal(cardTintForTeam("Player"), 0x7dd3fc);
   assert.equal(cardTintForTeam("Cpu"), 0xfda4af);
+});
+
+test("battle status overlay is rendered in front of card images", () => {
+  assert.ok(battleStatusOverlayDepth > cardImageDepth);
 });

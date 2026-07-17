@@ -12,7 +12,13 @@ import type {
   UnitState,
   Vec2
 } from "../core/types";
-import { cardTintForTeam, summonedCardPresentation, unitCardPresentation } from "../render/cardPresentation";
+import {
+  battleStatusOverlayDepth,
+  cardImageDepth,
+  cardTintForTeam,
+  summonedCardPresentation,
+  unitCardPresentation
+} from "../render/cardPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
@@ -28,6 +34,7 @@ const battlefieldAspectRatio = 1.4;
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
+  private battlefieldOverlay!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
   private leaderSprites = new Map<TeamId, Phaser.GameObjects.Image>();
   private elementalSprites = new Map<ElementalId, Phaser.GameObjects.Image>();
@@ -60,6 +67,8 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#101827");
 
     this.battlefield = this.add.graphics();
+    this.battlefieldOverlay = this.add.graphics();
+    this.battlefieldOverlay.setDepth(battleStatusOverlayDepth);
     this.createLeaderSprites();
     this.createUnitImages();
     this.hud = new BattleHud(this, {
@@ -193,6 +202,7 @@ export class BattleScene extends Phaser.Scene {
   private draw(): void {
     const state = this.session.state;
     this.battlefield.clear();
+    this.battlefieldOverlay.clear();
     this.drawField();
     this.drawArea("Player");
     this.drawArea("Cpu");
@@ -249,10 +259,10 @@ export class BattleScene extends Phaser.Scene {
       const screen = this.worldToScreen(leader.position);
       const color = leader.team === "Player" ? 0x3b82f6 : 0xef4444;
       this.updateLeaderSprite(leader, screen);
-      this.battlefield.lineStyle(3, color, 0.75);
-      this.battlefield.strokeCircle(screen.x, screen.y, 28);
-      this.battlefield.lineStyle(3, 0xf8fafc, 0.9);
-      this.battlefield.strokeCircle(screen.x, screen.y, 25);
+      this.battlefieldOverlay.lineStyle(3, color, 0.75);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 28);
+      this.battlefieldOverlay.lineStyle(3, 0xf8fafc, 0.9);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 25);
       this.drawHpBar(screen.x - 30, screen.y - 38, 60, leader.currentHp / leader.maxHp, color);
     }
   }
@@ -263,8 +273,8 @@ export class BattleScene extends Phaser.Scene {
       const screen = this.worldToScreen(elemental.position);
       const color = elemental.team === "Player" ? 0x7dd3fc : 0xfda4af;
       this.updateElementalSprite(elemental, screen);
-      this.battlefield.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
-      this.battlefield.strokeCircle(screen.x, screen.y, 18);
+      this.battlefieldOverlay.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 18);
       this.drawHpBar(screen.x - 18, screen.y + 18, 36, elemental.currentHp / elemental.maxHp, color);
     }
   }
@@ -275,8 +285,8 @@ export class BattleScene extends Phaser.Scene {
       const screen = this.worldToScreen(summoned.position);
       const color = summoned.team === "Player" ? 0x22d3ee : 0xfb7185;
       this.updateSummonedUnitImage(summoned, screen);
-      this.battlefield.lineStyle(2, color, 1);
-      this.battlefield.strokeCircle(screen.x, screen.y, 30);
+      this.battlefieldOverlay.lineStyle(2, color, 1);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 30);
       this.drawHpBar(screen.x - 28, screen.y + 34, 56, summoned.currentHp / summoned.maxHp, color);
     }
   }
@@ -291,8 +301,8 @@ export class BattleScene extends Phaser.Scene {
       this.updateUnitImage(unit, screen, alpha);
 
       if (isSelected) {
-        this.battlefield.lineStyle(3, 0xfacc15, 1);
-        this.battlefield.strokeCircle(screen.x, screen.y, 24);
+        this.battlefieldOverlay.lineStyle(3, 0xfacc15, 1);
+        this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 24);
       }
 
       if (!this.unitImages.has(unit.unitId)) {
@@ -305,8 +315,8 @@ export class BattleScene extends Phaser.Scene {
       }
 
       if (unit.mode === "BuildingElemental") {
-        this.battlefield.lineStyle(2, 0xfacc15, 0.95);
-        this.battlefield.strokeCircle(screen.x, screen.y, 20);
+        this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.95);
+        this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 20);
       }
       this.drawHpBar(screen.x - 20, screen.y + 21, 40, unit.currentHp / unit.stats.maxHp, color);
     }
@@ -318,7 +328,7 @@ export class BattleScene extends Phaser.Scene {
       const image = this.add.image(0, 0, presentation.textureKey);
       const displayWidth = image.width / image.height * presentation.displayHeight;
       image.setDisplaySize(displayWidth, presentation.displayHeight);
-      image.setDepth(1);
+      image.setDepth(cardImageDepth);
       image.setTint(cardTintForTeam(unit.team));
       this.unitImages.set(unit.unitId, image);
     }
@@ -386,7 +396,7 @@ export class BattleScene extends Phaser.Scene {
       image = this.add.image(0, 0, summonedCardPresentation.textureKey);
       const displayWidth = image.width / image.height * summonedCardPresentation.displayHeight;
       image.setDisplaySize(displayWidth, summonedCardPresentation.displayHeight);
-      image.setDepth(1);
+      image.setDepth(cardImageDepth);
       this.summonedUnitImages.set(summoned.summonedUnitId, image);
     }
 
@@ -416,10 +426,10 @@ export class BattleScene extends Phaser.Scene {
 
   private drawHpBar(x: number, y: number, width: number, ratio: number, color: number): void {
     const clampedRatio = Phaser.Math.Clamp(ratio, 0, 1);
-    this.battlefield.fillStyle(0x020617, 0.9);
-    this.battlefield.fillRect(x, y, width, 5);
-    this.battlefield.fillStyle(color, 1);
-    this.battlefield.fillRect(x, y, width * clampedRatio, 5);
+    this.battlefieldOverlay.fillStyle(0x020617, 0.9);
+    this.battlefieldOverlay.fillRect(x, y, width, 5);
+    this.battlefieldOverlay.fillStyle(color, 1);
+    this.battlefieldOverlay.fillRect(x, y, width * clampedRatio, 5);
   }
 
   private worldToScreen(position: Vec2): Vec2 {

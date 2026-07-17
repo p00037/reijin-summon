@@ -6,6 +6,9 @@ export interface CardPresentation {
   displayHeight: number;
 }
 
+export const cardImageDepth = 1;
+export const battleStatusOverlayDepth = 2;
+
 export const unitCardPresentation = {
   Speed: { textureKey: "unit-card-speed", path: "/assets/units/blue/blue001.png", displayHeight: 72 },
   Melee: { textureKey: "unit-card-melee", path: "/assets/units/blue/blue002.png", displayHeight: 72 },
