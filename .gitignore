@@ -11,3 +11,4 @@ pnpm-debug.log*
 dev-server.*.log
 /images
 /tmp
+/.worktrees/
