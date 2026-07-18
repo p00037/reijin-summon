@@ -31,7 +31,7 @@ const selectionRadiusPx = 28;
 const summonerTextureKey = "summoner";
 const elementalTextureKey = "elemental-crystal";
 const summonerSpriteDisplaySize = 64;
-const elementalSpriteDisplaySize = 17;
+const elementalSpriteDisplaySize = 15;
 const battlefieldAspectRatio = 1.4;
 
 export class BattleScene extends Phaser.Scene {
@@ -289,7 +289,7 @@ export class BattleScene extends Phaser.Scene {
       const color = elemental.team === "Player" ? 0x7dd3fc : 0xfda4af;
       this.updateElementalSprite(elemental, screen);
       this.battlefieldOverlay.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
-      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 14);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 13);
       this.drawHpBar(screen.x - 18, screen.y + 18, 36, elemental.currentHp / elemental.maxHp, color);
     }
   }
