@@ -22,6 +22,7 @@ import {
   unitCardPresentation
 } from "../render/cardPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
+import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 
@@ -44,6 +45,10 @@ export class BattleScene extends Phaser.Scene {
   private unitCardBorders = new Map<string, Phaser.GameObjects.Rectangle>();
   private summonedUnitImages = new Map<number, Phaser.GameObjects.Image>();
   private summonedUnitCardBorders = new Map<number, Phaser.GameObjects.Rectangle>();
+  private unitCardPositions = new Map<string, Vec2>();
+  private unitCardRotations = new Map<string, number>();
+  private summonedCardPositions = new Map<number, Vec2>();
+  private summonedCardRotations = new Map<number, number>();
   private selectedUnitId: PlayerUnitId | null = null;
   private cpuPlanTimerSeconds = 0;
 
@@ -68,6 +73,10 @@ export class BattleScene extends Phaser.Scene {
     this.unitCardBorders = new Map();
     this.summonedUnitImages = new Map();
     this.summonedUnitCardBorders = new Map();
+    this.unitCardPositions = new Map();
+    this.unitCardRotations = new Map();
+    this.summonedCardPositions = new Map();
+    this.summonedCardRotations = new Map();
     this.selectedUnitId = null;
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
@@ -343,8 +352,12 @@ export class BattleScene extends Phaser.Scene {
         cardBorderColorForTeam(unit.team)
       );
       border.setDepth(cardBorderDepth);
+      const rotation = initialCardRotation(unit.team);
+      image.setRotation(rotation);
+      border.setRotation(rotation);
       this.unitImages.set(unit.unitId, image);
       this.unitCardBorders.set(unit.unitId, border);
+      this.unitCardRotations.set(unit.unitId, rotation);
     }
   }
 
@@ -400,13 +413,22 @@ export class BattleScene extends Phaser.Scene {
     }
 
     const border = this.unitCardBorders.get(unit.unitId);
+    const rotation = cardRotationForMovement(
+      this.unitCardPositions.get(unit.unitId) ?? screen,
+      screen,
+      this.unitCardRotations.get(unit.unitId) ?? initialCardRotation(unit.team)
+    );
     if (border) {
       border.setPosition(screen.x, screen.y);
       border.setAlpha(alpha);
       border.setFillStyle(cardBorderColorForTeam(unit.team));
+      border.setRotation(rotation);
     }
     image.setPosition(screen.x, screen.y);
     image.setAlpha(alpha);
+    image.setRotation(rotation);
+    this.unitCardPositions.set(unit.unitId, { ...screen });
+    this.unitCardRotations.set(unit.unitId, rotation);
   }
 
   private updateSummonedUnitImage(summoned: SummonedUnitState, screen: Vec2): void {
@@ -424,18 +446,31 @@ export class BattleScene extends Phaser.Scene {
         cardBorderColorForTeam(summoned.team)
       );
       border.setDepth(cardBorderDepth);
+      const rotation = initialCardRotation(summoned.team);
+      image.setRotation(rotation);
+      border.setRotation(rotation);
       this.summonedUnitImages.set(summoned.summonedUnitId, image);
       this.summonedUnitCardBorders.set(summoned.summonedUnitId, border);
+      this.summonedCardRotations.set(summoned.summonedUnitId, rotation);
     }
 
     const border = this.summonedUnitCardBorders.get(summoned.summonedUnitId);
+    const rotation = cardRotationForMovement(
+      this.summonedCardPositions.get(summoned.summonedUnitId) ?? screen,
+      screen,
+      this.summonedCardRotations.get(summoned.summonedUnitId) ?? initialCardRotation(summoned.team)
+    );
     if (border) {
       border.setPosition(screen.x, screen.y);
       border.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
       border.setFillStyle(cardBorderColorForTeam(summoned.team));
+      border.setRotation(rotation);
     }
     image.setPosition(screen.x, screen.y);
     image.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
+    image.setRotation(rotation);
+    this.summonedCardPositions.set(summoned.summonedUnitId, { ...screen });
+    this.summonedCardRotations.set(summoned.summonedUnitId, rotation);
   }
 
   private destroyRemovedSummonedUnitImages(summonedUnits: SummonedUnitState[]): void {
@@ -447,6 +482,8 @@ export class BattleScene extends Phaser.Scene {
         const border = this.summonedUnitCardBorders.get(id);
         border?.destroy();
         this.summonedUnitCardBorders.delete(id);
+        this.summonedCardPositions.delete(id);
+        this.summonedCardRotations.delete(id);
       }
     }
   }
