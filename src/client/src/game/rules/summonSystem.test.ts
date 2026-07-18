@@ -112,27 +112,37 @@ test("このtickで消滅する召喚ユニットは接触ダメージを与え�
   assert.equal(state.summonedUnits.length, 0);
 });
 
-test("召喚獣HPは召喚エリア面積に完全比例する", () => {
+test("召喚獣HPは戦場面積の5%で近接ユニットと同じになる", () => {
   const config = createDefaultBattleConfig();
-  const minState = createDefaultBattleState(config);
-  minState.elementals.push(
-    { elementalId: "Elemental1", team: "Player", position: { x: -7, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
-    { elementalId: "Elemental2", team: "Player", position: { x: -7, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true }
+  config.battlefieldMin = { x: 0, y: 0 };
+  config.battlefieldMax = { x: 10, y: 10 };
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Player").position = { x: 0, y: 0 };
+  state.elementals.push(
+    { elementalId: "Elemental1", team: "Player", position: { x: 10, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
+    { elementalId: "Elemental2", team: "Player", position: { x: 0, y: 1 }, maxHp: 120, currentHp: 120, isComplete: true }
   );
-  minState.playerSummonGauge = 1;
+  state.playerSummonGauge = 1;
 
-  assert.equal(tryExecuteSummon(minState, config, "Player"), true);
-  assert.equal(minState.summonedUnits[0].maxHp, 0);
+  assert.equal(tryExecuteSummon(state, config, "Player"), true);
+  assert.equal(state.summonedUnits[0].maxHp, 350);
+});
 
-  const maxState = createDefaultBattleState(config);
-  maxState.elementals.push(
-    { elementalId: "Elemental1", team: "Player", position: { x: -7, y: 100 }, maxHp: 120, currentHp: 120, isComplete: true },
-    { elementalId: "Elemental2", team: "Player", position: { x: 100, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true }
+test("召喚獣HPは戦場面積の100%で近接ユニットの20倍になる", () => {
+  const config = createDefaultBattleConfig();
+  config.battlefieldMin = { x: 0, y: 0 };
+  config.battlefieldMax = { x: 10, y: 10 };
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Player").position = { x: 0, y: 0 };
+  state.elementals.push(
+    { elementalId: "Elemental1", team: "Player", position: { x: 10, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
+    { elementalId: "Elemental2", team: "Player", position: { x: 10, y: 10 }, maxHp: 120, currentHp: 120, isComplete: true },
+    { elementalId: "Elemental3", team: "Player", position: { x: 0, y: 10 }, maxHp: 120, currentHp: 120, isComplete: true }
   );
-  maxState.playerSummonGauge = 1;
+  state.playerSummonGauge = 1;
 
-  assert.equal(tryExecuteSummon(maxState, config, "Player"), true);
-  assert.equal(maxState.summonedUnits[0].maxHp, 350 * 5219.35);
+  assert.equal(tryExecuteSummon(state, config, "Player"), true);
+  assert.equal(state.summonedUnits[0].maxHp, 7000);
 });
 
 test("2回の召喚は連番IDを割り当てる", () => {

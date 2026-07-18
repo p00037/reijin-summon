@@ -24,7 +24,10 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   const area = calculateSummonArea([leader.position, ...elementals.map((elemental) => elemental.position)]);
   const meleeStats = config.statsByType.Melee;
   const speedStats = config.statsByType.Speed;
-  const maxHp = meleeStats.maxHp * area * config.summonedUnitHpPerAreaMultiplier;
+  const battlefieldArea =
+    (config.battlefieldMax.x - config.battlefieldMin.x) *
+    (config.battlefieldMax.y - config.battlefieldMin.y);
+  const maxHp = meleeStats.maxHp * 20 * (area / battlefieldArea) * config.summonedUnitHpPerAreaMultiplier;
 
   state.summonedUnits.push({
     summonedUnitId: state.nextSummonedUnitId,
