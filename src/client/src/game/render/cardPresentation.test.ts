@@ -32,9 +32,9 @@ test("summoned card is one and a half times the unit card height", () => {
   assert.deepEqual(summonedCardPresentation, {
     textureKey: "summoned-card",
     path: "/assets/summons/summon01.png",
-    displayHeight: 72
+    displayHeight: 58
   });
-  assert.equal(summonedCardPresentation.displayHeight, unitCardPresentation.Melee.displayHeight * 1.5);
+  assert.equal(summonedCardPresentation.displayHeight, Math.round(unitCardPresentation.Melee.displayHeight * 1.2));
 });
 
 test("card borders distinguish player and CPU teams", () => {

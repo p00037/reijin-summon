@@ -20,7 +20,7 @@ export const unitCardPresentation = {
 export const summonedCardPresentation: CardPresentation = {
   textureKey: "summoned-card",
   path: "/assets/summons/summon01.png",
-  displayHeight: 72
+  displayHeight: 58
 };
 
 export function cardBorderColorForTeam(team: TeamId): number {
