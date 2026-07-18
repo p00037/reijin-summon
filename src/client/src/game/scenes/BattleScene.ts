@@ -31,7 +31,7 @@ const selectionRadiusPx = 28;
 const summonerTextureKey = "summoner";
 const elementalTextureKey = "elemental-crystal";
 const summonerSpriteDisplaySize = 64;
-const elementalSpriteDisplaySize = 22;
+const elementalSpriteDisplaySize = 11;
 const battlefieldAspectRatio = 1.4;
 
 export class BattleScene extends Phaser.Scene {
