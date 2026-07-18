@@ -14,8 +14,10 @@ import type {
 } from "../core/types";
 import {
   battleStatusOverlayDepth,
+  cardBorderColorForTeam,
+  cardBorderDepth,
+  cardBorderWidth,
   cardImageDepth,
-  cardTintForTeam,
   summonedCardPresentation,
   unitCardPresentation
 } from "../render/cardPresentation";
@@ -39,7 +41,9 @@ export class BattleScene extends Phaser.Scene {
   private leaderSprites = new Map<TeamId, Phaser.GameObjects.Image>();
   private elementalSprites = new Map<ElementalId, Phaser.GameObjects.Image>();
   private unitImages = new Map<string, Phaser.GameObjects.Image>();
+  private unitCardBorders = new Map<string, Phaser.GameObjects.Rectangle>();
   private summonedUnitImages = new Map<number, Phaser.GameObjects.Image>();
+  private summonedUnitCardBorders = new Map<number, Phaser.GameObjects.Rectangle>();
   private selectedUnitId: PlayerUnitId | null = null;
   private cpuPlanTimerSeconds = 0;
 
@@ -61,7 +65,9 @@ export class BattleScene extends Phaser.Scene {
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
     this.unitImages = new Map();
+    this.unitCardBorders = new Map();
     this.summonedUnitImages = new Map();
+    this.summonedUnitCardBorders = new Map();
     this.selectedUnitId = null;
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
@@ -329,8 +335,16 @@ export class BattleScene extends Phaser.Scene {
       const displayWidth = image.width / image.height * presentation.displayHeight;
       image.setDisplaySize(displayWidth, presentation.displayHeight);
       image.setDepth(cardImageDepth);
-      image.setTint(cardTintForTeam(unit.team));
+      const border = this.add.rectangle(
+        0,
+        0,
+        displayWidth + cardBorderWidth * 2,
+        presentation.displayHeight + cardBorderWidth * 2,
+        cardBorderColorForTeam(unit.team)
+      );
+      border.setDepth(cardBorderDepth);
       this.unitImages.set(unit.unitId, image);
+      this.unitCardBorders.set(unit.unitId, border);
     }
   }
 
@@ -385,9 +399,14 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    const border = this.unitCardBorders.get(unit.unitId);
+    if (border) {
+      border.setPosition(screen.x, screen.y);
+      border.setAlpha(alpha);
+      border.setFillStyle(cardBorderColorForTeam(unit.team));
+    }
     image.setPosition(screen.x, screen.y);
     image.setAlpha(alpha);
-    image.setTint(cardTintForTeam(unit.team));
   }
 
   private updateSummonedUnitImage(summoned: SummonedUnitState, screen: Vec2): void {
@@ -397,12 +416,26 @@ export class BattleScene extends Phaser.Scene {
       const displayWidth = image.width / image.height * summonedCardPresentation.displayHeight;
       image.setDisplaySize(displayWidth, summonedCardPresentation.displayHeight);
       image.setDepth(cardImageDepth);
+      const border = this.add.rectangle(
+        0,
+        0,
+        displayWidth + cardBorderWidth * 2,
+        summonedCardPresentation.displayHeight + cardBorderWidth * 2,
+        cardBorderColorForTeam(summoned.team)
+      );
+      border.setDepth(cardBorderDepth);
       this.summonedUnitImages.set(summoned.summonedUnitId, image);
+      this.summonedUnitCardBorders.set(summoned.summonedUnitId, border);
     }
 
+    const border = this.summonedUnitCardBorders.get(summoned.summonedUnitId);
+    if (border) {
+      border.setPosition(screen.x, screen.y);
+      border.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
+      border.setFillStyle(cardBorderColorForTeam(summoned.team));
+    }
     image.setPosition(screen.x, screen.y);
     image.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
-    image.setTint(cardTintForTeam(summoned.team));
   }
 
   private destroyRemovedSummonedUnitImages(summonedUnits: SummonedUnitState[]): void {
@@ -411,6 +444,9 @@ export class BattleScene extends Phaser.Scene {
       if (!activeIds.has(id)) {
         image.destroy();
         this.summonedUnitImages.delete(id);
+        const border = this.summonedUnitCardBorders.get(id);
+        border?.destroy();
+        this.summonedUnitCardBorders.delete(id);
       }
     }
   }
