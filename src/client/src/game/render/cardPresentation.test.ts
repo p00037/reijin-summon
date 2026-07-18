@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   battleStatusOverlayDepth,
+  cardBorderColorForTeam,
+  cardBorderDepth,
+  cardBorderWidth,
   cardImageDepth,
-  cardTintForTeam,
   summonedCardPresentation,
   unitCardPresentation
 } from "./cardPresentation";
@@ -26,19 +28,22 @@ test("unit cards use the specified static image presentations", () => {
   });
 });
 
-test("summoned card uses the specified static image presentation", () => {
+test("summoned card is one and a half times the unit card height", () => {
   assert.deepEqual(summonedCardPresentation, {
     textureKey: "summoned-card",
     path: "/assets/summons/summon01.png",
-    displayHeight: 144
+    displayHeight: 108
   });
+  assert.equal(summonedCardPresentation.displayHeight, unitCardPresentation.Melee.displayHeight * 1.5);
 });
 
-test("card tint distinguishes player and CPU teams", () => {
-  assert.equal(cardTintForTeam("Player"), 0x7dd3fc);
-  assert.equal(cardTintForTeam("Cpu"), 0xfda4af);
+test("card borders distinguish player and CPU teams", () => {
+  assert.equal(cardBorderWidth, 4);
+  assert.equal(cardBorderColorForTeam("Player"), 0x7dd3fc);
+  assert.equal(cardBorderColorForTeam("Cpu"), 0xfda4af);
 });
 
-test("battle status overlay is rendered in front of card images", () => {
+test("card border is behind cards and status overlay is in front", () => {
+  assert.ok(cardBorderDepth < cardImageDepth);
   assert.ok(battleStatusOverlayDepth > cardImageDepth);
 });

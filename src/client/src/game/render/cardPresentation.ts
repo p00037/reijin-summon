@@ -6,8 +6,10 @@ export interface CardPresentation {
   displayHeight: number;
 }
 
+export const cardBorderDepth = 0;
 export const cardImageDepth = 1;
 export const battleStatusOverlayDepth = 2;
+export const cardBorderWidth = 4;
 
 export const unitCardPresentation = {
   Speed: { textureKey: "unit-card-speed", path: "/assets/units/blue/blue001.png", displayHeight: 72 },
@@ -18,9 +20,9 @@ export const unitCardPresentation = {
 export const summonedCardPresentation: CardPresentation = {
   textureKey: "summoned-card",
   path: "/assets/summons/summon01.png",
-  displayHeight: 144
+  displayHeight: 108
 };
 
-export function cardTintForTeam(team: TeamId): number {
+export function cardBorderColorForTeam(team: TeamId): number {
   return team === "Player" ? 0x7dd3fc : 0xfda4af;
 }
