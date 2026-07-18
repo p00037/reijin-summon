@@ -22,8 +22,8 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(config.statsByType.Ranged.moveSpeed, 0.375);
   assert.equal(config.statsByType.Melee.moveSpeed, 0.5);
   assert.equal(config.statsByType.Speed.moveSpeed, 0.5);
-  assert.equal(config.elementalPlacementRadius, 0.225);
-  assert.equal(config.elementalContactRadius, 0.225);
+  assert.equal(config.elementalPlacementRadius, 0.3375);
+  assert.equal(config.elementalContactRadius, 0.3375);
   assert.equal(config.contactSlowRadius, 0.45);
 });
 
