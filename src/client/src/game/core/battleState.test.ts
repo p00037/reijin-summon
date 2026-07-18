@@ -21,7 +21,7 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.deepEqual(config.battlefieldMax, { x: 6.3, y: 4.5 });
   assert.equal(config.statsByType.Ranged.moveSpeed, 0.375);
   assert.equal(config.statsByType.Melee.moveSpeed, 0.5);
-  assert.equal(config.statsByType.Speed.moveSpeed, 0.75);
+  assert.equal(config.statsByType.Speed.moveSpeed, 0.5);
 });
 
 test("既定設定と既定状態は可変のステータス参照を共有しない", () => {

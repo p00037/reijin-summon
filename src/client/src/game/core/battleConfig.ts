@@ -10,7 +10,7 @@ const statsByType: Record<UnitType, UnitStats> = {
   },
   Speed: {
     maxHp: 250,
-    moveSpeed: 0.75,
+    moveSpeed: 0.5,
     attackDamage: 30,
     attackRange: 1,
     attackIntervalSeconds: 0.8

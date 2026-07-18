@@ -18,7 +18,7 @@ test("完成済みエレメンタルが2つあれば召喚できる", () => {
   assert.equal(state.summonedUnits.length, 1);
   assert.equal(state.playerSummonGauge, 0);
   assert.deepEqual(state.summonedUnits[0].destination, { x: 0, y: 4.1 });
-  assert.equal(Number(state.summonedUnits[0].moveSpeed.toFixed(2)), 0.9);
+  assert.equal(Number(state.summonedUnits[0].moveSpeed.toFixed(2)), 0.6);
 });
 
 test("召喚ユニットは接触した敵リーダーへ継続ダメージを与える", () => {
