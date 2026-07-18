@@ -48,8 +48,6 @@ export type BattleConfig = {
   elementalContactRadius: number;
   maxElementalsPerTeam: number;
   summonGaugeSecondsAtMaxElementals: number;
-  summonedUnitMinHpMultiplier: number;
-  summonedUnitMaxHpMultiplier: number;
   summonedUnitHpPerAreaMultiplier: number;
   summonedUnitAttackDamageMultiplier: number;
   summonedUnitHealthDecayMinimumHpFactorPerSecond: number;

@@ -24,11 +24,7 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   const area = calculateSummonArea([leader.position, ...elementals.map((elemental) => elemental.position)]);
   const meleeStats = config.statsByType.Melee;
   const speedStats = config.statsByType.Speed;
-  const hpMultiplier = Math.min(
-    config.summonedUnitMaxHpMultiplier,
-    Math.max(config.summonedUnitMinHpMultiplier, config.summonedUnitMinHpMultiplier + area * config.summonedUnitHpPerAreaMultiplier)
-  );
-  const maxHp = meleeStats.maxHp * hpMultiplier;
+  const maxHp = meleeStats.maxHp * area * config.summonedUnitHpPerAreaMultiplier;
 
   state.summonedUnits.push({
     summonedUnitId: state.nextSummonedUnitId,
@@ -39,7 +35,7 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
     currentHp: maxHp,
     attackDamage: meleeStats.attackDamage * config.summonedUnitAttackDamageMultiplier,
     moveSpeed: speedStats.moveSpeed * summonedUnitSpeedMultiplier,
-    healthDecayPerSecond: meleeStats.maxHp * config.summonedUnitMinHpMultiplier * config.summonedUnitHealthDecayMinimumHpFactorPerSecond
+    healthDecayPerSecond: meleeStats.maxHp * config.summonedUnitHealthDecayMinimumHpFactorPerSecond
   });
   state.nextSummonedUnitId += 1;
   setSummonGauge(state, team, 0);

@@ -11,7 +11,8 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(state.remainingSeconds, 180);
   assert.equal(state.leaders.length, 2);
   assert.equal(state.units.length, 6);
-  assert.equal(findLeader(state, "Player").currentHp, 1000);
+  assert.equal(findLeader(state, "Player").currentHp, 2000);
+  assert.equal(findLeader(state, "Cpu").currentHp, 2000);
   assert.deepEqual(findLeader(state, "Player").position, { x: 0, y: -4.1 });
   assert.deepEqual(findLeader(state, "Cpu").position, { x: 0, y: 4.1 });
   assert.equal(findUnit(state, "PlayerMelee").unitType, "Melee");

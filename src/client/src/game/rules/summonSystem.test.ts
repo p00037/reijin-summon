@@ -38,7 +38,7 @@ test("召喚ユニットは接触した敵リーダーへ継続ダメージを�
 
   tickSummonedUnits(state, config, 1);
 
-  assert.equal(findLeader(state, "Cpu").currentHp, 865);
+  assert.equal(findLeader(state, "Cpu").currentHp, 1865);
   assert.equal(state.summonedUnits[0].currentHp, 90);
 });
 
@@ -108,11 +108,11 @@ test("このtickで消滅する召喚ユニットは接触ダメージを与え�
 
   tickSummonedUnits(state, config, 1);
 
-  assert.equal(findLeader(state, "Cpu").currentHp, 1000);
+  assert.equal(findLeader(state, "Cpu").currentHp, 2000);
   assert.equal(state.summonedUnits.length, 0);
 });
 
-test("召喚HP倍率は最小値と最大値にクランプされる", () => {
+test("召喚獣HPは召喚エリア面積に完全比例する", () => {
   const config = createDefaultBattleConfig();
   const minState = createDefaultBattleState(config);
   minState.elementals.push(
@@ -122,7 +122,7 @@ test("召喚HP倍率は最小値と最大値にクランプされる", () => {
   minState.playerSummonGauge = 1;
 
   assert.equal(tryExecuteSummon(minState, config, "Player"), true);
-  assert.equal(minState.summonedUnits[0].maxHp, 1050);
+  assert.equal(minState.summonedUnits[0].maxHp, 0);
 
   const maxState = createDefaultBattleState(config);
   maxState.elementals.push(
@@ -132,7 +132,7 @@ test("召喚HP倍率は最小値と最大値にクランプされる", () => {
   maxState.playerSummonGauge = 1;
 
   assert.equal(tryExecuteSummon(maxState, config, "Player"), true);
-  assert.equal(maxState.summonedUnits[0].maxHp, 3500);
+  assert.equal(maxState.summonedUnits[0].maxHp, 350 * 5219.35);
 });
 
 test("2回の召喚は連番IDを割り当てる", () => {

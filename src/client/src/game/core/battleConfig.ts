@@ -27,14 +27,12 @@ const statsByType: Record<UnitType, UnitStats> = {
 export function createDefaultBattleConfig(): BattleConfig {
   return {
     matchDurationSeconds: 180,
-    leaderMaxHp: 1000,
+    leaderMaxHp: 2000,
     elementalBuildSeconds: 5,
     elementalPlacementRadius: 0.30375,
     elementalContactRadius: 0.30375,
     maxElementalsPerTeam: 6,
     summonGaugeSecondsAtMaxElementals: 45,
-    summonedUnitMinHpMultiplier: 3,
-    summonedUnitMaxHpMultiplier: 10,
     summonedUnitHpPerAreaMultiplier: 1,
     summonedUnitAttackDamageMultiplier: 3,
     summonedUnitHealthDecayMinimumHpFactorPerSecond: 0.1,
