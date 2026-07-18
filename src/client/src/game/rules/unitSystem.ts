@@ -117,6 +117,7 @@ export function tickRespawns(state: BattleState, deltaSeconds: number): void {
 function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
   const enemyTeam = oppositeTeam(unit.team);
   const contactRadiusSq = config.contactSlowRadius * config.contactSlowRadius;
+  const elementalContactRadiusSq = config.elementalContactRadius * config.elementalContactRadius;
   return (
     state.units.some(
       (candidate) =>
@@ -127,7 +128,7 @@ function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitSta
     ) ||
     state.summonedUnits.some(
       (candidate) =>
-        candidate.team === enemyTeam && candidate.currentHp > 0 && distanceSq(unit.position, candidate.position) <= contactRadiusSq
+        candidate.team === enemyTeam && candidate.currentHp > 0 && distanceSq(unit.position, candidate.position) <= elementalContactRadiusSq
     ) ||
     state.elementals.some(
       (candidate) =>
