@@ -59,6 +59,9 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
     if (unit.attackTimerSeconds > 0) {
       continue;
     }
+    if (!canAttack(state, config, unit)) {
+      continue;
+    }
 
     const target = findAttackTarget(state, unit);
     if (!target) {
@@ -79,6 +82,14 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       defeatUnit(unit, config);
     }
   }
+}
+
+function canAttack(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
+  if (unit.unitType !== "Ranged") {
+    return true;
+  }
+  const isStopped = distanceSq(unit.position, unit.destination) <= Number.EPSILON;
+  return isStopped || hasEnemyContact(state, config, unit);
 }
 
 export function tickLeaderHealing(state: BattleState, config: BattleConfig, deltaSeconds: number): void {

@@ -26,7 +26,7 @@ const statsByType: Record<UnitType, UnitStats> = {
 
 export function createDefaultBattleConfig(): BattleConfig {
   return {
-    matchDurationSeconds: 180,
+    matchDurationSeconds: 300,
     leaderMaxHp: 2000,
     elementalBuildSeconds: 5,
     elementalPlacementRadius: 0.30375,

@@ -129,6 +129,46 @@ test("combat chooses nearest target across all target kinds", () => {
   assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp);
 });
 
+test("移動中かつ非接敵のマスターは射程内の敵を攻撃しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerRanged");
+  const enemy = findUnit(state, "CpuMelee");
+  attacker.position = { x: 0, y: 0 };
+  attacker.destination = { x: 1, y: 0 };
+  attacker.attackTimerSeconds = 0;
+  for (const candidate of state.units.filter((unit) => unit.team === "Cpu" && unit.unitId !== enemy.unitId)) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+  enemy.position = { x: 3, y: 0 };
+  enemy.destination = { ...enemy.position };
+
+  tickCombat(state, config, 1);
+
+  assert.equal(enemy.currentHp, enemy.stats.maxHp);
+});
+
+test("移動中でも接敵中のマスターは射程内の敵を攻撃する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerRanged");
+  const enemy = findUnit(state, "CpuMelee");
+  attacker.position = { x: 0, y: 0 };
+  attacker.destination = { x: 1, y: 0 };
+  attacker.attackTimerSeconds = 0;
+  for (const candidate of state.units.filter((unit) => unit.team === "Cpu" && unit.unitId !== enemy.unitId)) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+  enemy.position = { x: config.contactSlowRadius, y: 0 };
+  enemy.destination = { ...enemy.position };
+
+  tickCombat(state, config, 1);
+
+  assert.equal(enemy.currentHp, enemy.stats.maxHp - attacker.stats.attackDamage);
+});
+
 test("combat clears stale attack events before processing", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);

@@ -8,7 +8,8 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
 
-  assert.equal(state.remainingSeconds, 180);
+  assert.equal(state.remainingSeconds, 300);
+  assert.equal(config.matchDurationSeconds, 300);
   assert.equal(state.leaders.length, 2);
   assert.equal(state.units.length, 6);
   assert.equal(findLeader(state, "Player").currentHp, 2000);

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findLeader } from "../core/battleState";
-import type { ElementalId } from "../core/types";
+import type { BattleState, ElementalId, TeamId } from "../core/types";
 import { canSummon, tryExecuteSummon, tickSummonGauges, tickSummonedUnits } from "./summonSystem";
 
 test("完成済みエレメンタルが2つあれば召喚できる", () => {
@@ -378,10 +378,63 @@ test("エレメントが0個なら召喚ゲージは増えない", () => {
   assert.equal(state.playerSummonGauge, 0);
 });
 
+test("自陣営の生存中召喚獣がいる間は召喚ゲージが増えない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addCompletedPlayerElementals(state);
+  state.playerSummonGauge = 0;
+  addSummonedUnit(state, "Player", 100);
+
+  tickSummonGauges(state, config, 45);
+
+  assert.equal(state.playerSummonGauge, 0);
+});
+
+test("相手陣営の召喚獣だけがいる場合は召喚ゲージが増える", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addCompletedPlayerElementals(state);
+  state.playerSummonGauge = 0;
+  addSummonedUnit(state, "Cpu", 100);
+
+  tickSummonGauges(state, config, 45);
+
+  assert.ok(state.playerSummonGauge > 0);
+});
+
+test("HPが0の自陣営召喚獣は召喚ゲージの増加を妨げない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addCompletedPlayerElementals(state);
+  state.playerSummonGauge = 0;
+  addSummonedUnit(state, "Player", 0);
+
+  tickSummonGauges(state, config, 45);
+
+  assert.ok(state.playerSummonGauge > 0);
+});
+
 function addCompletedPlayerElementals(state: ReturnType<typeof createDefaultBattleState>): void {
   state.elementals.push(
     { elementalId: "Elemental1", team: "Player", position: { x: -5, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
     { elementalId: "Elemental2", team: "Player", position: { x: -4, y: 1 }, maxHp: 120, currentHp: 120, isComplete: true }
   );
   state.playerSummonGauge = 1;
+}
+
+function addSummonedUnit(state: BattleState, team: TeamId, currentHp: number): void {
+  state.summonedUnits.push({
+    summonedUnitId: state.nextSummonedUnitId++,
+    team,
+    position: { x: 0, y: 0 },
+    destination: { x: 0, y: 0 },
+    maxHp: 100,
+    currentHp,
+    attackDamage: 99,
+    leaderAttackDamage: 300,
+    attackIntervalSeconds: 2,
+    attackTimerSeconds: 0,
+    moveSpeed: 8.2 / 12,
+    healthDecayPerSecond: 120
+  });
 }

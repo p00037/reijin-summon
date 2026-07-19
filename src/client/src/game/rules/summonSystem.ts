@@ -47,6 +47,12 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
 
 export function tickSummonGauges(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
   for (const team of ["Player", "Cpu"] as const) {
+    const hasLivingSummonedUnit = state.summonedUnits.some(
+      (summoned) => summoned.team === team && summoned.currentHp > 0
+    );
+    if (hasLivingSummonedUnit) {
+      continue;
+    }
     const elementalCount = completedElementalsForTeam(state, team).length;
     if (elementalCount === 0) {
       continue;
