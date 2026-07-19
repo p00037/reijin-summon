@@ -20,9 +20,9 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.deepEqual(findUnit(state, "CpuRanged").position, { x: 2.4, y: 3 });
   assert.deepEqual(config.battlefieldMin, { x: -6.3, y: -4.5 });
   assert.deepEqual(config.battlefieldMax, { x: 6.3, y: 4.5 });
-  assert.equal(config.statsByType.Ranged.moveSpeed, 0.375);
-  assert.equal(config.statsByType.Melee.moveSpeed, 0.5);
-  assert.equal(config.statsByType.Speed.moveSpeed, 0.5);
+  assert.equal(config.statsByType.Ranged.moveSpeed, 8.2 / 32);
+  assert.equal(config.statsByType.Melee.moveSpeed, 8.2 / 40);
+  assert.equal(config.statsByType.Speed.moveSpeed, 8.2 / 22);
   assert.equal(config.elementalPlacementRadius, 0.30375);
   assert.equal(config.elementalContactRadius, 0.30375);
   assert.equal(config.contactSlowRadius, 0.45);

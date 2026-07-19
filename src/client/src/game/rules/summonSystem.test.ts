@@ -18,10 +18,16 @@ test("完成済みエレメンタルが2つあれば召喚できる", () => {
   assert.equal(state.summonedUnits.length, 1);
   assert.equal(state.playerSummonGauge, 0);
   assert.deepEqual(state.summonedUnits[0].destination, { x: 0, y: 4.1 });
-  assert.equal(Number(state.summonedUnits[0].moveSpeed.toFixed(2)), 0.6);
+  const summoned = state.summonedUnits[0];
+  assert.equal(summoned.moveSpeed, 8.2 / 12);
+  assert.equal(summoned.attackDamage, 99);
+  assert.equal(summoned.leaderAttackDamage, 300);
+  assert.equal(summoned.attackIntervalSeconds, 2);
+  assert.equal(summoned.attackTimerSeconds, 0);
+  assert.equal(summoned.healthDecayPerSecond, 120);
 });
 
-test("召喚ユニットは接触した敵リーダーへ継続ダメージを与える", () => {
+test("召喚ユニットは攻撃可能時に敵リーダーへ1回分のダメージを与える", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   state.summonedUnits.push({
@@ -32,6 +38,9 @@ test("召喚ユニットは接触した敵リーダーへ継続ダメージを�
     maxHp: 100,
     currentHp: 100,
     attackDamage: 135,
+    leaderAttackDamage: 135,
+    attackIntervalSeconds: 2,
+    attackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -102,6 +111,9 @@ test("このtickで消滅する召喚ユニットは接触ダメージを与え�
     maxHp: 100,
     currentHp: 10,
     attackDamage: 135,
+    leaderAttackDamage: 135,
+    attackIntervalSeconds: 2,
+    attackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -125,7 +137,53 @@ test("召喚獣HPは戦場面積の5%で近接ユニットと同じになる", (
   state.playerSummonGauge = 1;
 
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
-  assert.equal(state.summonedUnits[0].maxHp, 350);
+  assert.equal(state.summonedUnits[0].maxHp, 2050);
+});
+
+test("召喚獣は2Cごとに通常対象へ99、召喚士へ300ダメージを与える", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const enemyUnit = state.units.find((unit) => unit.unitId === "CpuMelee")!;
+  enemyUnit.position = { x: 0, y: 4.1 };
+  enemyUnit.destination = { ...enemyUnit.position };
+  state.summonedUnits.push({
+    summonedUnitId: 1,
+    team: "Player",
+    position: { x: 0, y: 4.1 },
+    destination: { x: 0, y: 4.1 },
+    maxHp: 2000,
+    currentHp: 2000,
+    attackDamage: 99,
+    leaderAttackDamage: 300,
+    attackIntervalSeconds: 2,
+    attackTimerSeconds: 2,
+    moveSpeed: 8.2 / 12,
+    healthDecayPerSecond: 0
+  });
+
+  tickSummonedUnits(state, config, 1.99);
+
+  assert.equal(findLeader(state, "Cpu").currentHp, 2000);
+  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp);
+
+  tickSummonedUnits(state, config, 0.01);
+
+  assert.equal(findLeader(state, "Cpu").currentHp, 1700);
+  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 99);
+  assert.equal(state.summonedUnits[0].attackTimerSeconds, 2);
+});
+
+test("召喚獣は1CでHPが120自然減少する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addCompletedPlayerElementals(state);
+  assert.equal(tryExecuteSummon(state, config, "Player"), true);
+  const summoned = state.summonedUnits[0];
+  const hpBeforeTick = summoned.currentHp;
+
+  tickSummonedUnits(state, config, 1);
+
+  assert.equal(summoned.currentHp, hpBeforeTick - 120);
 });
 
 test("召喚獣HPは戦場面積の100%で近接ユニットの20倍になる", () => {
@@ -142,7 +200,21 @@ test("召喚獣HPは戦場面積の100%で近接ユニットの20倍になる", 
   state.playerSummonGauge = 1;
 
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
-  assert.equal(state.summonedUnits[0].maxHp, 7000);
+  assert.equal(state.summonedUnits[0].maxHp, 7750);
+});
+
+test("召喚獣HPは召喚面積0%で基礎HPになる", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Player").position = { x: 0, y: 0 };
+  state.elementals.push(
+    { elementalId: "Elemental1", team: "Player", position: { x: 1, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },
+    { elementalId: "Elemental2", team: "Player", position: { x: 2, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true }
+  );
+  state.playerSummonGauge = 1;
+
+  assert.equal(tryExecuteSummon(state, config, "Player"), true);
+  assert.equal(state.summonedUnits[0].maxHp, 1750);
 });
 
 test("2回の召喚は連番IDを割り当てる", () => {
@@ -190,6 +262,9 @@ test("非接触の召喚ユニットは敵リーダーへ移動する", () => {
     maxHp: 100,
     currentHp: 100,
     attackDamage: 135,
+    leaderAttackDamage: 135,
+    attackIntervalSeconds: 2,
+    attackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -200,7 +275,7 @@ test("非接触の召喚ユニットは敵リーダーへ移動する", () => {
   assert.deepEqual(state.summonedUnits[0].destination, { x: 7, y: 0 });
 });
 
-test("召喚ユニットは接触した敵通常ユニットへ継続ダメージを与え、移動速度が低下する", () => {
+test("召喚ユニットは接触した敵通常ユニットへ攻撃し、移動速度が低下する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   findLeader(state, "Cpu").position = { x: 7, y: 0 };
@@ -216,6 +291,9 @@ test("召喚ユニットは接触した敵通常ユニットへ継続ダメー�
     maxHp: 100,
     currentHp: 100,
     attackDamage: 90,
+    leaderAttackDamage: 90,
+    attackIntervalSeconds: 2,
+    attackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -226,7 +304,7 @@ test("召喚ユニットは接触した敵通常ユニットへ継続ダメー�
   assert.equal(Number(state.summonedUnits[0].position.x.toFixed(2)), -5.67);
 });
 
-test("召喚ユニット同士は接触中に互いへ継続ダメージを与え、移動速度が低下する", () => {
+test("召喚ユニット同士は接触中に互いへ攻撃し、移動速度が低下する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   findLeader(state, "Player").position = { x: -7, y: 0 };
@@ -240,6 +318,9 @@ test("召喚ユニット同士は接触中に互いへ継続ダメージを与�
       maxHp: 100,
       currentHp: 100,
       attackDamage: 30,
+      leaderAttackDamage: 30,
+      attackIntervalSeconds: 2,
+      attackTimerSeconds: 0,
       moveSpeed: 1,
       healthDecayPerSecond: 10
     },
@@ -251,6 +332,9 @@ test("召喚ユニット同士は接触中に互いへ継続ダメージを与�
       maxHp: 100,
       currentHp: 100,
       attackDamage: 40,
+      leaderAttackDamage: 40,
+      attackIntervalSeconds: 2,
+      attackTimerSeconds: 0,
       moveSpeed: 1,
       healthDecayPerSecond: 10
     }

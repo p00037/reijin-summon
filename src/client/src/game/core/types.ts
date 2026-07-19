@@ -48,9 +48,13 @@ export type BattleConfig = {
   elementalContactRadius: number;
   maxElementalsPerTeam: number;
   summonGaugeSecondsAtMaxElementals: number;
-  summonedUnitHpPerAreaMultiplier: number;
-  summonedUnitAttackDamageMultiplier: number;
-  summonedUnitHealthDecayMinimumHpFactorPerSecond: number;
+  summonedUnitBaseHp: number;
+  summonedUnitHpPerFieldPercent: number;
+  summonedUnitAttackDamage: number;
+  summonedUnitLeaderAttackDamage: number;
+  summonedUnitAttackIntervalSeconds: number;
+  summonedUnitHealthDecayPerSecond: number;
+  summonedUnitMoveSpeed: number;
   unitRespawnSeconds: number;
   elementalMaxHp: number;
   directLeaderDamageMultiplier: number;
@@ -113,6 +117,9 @@ export type SummonedUnitState = {
   maxHp: number;
   currentHp: number;
   attackDamage: number;
+  leaderAttackDamage: number;
+  attackIntervalSeconds: number;
+  attackTimerSeconds: number;
   moveSpeed: number;
   healthDecayPerSecond: number;
 };

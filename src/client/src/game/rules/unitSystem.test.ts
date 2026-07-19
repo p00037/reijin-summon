@@ -38,7 +38,7 @@ test("ユニットは目標へ移動する", () => {
   });
   tickMovement(state, config, 3);
 
-  assert.equal(Number(unit.position.x.toFixed(2)), -4);
+  assert.equal(Number(unit.position.x.toFixed(2)), -4.38);
 });
 
 test("攻撃範囲内の敵リーダーへ直接ダメージを与える", () => {
@@ -170,7 +170,7 @@ test("movement is slowed near a live enemy elemental", () => {
 
   tickMovement(state, config, 1);
 
-  assert.equal(Number(unit.position.x.toFixed(2)), -4.83);
+  assert.equal(Number(unit.position.x.toFixed(2)), -4.93);
 });
 
 test("allies and defeated enemies do not slow movement", () => {
@@ -200,7 +200,7 @@ test("allies and defeated enemies do not slow movement", () => {
 
   tickMovement(state, config, 1);
 
-  assert.equal(Number(unit.position.x.toFixed(2)), -4.5);
+  assert.equal(Number(unit.position.x.toFixed(2)), -4.79);
 });
 
 test("attack timer gates combat damage", () => {

@@ -4,8 +4,6 @@ import { distance, moveTowards } from "../core/vector";
 import { calculateSummonArea } from "./areaCalculator";
 import { completedElementalsForTeam } from "./elementalSystem";
 
-const summonedUnitSpeedMultiplier = 1.2;
-
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
   return (
     findLeader(state, team).currentHp > 0 &&
@@ -22,12 +20,11 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   const enemyLeader = findLeader(state, oppositeTeam(team));
   const elementals = completedElementalsForTeam(state, team);
   const area = calculateSummonArea([leader.position, ...elementals.map((elemental) => elemental.position)]);
-  const meleeStats = config.statsByType.Melee;
-  const speedStats = config.statsByType.Speed;
   const battlefieldArea =
     (config.battlefieldMax.x - config.battlefieldMin.x) *
     (config.battlefieldMax.y - config.battlefieldMin.y);
-  const maxHp = meleeStats.maxHp * 20 * (area / battlefieldArea) * config.summonedUnitHpPerAreaMultiplier;
+  const fieldPercent = area / battlefieldArea * 100;
+  const maxHp = config.summonedUnitBaseHp + config.summonedUnitHpPerFieldPercent * fieldPercent;
 
   state.summonedUnits.push({
     summonedUnitId: state.nextSummonedUnitId,
@@ -36,9 +33,12 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
     destination: { ...enemyLeader.position },
     maxHp,
     currentHp: maxHp,
-    attackDamage: meleeStats.attackDamage * config.summonedUnitAttackDamageMultiplier,
-    moveSpeed: speedStats.moveSpeed * summonedUnitSpeedMultiplier,
-    healthDecayPerSecond: meleeStats.maxHp * config.summonedUnitHealthDecayMinimumHpFactorPerSecond
+    attackDamage: config.summonedUnitAttackDamage,
+    leaderAttackDamage: config.summonedUnitLeaderAttackDamage,
+    attackIntervalSeconds: config.summonedUnitAttackIntervalSeconds,
+    attackTimerSeconds: 0,
+    moveSpeed: config.summonedUnitMoveSpeed,
+    healthDecayPerSecond: config.summonedUnitHealthDecayPerSecond
   });
   state.nextSummonedUnitId += 1;
   setSummonGauge(state, team, 0);
@@ -65,22 +65,28 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     if (summoned.currentHp <= 0) {
       continue;
     }
+    summoned.attackTimerSeconds = Math.max(0, summoned.attackTimerSeconds - deltaSeconds);
 
     const enemyLeader = findLeader(state, oppositeTeam(summoned.team));
     summoned.destination = { ...enemyLeader.position };
     const touchingLeader = distance(summoned.position, enemyLeader.position) <= config.contactSlowRadius;
     const touchingUnits = enemyUnitsInContact(state, config, summoned);
     const touchingSummonedUnits = enemySummonedUnitsInContact(state, config, summoned);
-    for (const target of touchingUnits) {
-      target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage * deltaSeconds);
-    }
-    for (const target of touchingSummonedUnits) {
-      target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage * deltaSeconds);
+    const hasAttackTarget = touchingLeader || touchingUnits.length > 0 || touchingSummonedUnits.length > 0;
+    if (hasAttackTarget && summoned.attackTimerSeconds <= Number.EPSILON) {
+      for (const target of touchingUnits) {
+        target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage);
+      }
+      for (const target of touchingSummonedUnits) {
+        target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage);
+      }
+      if (touchingLeader) {
+        enemyLeader.currentHp = Math.max(0, enemyLeader.currentHp - summoned.leaderAttackDamage);
+      }
+      summoned.attackTimerSeconds = summoned.attackIntervalSeconds;
     }
 
-    if (touchingLeader) {
-      enemyLeader.currentHp = Math.max(0, enemyLeader.currentHp - summoned.attackDamage * deltaSeconds);
-    } else {
+    if (!touchingLeader) {
       const speedMultiplier = touchingUnits.length > 0 || touchingSummonedUnits.length > 0 ? config.contactSlowMultiplier : 1;
       summoned.position = moveTowards(summoned.position, summoned.destination, summoned.moveSpeed * speedMultiplier * deltaSeconds);
     }
