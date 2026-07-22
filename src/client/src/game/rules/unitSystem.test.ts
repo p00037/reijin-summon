@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
-import { applyMoveCommand, tickCombat, tickMovement, tickRespawns } from "./unitSystem";
+import { applyMoveCommand, tickCombat, tickMovement, tickRespawns, tickUnitHealing } from "./unitSystem";
 
 test("移動コマンドは生成中を解除し、目標を戦場内にクランプする", () => {
   const config = createDefaultBattleConfig();
@@ -127,6 +127,172 @@ test("combat chooses nearest target across all target kinds", () => {
 
   assert.equal(state.elementals[0].currentHp, 120 - attacker.stats.attackDamage);
   assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp);
+});
+
+test("keeper deals double damage to elementals but normal damage to units", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  const enemyUnit = findUnit(state, "CpuMelee");
+  keeper.position = { x: 0, y: 0 };
+  keeper.destination = { ...keeper.position };
+  keeper.attackTimerSeconds = 0;
+  enemyUnit.position = { x: 0.5, y: 0 };
+  enemyUnit.destination = { ...enemyUnit.position };
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.25, y: 0 },
+    maxHp: 1000,
+    currentHp: 1000,
+    isComplete: true
+  });
+
+  tickCombat(state, config, 1.2);
+
+  assert.equal(state.elementals[0].currentHp, 878);
+  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp);
+
+  keeper.attackTimerSeconds = 0;
+  state.elementals[0].currentHp = 0;
+  tickCombat(state, config, 1.2);
+
+  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 61);
+});
+
+test("units in the leader healing area recover 10% of maximum HP every two seconds", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerSpeed");
+  unit.position = { ...findLeader(state, "Player").position };
+  unit.destination = { x: unit.position.x + 1, y: unit.position.y };
+  unit.currentHp = 500;
+
+  tickUnitHealing(state, config, 1.99);
+  assert.equal(unit.currentHp, 500);
+  tickUnitHealing(state, config, 0.01);
+
+  assert.equal(unit.currentHp, 606);
+});
+
+test("leaving the leader healing area resets its periodic recovery timer", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerSpeed");
+  unit.position = { ...findLeader(state, "Player").position };
+  unit.destination = { x: unit.position.x + 1, y: unit.position.y };
+  unit.currentHp = 500;
+
+  tickUnitHealing(state, config, 1.5);
+  unit.position = { x: 6, y: 0 };
+  tickUnitHealing(state, config, 1);
+  unit.position = { ...findLeader(state, "Player").position };
+  tickUnitHealing(state, config, 0.5);
+
+  assert.equal(unit.currentHp, 500);
+  assert.equal(unit.leaderHealingElapsedSeconds, 0.5);
+});
+
+test("a stopped keeper recovers 60 HP every 1.5 seconds", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.currentHp = 500;
+
+  tickUnitHealing(state, config, 1.49);
+  assert.equal(keeper.currentHp, 500);
+  tickUnitHealing(state, config, 0.01);
+
+  assert.equal(keeper.currentHp, 560);
+});
+
+test("keeper rest healing and leader-area healing stack on their own intervals", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.position = { ...findLeader(state, "Player").position };
+  keeper.destination = { ...keeper.position };
+  keeper.currentHp = 500;
+
+  tickUnitHealing(state, config, 6);
+
+  assert.equal(keeper.currentHp, 500 + 3 * 110 + 4 * 60);
+});
+
+test("a move command resets the keeper's healing timers", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.position = { ...findLeader(state, "Player").position };
+  keeper.destination = { ...keeper.position };
+
+  tickUnitHealing(state, config, 0.5);
+  applyMoveCommand(state, config, {
+    commandType: "MoveUnit",
+    team: "Player",
+    unitId: "PlayerMelee",
+    targetPosition: { x: keeper.position.x + 1, y: keeper.position.y }
+  });
+
+  assert.equal(keeper.leaderHealingElapsedSeconds, 0);
+  assert.equal(keeper.restHealingElapsedSeconds, 0);
+});
+
+test("building units reset their healing timers and do not recover", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.position = { ...findLeader(state, "Player").position };
+  keeper.destination = { ...keeper.position };
+  keeper.currentHp = 500;
+  keeper.mode = "BuildingElemental";
+  keeper.leaderHealingElapsedSeconds = 1;
+  keeper.restHealingElapsedSeconds = 1;
+
+  tickUnitHealing(state, config, 1);
+
+  assert.equal(keeper.currentHp, 500);
+  assert.equal(keeper.leaderHealingElapsedSeconds, 0);
+  assert.equal(keeper.restHealingElapsedSeconds, 0);
+});
+
+test("defeat and respawn reset healing timers", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.currentHp = 0;
+  keeper.leaderHealingElapsedSeconds = 1;
+  keeper.restHealingElapsedSeconds = 1;
+
+  tickCombat(state, config, 0);
+
+  assert.equal(keeper.mode, "Defeated");
+  assert.equal(keeper.leaderHealingElapsedSeconds, 0);
+  assert.equal(keeper.restHealingElapsedSeconds, 0);
+
+  keeper.leaderHealingElapsedSeconds = 1;
+  keeper.restHealingElapsedSeconds = 1;
+  keeper.respawnTimerSeconds = 0;
+  tickRespawns(state, 0);
+
+  assert.equal(keeper.mode, "Active");
+  assert.equal(keeper.leaderHealingElapsedSeconds, 0);
+  assert.equal(keeper.restHealingElapsedSeconds, 0);
+});
+
+test("large healing ticks apply every completed interval without exceeding maximum HP", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.position = { ...findLeader(state, "Player").position };
+  keeper.destination = { ...keeper.position };
+  keeper.currentHp = 1000;
+
+  tickUnitHealing(state, config, 30);
+
+  assert.equal(keeper.currentHp, keeper.stats.maxHp);
+  assert.equal(keeper.leaderHealingElapsedSeconds, 0);
+  assert.equal(keeper.restHealingElapsedSeconds, 0);
 });
 
 test("移動中かつ非接敵のマスターは射程内の敵を攻撃しない", () => {

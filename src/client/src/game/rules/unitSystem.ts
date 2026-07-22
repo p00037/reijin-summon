@@ -29,6 +29,7 @@ export function applyMoveCommand(state: BattleState, config: BattleConfig, comma
     unit.buildTimerSeconds = 0;
     unit.pendingElementalId = null;
   }
+  resetUnitHealingTimers(unit);
   unit.destination = clampVec2(command.targetPosition, config.battlefieldMin, config.battlefieldMax);
 }
 
@@ -68,7 +69,11 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       continue;
     }
 
-    applyDamage(target, unit.stats.attackDamage, config);
+    const damage =
+      target.kind === "Elemental"
+        ? unit.stats.attackDamage * unit.stats.elementalAttackMultiplier
+        : unit.stats.attackDamage;
+    applyDamage(target, damage, config);
     state.recentAttackEvents.push({
       attackerUnitId: unit.unitId,
       origin: { ...unit.position },
@@ -92,17 +97,36 @@ function canAttack(state: BattleState, config: BattleConfig, unit: UnitState): b
   return isStopped || hasEnemyContact(state, config, unit);
 }
 
-export function tickLeaderHealing(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
+export function tickUnitHealing(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
   const healingRadiusSq = config.leaderHealingRadius * config.leaderHealingRadius;
   for (const unit of state.units) {
-    if (!isUnitAlive(unit)) {
+    if (unit.mode !== "Active" || !isUnitAlive(unit)) {
+      resetUnitHealingTimers(unit);
       continue;
     }
     const leader = findLeader(state, unit.team);
-    if (distanceSq(unit.position, leader.position) > healingRadiusSq) {
-      continue;
+    if (distanceSq(unit.position, leader.position) <= healingRadiusSq) {
+      const { count, remainder } = elapsedIntervals(
+        unit.leaderHealingElapsedSeconds + deltaSeconds,
+        config.leaderHealingIntervalSeconds
+      );
+      unit.leaderHealingElapsedSeconds = remainder;
+      healUnit(unit, count * unit.stats.maxHp * config.leaderHealingPercent);
+    } else {
+      unit.leaderHealingElapsedSeconds = 0;
     }
-    unit.currentHp = Math.min(unit.stats.maxHp, unit.currentHp + unit.stats.attackDamage * deltaSeconds);
+
+    const isStopped = distanceSq(unit.position, unit.destination) <= Number.EPSILON;
+    if (unit.unitType === "Melee" && isStopped) {
+      const { count, remainder } = elapsedIntervals(
+        unit.restHealingElapsedSeconds + deltaSeconds,
+        config.keeperRestHealingIntervalSeconds
+      );
+      unit.restHealingElapsedSeconds = remainder;
+      healUnit(unit, count * config.keeperRestHealingAmount);
+    } else {
+      unit.restHealingElapsedSeconds = 0;
+    }
   }
 }
 
@@ -120,6 +144,7 @@ export function tickRespawns(state: BattleState, deltaSeconds: number): void {
     unit.position = { ...unit.spawnPosition };
     unit.destination = { ...unit.spawnPosition };
     unit.attackTimerSeconds = 0;
+    resetUnitHealingTimers(unit);
     unit.buildTimerSeconds = 0;
     unit.pendingElementalId = null;
   }
@@ -197,6 +222,21 @@ function defeatUnit(unit: UnitState, config: BattleConfig): void {
   unit.mode = "Defeated";
   unit.currentHp = 0;
   unit.respawnTimerSeconds = config.unitRespawnSeconds;
+  resetUnitHealingTimers(unit);
   unit.buildTimerSeconds = 0;
   unit.pendingElementalId = null;
+}
+
+function elapsedIntervals(elapsed: number, interval: number): { count: number; remainder: number } {
+  const count = Math.floor((elapsed + Number.EPSILON) / interval);
+  return { count, remainder: Math.max(0, elapsed - count * interval) };
+}
+
+function healUnit(unit: UnitState, amount: number): void {
+  unit.currentHp = Math.min(unit.stats.maxHp, unit.currentHp + amount);
+}
+
+function resetUnitHealingTimers(unit: UnitState): void {
+  unit.leaderHealingElapsedSeconds = 0;
+  unit.restHealingElapsedSeconds = 0;
 }

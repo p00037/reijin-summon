@@ -3,7 +3,7 @@ import { createDefaultBattleState, findLeader, findUnit } from "../core/battleSt
 import type { BattleCommand, BattleConfig, BattleState, MatchResult, TeamId } from "../core/types";
 import { countCompletedElementals, removeDestroyedElementals, tickElementalBuilds, tryBeginElementalBuild } from "./elementalSystem";
 import { canSummon, tickSummonGauges, tickSummonedUnits, tryExecuteSummon } from "./summonSystem";
-import { applyMoveCommand, tickCombat, tickLeaderHealing, tickMovement, tickRespawns } from "./unitSystem";
+import { applyMoveCommand, tickCombat, tickMovement, tickRespawns, tickUnitHealing } from "./unitSystem";
 
 export class GameSession {
   readonly config: BattleConfig;
@@ -45,7 +45,7 @@ export class GameSession {
     tickElementalBuilds(this.state, this.config, deltaSeconds);
     tickSummonGauges(this.state, this.config, deltaSeconds);
     tickMovement(this.state, this.config, deltaSeconds);
-    tickLeaderHealing(this.state, this.config, deltaSeconds);
+    tickUnitHealing(this.state, this.config, deltaSeconds);
     tickRespawns(this.state, deltaSeconds);
     tickCombat(this.state, this.config, deltaSeconds);
     tickSummonedUnits(this.state, this.config, deltaSeconds);
