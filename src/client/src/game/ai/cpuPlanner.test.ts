@@ -81,7 +81,7 @@ test("CPUは完成済みと生成中の合計が上限なら移動する", () =>
   const buildingUnit = state.units.find((unit) => unit.unitId === "CpuMelee")!;
   buildingUnit.mode = "BuildingElemental";
   buildingUnit.pendingElementalId = "Elemental6";
-  buildingUnit.buildTimerSeconds = config.elementalBuildSeconds;
+  buildingUnit.buildTimerSeconds = buildingUnit.stats.elementalBuildSeconds;
 
   const commands = planCpuCommands(state, config);
 

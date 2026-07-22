@@ -35,7 +35,7 @@ export function tryBeginElementalBuild(state: BattleState, config: BattleConfig,
     return false;
   }
   unit.mode = "BuildingElemental";
-  unit.buildTimerSeconds = config.elementalBuildSeconds;
+  unit.buildTimerSeconds = unit.stats.elementalBuildSeconds;
   unit.pendingElementalId = nextId;
   return true;
 }

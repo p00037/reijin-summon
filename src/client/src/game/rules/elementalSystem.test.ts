@@ -77,12 +77,30 @@ test("active units can begin elemental builds", () => {
   assert.equal(unit.pendingElementalId, "Elemental1");
 });
 
+test("unit types begin elemental builds with their own durations and completed elementals use the configured HP", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
+  assert.equal(tryBeginElementalBuild(state, config, "PlayerRanged"), true);
+
+  assert.equal(findUnit(state, "PlayerMelee").buildTimerSeconds, 5.7);
+  assert.equal(findUnit(state, "PlayerSpeed").buildTimerSeconds, 7.2);
+  assert.equal(findUnit(state, "PlayerRanged").buildTimerSeconds, 6.7);
+
+  tickElementalBuilds(state, config, 5.7);
+
+  assert.equal(state.elementals[0].maxHp, 1000);
+  assert.equal(state.elementals[0].currentHp, 1000);
+});
+
 test("completed builds create an elemental at the unit position", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
 
   tryBeginElementalBuild(state, config, "PlayerMelee");
-  tickElementalBuilds(state, config, 5);
+  tickElementalBuilds(state, config, 5.7);
 
   const unit = findUnit(state, "PlayerMelee");
   assert.equal(unit.mode, "Active");
@@ -145,7 +163,7 @@ test("both teams can build six elementals without exhausting shared ids", () => 
   assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
   assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
   assert.equal(tryBeginElementalBuild(state, config, "PlayerRanged"), true);
-  tickElementalBuilds(state, config, config.elementalBuildSeconds);
+  tickElementalBuilds(state, config, 7.2);
   for (const unit of state.units) {
     if (unit.team === "Player") {
       unit.position.y += 1;
@@ -154,7 +172,7 @@ test("both teams can build six elementals without exhausting shared ids", () => 
   assert.equal(tryBeginElementalBuild(state, config, "PlayerMelee"), true);
   assert.equal(tryBeginElementalBuild(state, config, "PlayerSpeed"), true);
   assert.equal(tryBeginElementalBuild(state, config, "PlayerRanged"), true);
-  tickElementalBuilds(state, config, config.elementalBuildSeconds);
+  tickElementalBuilds(state, config, 7.2);
 
   assert.equal(countCompletedElementals(state, "Cpu"), 6);
   assert.equal(countCompletedElementals(state, "Player"), 6);
@@ -199,7 +217,7 @@ test("completed elemental positions are copied from units", () => {
   const unit = findUnit(state, "PlayerMelee");
 
   tryBeginElementalBuild(state, config, "PlayerMelee");
-  tickElementalBuilds(state, config, 5);
+  tickElementalBuilds(state, config, 5.7);
   unit.position.x = 99;
   unit.position.y = 99;
 
@@ -215,10 +233,10 @@ test("partial ticks do not complete builds until enough time accumulates", () =>
   tickElementalBuilds(state, config, 2);
 
   assert.equal(unit.mode, "BuildingElemental");
-  assert.equal(unit.buildTimerSeconds, 3);
+  assert.equal(unit.buildTimerSeconds, 3.7);
   assert.equal(state.elementals.length, 0);
 
-  tickElementalBuilds(state, config, 3);
+  tickElementalBuilds(state, config, 3.7);
 
   assert.equal(unit.mode, "Active");
   assert.equal(state.elementals.length, 1);
