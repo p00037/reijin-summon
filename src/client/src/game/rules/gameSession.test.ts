@@ -27,6 +27,18 @@ test("moving into the leader healing area only counts time after entry", () => {
   assert.equal(Number(unit.leaderHealingElapsedSeconds.toFixed(2)), 1.1);
 });
 
+test("stopped keeper in the leader healing area receives both periodic heals", () => {
+  const session = new GameSession();
+  const keeper = session.state.units.find((candidate) => candidate.unitId === "PlayerMelee")!;
+  keeper.position = { ...session.state.leaders.find((leader) => leader.team === "Player")!.position };
+  keeper.destination = { ...keeper.position };
+  keeper.currentHp = 500;
+
+  session.tick(2);
+
+  assert.equal(keeper.currentHp, 500 + 110 + 60);
+});
+
 test("moving keeper only counts rest time after reaching its destination", () => {
   const config = createDefaultBattleConfig();
   config.statsByType.Melee.moveSpeed = 1;
