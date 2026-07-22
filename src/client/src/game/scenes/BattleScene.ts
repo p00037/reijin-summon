@@ -21,6 +21,7 @@ import {
   summonedCardPresentation,
   unitCardPresentation
 } from "../render/cardPresentation";
+import { healingAreaPresentation } from "../render/healingAreaPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
@@ -221,6 +222,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawField();
     this.drawArea("Player");
     this.drawArea("Cpu");
+    this.drawHealingAreas(state.leaders);
     this.drawLeaders(state.leaders);
     this.drawElementals(state.elementals);
     this.drawSummonedUnits(state.summonedUnits);
@@ -266,6 +268,22 @@ export class BattleScene extends Phaser.Scene {
       const current = this.worldToScreen(ordered[index]);
       const next = this.worldToScreen(ordered[(index + 1) % ordered.length]);
       this.battlefield.lineBetween(current.x, current.y, next.x, next.y);
+    }
+  }
+
+  private drawHealingAreas(leaders: LeaderState[]): void {
+    const presentation = healingAreaPresentation(this.session.config.leaderHealingRadius);
+    const screenRadius = this.worldRadiusToScreen(presentation.radius);
+    for (const leader of leaders) {
+      const screen = this.worldToScreen(leader.position);
+      this.battlefieldOverlay.fillStyle(presentation.fillColor, presentation.fillAlpha);
+      this.battlefieldOverlay.fillCircle(screen.x, screen.y, screenRadius);
+      this.battlefieldOverlay.lineStyle(
+        presentation.strokeWidth,
+        presentation.strokeColor,
+        presentation.strokeAlpha
+      );
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, screenRadius);
     }
   }
 
@@ -512,6 +530,13 @@ export class BattleScene extends Phaser.Scene {
       x: Phaser.Math.Linear(bounds.x, bounds.x + bounds.width, (position.x - battlefieldMin.x) / (battlefieldMax.x - battlefieldMin.x)),
       y: Phaser.Math.Linear(bounds.y + bounds.height, bounds.y, (position.y - battlefieldMin.y) / (battlefieldMax.y - battlefieldMin.y))
     };
+  }
+
+  private worldRadiusToScreen(radius: number): number {
+    const { battlefieldMin } = this.session.config;
+    const origin = this.worldToScreen(battlefieldMin);
+    const edge = this.worldToScreen({ x: battlefieldMin.x + radius, y: battlefieldMin.y });
+    return Math.abs(edge.x - origin.x);
   }
 
   private screenToWorld(x: number, y: number): Vec2 {
