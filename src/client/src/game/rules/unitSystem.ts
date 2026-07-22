@@ -6,6 +6,7 @@ import type {
   ElementalState,
   LeaderState,
   SummonedUnitState,
+  UnitId,
   UnitState,
   Vec2
 } from "../core/types";
@@ -18,6 +19,22 @@ type AttackTarget =
   | { kind: "Elemental"; position: Vec2; target: ElementalState }
   | { kind: "SummonedUnit"; position: Vec2; target: SummonedUnitState }
   | { kind: "Leader"; position: Vec2; target: LeaderState };
+
+export type UnitMovementTimeline = {
+  initialPosition: Vec2;
+  finalPosition: Vec2;
+  activeStartSeconds: number;
+  activeSeconds: number;
+  movementSeconds: number;
+};
+
+export type UnitHealingElapsed = {
+  leaderAreaSeconds: number;
+  leaderEndsInArea: boolean;
+  restSeconds: number;
+  restEndsStopped: boolean;
+  resetTimersBeforeHealing: boolean;
+};
 
 export function applyMoveCommand(state: BattleState, config: BattleConfig, command: MoveUnitCommand): void {
   const unit = findUnit(state, command.unitId);
@@ -33,14 +50,34 @@ export function applyMoveCommand(state: BattleState, config: BattleConfig, comma
   unit.destination = clampVec2(command.targetPosition, config.battlefieldMin, config.battlefieldMax);
 }
 
-export function tickMovement(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
+export function tickMovement(
+  state: BattleState,
+  config: BattleConfig,
+  deltaSeconds: number,
+  activityStartSecondsByUnit: ReadonlyMap<UnitId, number> = new Map()
+): ReadonlyMap<UnitId, UnitMovementTimeline> {
+  const timelines = new Map<UnitId, UnitMovementTimeline>();
   for (const unit of state.units) {
     if (unit.mode !== "Active" || !isUnitAlive(unit)) {
       continue;
     }
+    const activeStartSeconds = Math.min(deltaSeconds, Math.max(0, activityStartSecondsByUnit.get(unit.unitId) ?? 0));
+    const activeSeconds = Math.max(0, deltaSeconds - activeStartSeconds);
+    const initialPosition = { ...unit.position };
     const speedMultiplier = hasEnemyContact(state, config, unit) ? config.contactSlowMultiplier : 1;
-    unit.position = moveTowards(unit.position, unit.destination, unit.stats.moveSpeed * speedMultiplier * deltaSeconds);
+    const moveSpeed = unit.stats.moveSpeed * speedMultiplier;
+    const targetDistance = Math.sqrt(distanceSq(unit.position, unit.destination));
+    const movementSeconds = moveSpeed > 0 ? Math.min(activeSeconds, targetDistance / moveSpeed) : 0;
+    unit.position = moveTowards(unit.position, unit.destination, moveSpeed * activeSeconds);
+    timelines.set(unit.unitId, {
+      initialPosition,
+      finalPosition: { ...unit.position },
+      activeStartSeconds,
+      activeSeconds,
+      movementSeconds
+    });
   }
+  return timelines;
 }
 
 export function tickCombat(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
@@ -97,37 +134,88 @@ function canAttack(state: BattleState, config: BattleConfig, unit: UnitState): b
   return isStopped || hasEnemyContact(state, config, unit);
 }
 
-export function tickUnitHealing(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
+export function tickUnitHealing(
+  state: BattleState,
+  config: BattleConfig,
+  deltaSeconds: number,
+  elapsedByUnit: ReadonlyMap<UnitId, UnitHealingElapsed> = new Map()
+): void {
   const healingRadiusSq = config.leaderHealingRadius * config.leaderHealingRadius;
   for (const unit of state.units) {
     if (unit.mode !== "Active" || !isUnitAlive(unit)) {
       resetUnitHealingTimers(unit);
       continue;
     }
+    const elapsed = elapsedByUnit.get(unit.unitId);
+    if (elapsed?.resetTimersBeforeHealing) {
+      resetUnitHealingTimers(unit);
+    }
     const leader = findLeader(state, unit.team);
-    if (distanceSq(unit.position, leader.position) <= healingRadiusSq) {
+    const leaderEndsInArea = elapsed?.leaderEndsInArea ?? distanceSq(unit.position, leader.position) <= healingRadiusSq;
+    const leaderAreaSeconds = elapsed?.leaderAreaSeconds ?? (leaderEndsInArea ? deltaSeconds : 0);
+    if (leaderAreaSeconds > 0) {
       const { count, remainder } = elapsedIntervals(
-        unit.leaderHealingElapsedSeconds + deltaSeconds,
+        unit.leaderHealingElapsedSeconds + leaderAreaSeconds,
         config.leaderHealingIntervalSeconds
       );
       unit.leaderHealingElapsedSeconds = remainder;
       healUnit(unit, count * unit.stats.maxHp * config.leaderHealingPercent);
-    } else {
+    }
+    if (!leaderEndsInArea) {
       unit.leaderHealingElapsedSeconds = 0;
     }
 
     const isStopped = distanceSq(unit.position, unit.destination) <= Number.EPSILON;
-    if (unit.unitType === "Melee" && isStopped) {
+    const restEndsStopped = elapsed?.restEndsStopped ?? (unit.unitType === "Melee" && isStopped);
+    const restSeconds = elapsed?.restSeconds ?? (restEndsStopped ? deltaSeconds : 0);
+    if (restSeconds > 0) {
       const { count, remainder } = elapsedIntervals(
-        unit.restHealingElapsedSeconds + deltaSeconds,
+        unit.restHealingElapsedSeconds + restSeconds,
         config.keeperRestHealingIntervalSeconds
       );
       unit.restHealingElapsedSeconds = remainder;
       healUnit(unit, count * config.keeperRestHealingAmount);
-    } else {
+    }
+    if (!restEndsStopped) {
       unit.restHealingElapsedSeconds = 0;
     }
   }
+}
+
+export function calculateUnitHealingElapsed(
+  state: BattleState,
+  config: BattleConfig,
+  timelines: ReadonlyMap<UnitId, UnitMovementTimeline>
+): ReadonlyMap<UnitId, UnitHealingElapsed> {
+  const elapsedByUnit = new Map<UnitId, UnitHealingElapsed>();
+  for (const unit of state.units) {
+    const timeline = timelines.get(unit.unitId);
+    if (!timeline || timeline.activeSeconds <= 0) {
+      elapsedByUnit.set(unit.unitId, {
+        leaderAreaSeconds: 0,
+        leaderEndsInArea: false,
+        restSeconds: 0,
+        restEndsStopped: false,
+        resetTimersBeforeHealing: Boolean(timeline && timeline.activeStartSeconds > 0)
+      });
+      continue;
+    }
+
+    const leader = findLeader(state, unit.team);
+    const leaderEndsInArea = distanceSq(timeline.finalPosition, leader.position) <= config.leaderHealingRadius * config.leaderHealingRadius;
+    const stoppedSeconds = Math.max(0, timeline.activeSeconds - timeline.movementSeconds);
+    const leaderAreaSeconds =
+      secondsWithinRadius(timeline.initialPosition, timeline.finalPosition, timeline.movementSeconds, leader.position, config.leaderHealingRadius) +
+      (leaderEndsInArea ? stoppedSeconds : 0);
+    elapsedByUnit.set(unit.unitId, {
+      leaderAreaSeconds,
+      leaderEndsInArea,
+      restSeconds: unit.unitType === "Melee" ? stoppedSeconds : 0,
+      restEndsStopped: unit.unitType === "Melee" && stoppedSeconds > 0,
+      resetTimersBeforeHealing: timeline.activeStartSeconds > 0
+    });
+  }
+  return elapsedByUnit;
 }
 
 export function tickRespawns(state: BattleState, deltaSeconds: number): void {
@@ -208,6 +296,35 @@ function nearestInRange(position: Vec2, targets: AttackTarget[], rangeSq: number
     }
   }
   return nearest;
+}
+
+function secondsWithinRadius(
+  start: Vec2,
+  end: Vec2,
+  durationSeconds: number,
+  center: Vec2,
+  radius: number
+): number {
+  if (durationSeconds <= 0) {
+    return 0;
+  }
+  const directionX = end.x - start.x;
+  const directionY = end.y - start.y;
+  const fromCenterX = start.x - center.x;
+  const fromCenterY = start.y - center.y;
+  const directionLengthSq = directionX * directionX + directionY * directionY;
+  if (directionLengthSq <= Number.EPSILON) {
+    return distanceSq(start, center) <= radius * radius ? durationSeconds : 0;
+  }
+  const projection = fromCenterX * directionX + fromCenterY * directionY;
+  const discriminant = projection * projection - directionLengthSq * (distanceSq(start, center) - radius * radius);
+  if (discriminant < 0) {
+    return 0;
+  }
+  const root = Math.sqrt(discriminant);
+  const entry = Math.max(0, Math.min(1, (-projection - root) / directionLengthSq));
+  const exit = Math.max(0, Math.min(1, (-projection + root) / directionLengthSq));
+  return Math.max(0, exit - entry) * durationSeconds;
 }
 
 function applyDamage(target: AttackTarget, damage: number, config: BattleConfig): void {

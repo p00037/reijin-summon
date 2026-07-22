@@ -1,9 +1,9 @@
 import { createDefaultBattleConfig } from "../core/battleConfig";
-import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
-import type { BattleCommand, BattleConfig, BattleState, MatchResult, TeamId } from "../core/types";
+import { createDefaultBattleState, findLeader, findUnit, isUnitAlive } from "../core/battleState";
+import type { BattleCommand, BattleConfig, BattleState, MatchResult, TeamId, UnitId } from "../core/types";
 import { countCompletedElementals, removeDestroyedElementals, tickElementalBuilds, tryBeginElementalBuild } from "./elementalSystem";
 import { canSummon, tickSummonGauges, tickSummonedUnits, tryExecuteSummon } from "./summonSystem";
-import { applyMoveCommand, tickCombat, tickMovement, tickRespawns, tickUnitHealing } from "./unitSystem";
+import { applyMoveCommand, calculateUnitHealingElapsed, tickCombat, tickMovement, tickRespawns, tickUnitHealing } from "./unitSystem";
 
 export class GameSession {
   readonly config: BattleConfig;
@@ -41,11 +41,13 @@ export class GameSession {
       return;
     }
 
+    const activityStarts = activityStartSecondsByUnit(this.state, deltaSeconds);
     this.state.remainingSeconds = Math.max(0, this.state.remainingSeconds - deltaSeconds);
     tickElementalBuilds(this.state, this.config, deltaSeconds);
     tickSummonGauges(this.state, this.config, deltaSeconds);
-    tickMovement(this.state, this.config, deltaSeconds);
-    tickUnitHealing(this.state, this.config, deltaSeconds);
+    const movementTimelines = tickMovement(this.state, this.config, deltaSeconds, activityStarts);
+    const healingElapsed = calculateUnitHealingElapsed(this.state, this.config, movementTimelines);
+    tickUnitHealing(this.state, this.config, deltaSeconds, healingElapsed);
     tickRespawns(this.state, deltaSeconds);
     tickCombat(this.state, this.config, deltaSeconds);
     tickSummonedUnits(this.state, this.config, deltaSeconds);
@@ -64,6 +66,22 @@ export class GameSession {
   private updateResult(): void {
     this.state.result = determineResult(this.state);
   }
+}
+
+function activityStartSecondsByUnit(state: BattleState, deltaSeconds: number): ReadonlyMap<UnitId, number> {
+  const offsets = new Map<UnitId, number>();
+  for (const unit of state.units) {
+    if (!isUnitAlive(unit) || unit.mode === "Defeated") {
+      offsets.set(unit.unitId, deltaSeconds);
+      continue;
+    }
+    if (unit.mode === "BuildingElemental") {
+      offsets.set(unit.unitId, Math.min(deltaSeconds, Math.max(0, unit.buildTimerSeconds)));
+      continue;
+    }
+    offsets.set(unit.unitId, 0);
+  }
+  return offsets;
 }
 
 function determineResult(state: BattleState): MatchResult {
