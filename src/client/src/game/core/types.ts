@@ -45,7 +45,6 @@ export type UnitStats = {
 export type BattleConfig = {
   matchDurationSeconds: number;
   leaderMaxHp: number;
-  elementalBuildSeconds: number;
   leaderHealingIntervalSeconds: number;
   leaderHealingPercent: number;
   keeperRestHealingIntervalSeconds: number;

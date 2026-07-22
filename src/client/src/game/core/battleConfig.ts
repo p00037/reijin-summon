@@ -34,7 +34,6 @@ export function createDefaultBattleConfig(): BattleConfig {
   return {
     matchDurationSeconds: 300,
     leaderMaxHp: 2000,
-    elementalBuildSeconds: 5,
     leaderHealingIntervalSeconds: 2,
     leaderHealingPercent: 0.1,
     keeperRestHealingIntervalSeconds: 1.5,
