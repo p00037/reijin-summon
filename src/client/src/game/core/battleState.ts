@@ -96,6 +96,8 @@ function createUnit(
     buildTimerSeconds: 0,
     respawnTimerSeconds: 0,
     attackTimerSeconds: 0,
+    leaderHealingElapsedSeconds: 0,
+    restHealingElapsedSeconds: 0,
     pendingElementalId: null
   };
 }

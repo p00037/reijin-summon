@@ -27,6 +27,49 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(config.elementalPlacementRadius, 0.30375);
   assert.equal(config.elementalContactRadius, 0.30375);
   assert.equal(config.contactSlowRadius, 0.45);
+  assert.deepEqual(
+    {
+      Melee: config.statsByType.Melee,
+      Speed: config.statsByType.Speed,
+      Ranged: config.statsByType.Ranged
+    },
+    {
+      Melee: {
+        maxHp: 1100,
+        moveSpeed: 8.2 / 40,
+        attackDamage: 61,
+        attackRange: 1.25,
+        attackIntervalSeconds: 1.2,
+        elementalBuildSeconds: 5.7,
+        elementalAttackMultiplier: 2
+      },
+      Speed: {
+        maxHp: 1060,
+        moveSpeed: 8.2 / 22,
+        attackDamage: 53,
+        attackRange: 1,
+        attackIntervalSeconds: 0.8,
+        elementalBuildSeconds: 7.2,
+        elementalAttackMultiplier: 1
+      },
+      Ranged: {
+        maxHp: 1025,
+        moveSpeed: 8.2 / 32,
+        attackDamage: 36,
+        attackRange: 3.5,
+        attackIntervalSeconds: 1.4,
+        elementalBuildSeconds: 6.7,
+        elementalAttackMultiplier: 1
+      }
+    }
+  );
+  assert.equal(config.elementalMaxHp, 1000);
+  assert.equal(config.leaderHealingIntervalSeconds, 2);
+  assert.equal(config.leaderHealingPercent, 0.1);
+  assert.equal(config.keeperRestHealingIntervalSeconds, 1.5);
+  assert.equal(config.keeperRestHealingAmount, 60);
+  assert.equal(findUnit(state, "PlayerMelee").leaderHealingElapsedSeconds, 0);
+  assert.equal(findUnit(state, "PlayerMelee").restHealingElapsedSeconds, 0);
 });
 
 test("既定設定と既定状態は可変のステータス参照を共有しない", () => {
@@ -35,21 +78,21 @@ test("既定設定と既定状態は可変のステータス参照を共有し�
 
   firstConfig.statsByType.Melee.maxHp = 1;
 
-  assert.equal(secondConfig.statsByType.Melee.maxHp, 350);
-  assert.equal(createDefaultBattleConfig().statsByType.Melee.maxHp, 350);
+  assert.equal(secondConfig.statsByType.Melee.maxHp, 1100);
+  assert.equal(createDefaultBattleConfig().statsByType.Melee.maxHp, 1100);
 
   const firstState = createDefaultBattleState(createDefaultBattleConfig());
   const secondState = createDefaultBattleState(createDefaultBattleConfig());
 
   findUnit(firstState, "PlayerMelee").stats.maxHp = 1;
 
-  assert.equal(findUnit(secondState, "PlayerMelee").stats.maxHp, 350);
+  assert.equal(findUnit(secondState, "PlayerMelee").stats.maxHp, 1100);
 
   const sameState = createDefaultBattleState(createDefaultBattleConfig());
 
   findUnit(sameState, "PlayerMelee").stats.maxHp = 1;
 
-  assert.equal(findUnit(sameState, "CpuMelee").stats.maxHp, 350);
+  assert.equal(findUnit(sameState, "CpuMelee").stats.maxHp, 1100);
 });
 
 const validPlayerMoveCommand: BattleCommand = {

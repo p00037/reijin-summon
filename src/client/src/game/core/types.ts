@@ -38,12 +38,18 @@ export type UnitStats = {
   attackDamage: number;
   attackRange: number;
   attackIntervalSeconds: number;
+  elementalBuildSeconds: number;
+  elementalAttackMultiplier: number;
 };
 
 export type BattleConfig = {
   matchDurationSeconds: number;
   leaderMaxHp: number;
   elementalBuildSeconds: number;
+  leaderHealingIntervalSeconds: number;
+  leaderHealingPercent: number;
+  keeperRestHealingIntervalSeconds: number;
+  keeperRestHealingAmount: number;
   elementalPlacementRadius: number;
   elementalContactRadius: number;
   maxElementalsPerTeam: number;
@@ -97,6 +103,8 @@ export type UnitState = {
   buildTimerSeconds: number;
   respawnTimerSeconds: number;
   attackTimerSeconds: number;
+  leaderHealingElapsedSeconds: number;
+  restHealingElapsedSeconds: number;
   pendingElementalId: ElementalId | null;
 };
 

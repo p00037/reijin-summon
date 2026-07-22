@@ -2,25 +2,31 @@ import type { BattleConfig, UnitStats, UnitType } from "./types";
 
 const statsByType: Record<UnitType, UnitStats> = {
   Melee: {
-    maxHp: 350,
+    maxHp: 1100,
     moveSpeed: 8.2 / 40,
-    attackDamage: 45,
+    attackDamage: 61,
     attackRange: 1.25,
-    attackIntervalSeconds: 1.2
+    attackIntervalSeconds: 1.2,
+    elementalBuildSeconds: 5.7,
+    elementalAttackMultiplier: 2
   },
   Speed: {
-    maxHp: 250,
+    maxHp: 1060,
     moveSpeed: 8.2 / 22,
-    attackDamage: 30,
+    attackDamage: 53,
     attackRange: 1,
-    attackIntervalSeconds: 0.8
+    attackIntervalSeconds: 0.8,
+    elementalBuildSeconds: 7.2,
+    elementalAttackMultiplier: 1
   },
   Ranged: {
-    maxHp: 220,
+    maxHp: 1025,
     moveSpeed: 8.2 / 32,
-    attackDamage: 35,
+    attackDamage: 36,
     attackRange: 3.5,
-    attackIntervalSeconds: 1.4
+    attackIntervalSeconds: 1.4,
+    elementalBuildSeconds: 6.7,
+    elementalAttackMultiplier: 1
   }
 };
 
@@ -29,6 +35,10 @@ export function createDefaultBattleConfig(): BattleConfig {
     matchDurationSeconds: 300,
     leaderMaxHp: 2000,
     elementalBuildSeconds: 5,
+    leaderHealingIntervalSeconds: 2,
+    leaderHealingPercent: 0.1,
+    keeperRestHealingIntervalSeconds: 1.5,
+    keeperRestHealingAmount: 60,
     elementalPlacementRadius: 0.30375,
     elementalContactRadius: 0.30375,
     maxElementalsPerTeam: 6,
@@ -41,7 +51,7 @@ export function createDefaultBattleConfig(): BattleConfig {
     summonedUnitHealthDecayPerSecond: 120,
     summonedUnitMoveSpeed: 8.2 / 12,
     unitRespawnSeconds: 10,
-    elementalMaxHp: 120,
+    elementalMaxHp: 1000,
     directLeaderDamageMultiplier: 0.25,
     playerLeaderPosition: { x: 0, y: -4.1 },
     cpuLeaderPosition: { x: 0, y: 4.1 },

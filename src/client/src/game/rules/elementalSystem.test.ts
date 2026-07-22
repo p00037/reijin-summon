@@ -89,7 +89,7 @@ test("completed builds create an elemental at the unit position", () => {
   assert.equal(state.elementals.length, 1);
   assert.equal(state.elementals[0].elementalId, "Elemental1");
   assert.equal(state.elementals[0].team, "Player");
-  assert.equal(state.elementals[0].currentHp, 120);
+  assert.equal(state.elementals[0].currentHp, 1000);
 });
 
 test("non-active or dead units cannot begin elemental builds", () => {
