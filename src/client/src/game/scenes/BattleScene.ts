@@ -30,6 +30,11 @@ import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
+import {
+  elementButtonTextureKey,
+  summonButtonTextureKey
+} from "../ui/battleHudModel";
+import { calculateBattleLayout } from "../ui/battleLayout";
 
 const maxFrameDeltaSeconds = 1 / 20;
 const selectionRadiusPx = 28;
@@ -37,7 +42,8 @@ const summonerTextureKey = "summoner";
 const elementalTextureKey = "elemental-crystal";
 const summonerSpriteDisplaySize = 64;
 const elementalSpriteDisplaySize = 15;
-const battlefieldAspectRatio = 1.4;
+const elementButtonPath = "/assets/buttons/element_button.png";
+const summonButtonPath = "/assets/buttons/summon_button.png";
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
@@ -70,6 +76,8 @@ export class BattleScene extends Phaser.Scene {
     this.load.image(summonedCardPresentation.textureKey, summonedCardPresentation.path);
     this.load.image(summonerTextureKey, "/assets/summoners/summoner.png");
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
+    this.load.image(elementButtonTextureKey, elementButtonPath);
+    this.load.image(summonButtonTextureKey, summonButtonPath);
   }
 
   create(): void {
@@ -95,12 +103,12 @@ export class BattleScene extends Phaser.Scene {
     this.battlefieldOverlay.setDepth(battleStatusOverlayDepth);
     this.createLeaderSprites();
     this.createUnitImages();
-    this.hud = new BattleHud(this, {
+    const layout = calculateBattleLayout(this.scale.width, this.scale.height);
+    this.hud = new BattleHud(this, layout, {
       onBuild: () => this.handleBuild(),
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
-    this.hud.setStatus("Drag a player unit to move.");
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer));
@@ -135,13 +143,11 @@ export class BattleScene extends Phaser.Scene {
 
     const unit = this.findPlayerUnitNear(pointer.x, pointer.y);
     if (!unit) {
-      this.hud.setStatus("Drag a player unit to move.");
       return;
     }
 
     this.selectedUnitId = unit.unitId;
     this.draggedUnitId = unit.unitId;
-    this.hud.setStatus(`${unit.unitType} selected. Drag to move.`);
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
@@ -169,7 +175,6 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.session.applyCommand(transition.command);
-    this.hud.setStatus(`${unit.unitType} moving.`);
   }
 
   private handleBuild(): void {
@@ -177,17 +182,14 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!this.selectedUnitId) {
-      this.hud.setStatus("Select a player unit before building.");
       return;
     }
 
     const unit = this.session.state.units.find((candidate) => candidate.unitId === this.selectedUnitId);
     if (!unit || unit.mode !== "Active" || !isUnitAlive(unit)) {
-      this.hud.setStatus("Only active player units can build.");
       return;
     }
     if (!canPlaceElementalAtUnit(this.session.state, this.session.config, this.selectedUnitId)) {
-      this.hud.setStatus("Too close to another elemental.");
       return;
     }
 
@@ -196,7 +198,6 @@ export class BattleScene extends Phaser.Scene {
       team: "Player",
       unitId: this.selectedUnitId
     });
-    this.hud.setStatus(`${unit.unitType} is building an elemental.`);
   }
 
   private handleSummon(): void {
@@ -204,22 +205,10 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!this.session.canSummon("Player")) {
-      this.hud.setStatus(this.summonBlockerText());
       return;
     }
 
     this.session.applyCommand({ commandType: "Summon", team: "Player" });
-    this.hud.setStatus("Summoned unit deployed.");
-  }
-
-  private summonBlockerText(): string {
-    if (findLeader(this.session.state, "Player").currentHp <= 0) {
-      return "Cannot summon while the leader is defeated.";
-    }
-    if (this.session.countCompletedElementals("Player") === 0) {
-      return "Build an elemental to charge the summon gauge.";
-    }
-    return `Summon gauge: ${Math.floor(this.session.state.playerSummonGauge * 100)}%.`;
   }
 
   private findPlayerUnitNear(x: number, y: number): (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null {
@@ -255,7 +244,11 @@ export class BattleScene extends Phaser.Scene {
     this.drawUnits(state.units);
     this.drawAttackEvents(state);
 
-    this.hud.update(state, this.selectedUnitId);
+    this.hud.update(
+      state,
+      this.selectedUnitId,
+      this.session.canSummon("Player")
+    );
   }
 
   private drawField(): void {
@@ -596,12 +589,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private fieldBounds(): Phaser.Geom.Rectangle {
-    const verticalPadding = 20;
-    const availableHeight = this.hud.top - verticalPadding * 2;
-    const availableWidth = this.scale.width - 68;
-    const height = Math.min(availableHeight, availableWidth / battlefieldAspectRatio);
-    const width = height * battlefieldAspectRatio;
-    return new Phaser.Geom.Rectangle((this.scale.width - width) / 2, verticalPadding, width, height);
+    const field = calculateBattleLayout(this.scale.width, this.scale.height).field;
+    return new Phaser.Geom.Rectangle(field.x, field.y, field.width, field.height);
   }
 }
 
