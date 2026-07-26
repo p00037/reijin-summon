@@ -74,6 +74,10 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
       continue;
     }
     summoned.attackTimerSeconds = Math.max(0, summoned.attackTimerSeconds - deltaSeconds);
+    summoned.leaderAttackTimerSeconds = Math.max(
+      0,
+      summoned.leaderAttackTimerSeconds - deltaSeconds
+    );
 
     const enemyLeader = findLeader(state, oppositeTeam(summoned.team));
     summoned.destination = { ...enemyLeader.position };
@@ -81,12 +85,11 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     const touchingUnits = enemyUnitsInContact(state, config, summoned);
     const touchingSummonedUnits = enemySummonedUnitsInContact(state, config, summoned);
     const touchingElementals = enemyElementalsInContact(state, config, summoned);
-    const hasAttackTarget =
-      touchingLeader ||
+    const touchingNormalTargets =
       touchingUnits.length > 0 ||
       touchingSummonedUnits.length > 0 ||
       touchingElementals.length > 0;
-    if (hasAttackTarget && summoned.attackTimerSeconds <= Number.EPSILON) {
+    if (touchingNormalTargets && summoned.attackTimerSeconds <= Number.EPSILON) {
       for (const target of touchingUnits) {
         target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage);
       }
@@ -96,10 +99,12 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
       for (const target of touchingElementals) {
         target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage);
       }
-      if (touchingLeader) {
-        enemyLeader.currentHp = Math.max(0, enemyLeader.currentHp - summoned.leaderAttackDamage);
-      }
       summoned.attackTimerSeconds = summoned.attackIntervalSeconds;
+    }
+
+    if (touchingLeader && summoned.leaderAttackTimerSeconds <= Number.EPSILON) {
+      enemyLeader.currentHp = Math.max(0, enemyLeader.currentHp - summoned.leaderAttackDamage);
+      summoned.leaderAttackTimerSeconds = summoned.leaderAttackIntervalSeconds;
     }
 
     if (!touchingLeader) {
