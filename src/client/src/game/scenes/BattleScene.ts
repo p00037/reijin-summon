@@ -1,7 +1,10 @@
 import Phaser from "phaser";
 import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive } from "../core/battleState";
-import { canCommitDragMovement, shouldKeepMoveMarker } from "../input/dragMovement";
+import {
+  shouldKeepMoveMarker,
+  transitionDragRelease
+} from "../input/dragMovement";
 import type {
   BattleState,
   ElementalId,
@@ -101,6 +104,9 @@ export class BattleScene extends Phaser.Scene {
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer));
+    this.input.on("pointerupoutside", () => {
+      this.draggedUnitId = null;
+    });
     this.draw();
   }
 
@@ -140,32 +146,29 @@ export class BattleScene extends Phaser.Scene {
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
     const draggedUnitId = this.draggedUnitId;
-    this.draggedUnitId = null;
-    if (!draggedUnitId) {
-      return;
-    }
-
     const unit = this.session.state.units.find(
       (candidate) => candidate.unitId === draggedUnitId
     );
-    const canCommit = canCommitDragMovement({
-      matchInProgress: this.session.state.result === "InProgress",
-      overHud: this.hud.contains(pointer.x, pointer.y),
-      insideBattlefield: this.fieldBounds().contains(pointer.x, pointer.y),
-      targetUnitAlive: unit !== undefined && isUnitAlive(unit)
-    });
-    if (!canCommit || !unit) {
+    const transition = transitionDragRelease(
+      {
+        draggedUnitId,
+        moveMarkers: this.moveMarkers
+      },
+      {
+        matchInProgress: this.session.state.result === "InProgress",
+        overHud: this.hud.contains(pointer.x, pointer.y),
+        insideBattlefield: this.fieldBounds().contains(pointer.x, pointer.y),
+        targetUnitAlive: unit !== undefined && isUnitAlive(unit)
+      },
+      this.screenToWorld(pointer.x, pointer.y)
+    );
+    this.draggedUnitId = transition.draggedUnitId;
+    this.moveMarkers = transition.moveMarkers;
+    if (!transition.command || !unit) {
       return;
     }
 
-    const targetPosition = this.screenToWorld(pointer.x, pointer.y);
-    this.session.applyCommand({
-      commandType: "MoveUnit",
-      team: "Player",
-      unitId: draggedUnitId,
-      targetPosition
-    });
-    this.moveMarkers.set(draggedUnitId, { ...targetPosition });
+    this.session.applyCommand(transition.command);
     this.hud.setStatus(`${unit.unitType} moving.`);
   }
 
