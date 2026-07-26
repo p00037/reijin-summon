@@ -414,6 +414,138 @@ test("HPが0の自陣営召喚獣は召喚ゲージの増加を妨げない", ()
   assert.ok(state.playerSummonGauge > 0);
 });
 
+test("summoned units damage enemy elementals after their attack timer expires", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addSummonedUnit(state, "Player", 1000);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.destination = { x: 0, y: 0 };
+  summoned.attackDamage = 99;
+  summoned.attackTimerSeconds = 2;
+  summoned.moveSpeed = 0;
+  summoned.healthDecayPerSecond = 0;
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.1, y: 0 },
+    maxHp: 1000,
+    currentHp: 1000,
+    isComplete: true
+  });
+
+  tickSummonedUnits(state, config, 1.99);
+  assert.equal(state.elementals[0].currentHp, 1000);
+
+  tickSummonedUnits(state, config, 0.01);
+  assert.equal(state.elementals[0].currentHp, 901);
+  assert.equal(summoned.attackTimerSeconds, 2);
+});
+
+test("summoned units do not target friendly, incomplete, destroyed, or distant elementals", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addSummonedUnit(state, "Player", 1000);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.attackDamage = 99;
+  summoned.healthDecayPerSecond = 0;
+  state.elementals.push(
+    { elementalId: "Elemental1", team: "Player", position: { x: 0, y: 0 }, maxHp: 1000, currentHp: 1000, isComplete: true },
+    { elementalId: "Elemental2", team: "Cpu", position: { x: 0, y: 0 }, maxHp: 1000, currentHp: 1000, isComplete: false },
+    { elementalId: "Elemental3", team: "Cpu", position: { x: 0, y: 0 }, maxHp: 1000, currentHp: 0, isComplete: true },
+    { elementalId: "Elemental4", team: "Cpu", position: { x: 2, y: 0 }, maxHp: 1000, currentHp: 1000, isComplete: true }
+  );
+
+  tickSummonedUnits(state, config, 0.1);
+
+  assert.deepEqual(
+    state.elementals.map((elemental) => elemental.currentHp),
+    [1000, 1000, 0, 1000]
+  );
+});
+
+test("summoned units ignore destroyed elementals for attacking and contact slowdown", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Cpu").position = { x: 7, y: 0 };
+  addSummonedUnit(state, "Player", 1000);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.destination = { x: 7, y: 0 };
+  summoned.attackTimerSeconds = 0;
+  summoned.moveSpeed = 1;
+  summoned.healthDecayPerSecond = 0;
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.1, y: 0 },
+    maxHp: 1000,
+    currentHp: 0,
+    isComplete: true
+  });
+
+  tickSummonedUnits(state, config, 1);
+
+  assert.equal(summoned.attackTimerSeconds, 0);
+  assert.equal(summoned.position.x, 1);
+});
+
+test("summoned units damage enemy units and enemy elementals simultaneously while moving slowly", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Cpu").position = { x: 7, y: 0 };
+  addSummonedUnit(state, "Player", 1000);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.destination = { x: 7, y: 0 };
+  summoned.moveSpeed = 1;
+  summoned.attackDamage = 99;
+  summoned.healthDecayPerSecond = 0;
+  const enemyUnit = state.units.find((unit) => unit.unitId === "CpuMelee")!;
+  enemyUnit.position = { x: 0.1, y: 0 };
+  enemyUnit.destination = { ...enemyUnit.position };
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.1, y: 0 },
+    maxHp: 1000,
+    currentHp: 1000,
+    isComplete: true
+  });
+
+  tickSummonedUnits(state, config, 1);
+
+  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 99);
+  assert.equal(state.elementals[0].currentHp, 901);
+  assert.equal(summoned.position.x, config.contactSlowMultiplier);
+});
+
+test("summoned units slow down when only an enemy elemental is in contact", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Cpu").position = { x: 7, y: 0 };
+  addSummonedUnit(state, "Player", 1000);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.destination = { x: 7, y: 0 };
+  summoned.moveSpeed = 1;
+  summoned.attackTimerSeconds = 10;
+  summoned.healthDecayPerSecond = 0;
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.1, y: 0 },
+    maxHp: 1000,
+    currentHp: 1000,
+    isComplete: true
+  });
+
+  tickSummonedUnits(state, config, 1);
+
+  assert.equal(summoned.position.x, config.contactSlowMultiplier);
+});
+
 function addCompletedPlayerElementals(state: ReturnType<typeof createDefaultBattleState>): void {
   state.elementals.push(
     { elementalId: "Elemental1", team: "Player", position: { x: -5, y: 0 }, maxHp: 120, currentHp: 120, isComplete: true },

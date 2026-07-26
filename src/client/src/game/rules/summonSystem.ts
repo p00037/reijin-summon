@@ -1,5 +1,5 @@
 import { findLeader, getSummonGauge, isUnitAlive, oppositeTeam, setSummonGauge } from "../core/battleState";
-import type { BattleConfig, BattleState, SummonedUnitState, TeamId, UnitState } from "../core/types";
+import type { BattleConfig, BattleState, ElementalState, SummonedUnitState, TeamId, UnitState } from "../core/types";
 import { distance, moveTowards } from "../core/vector";
 import { calculateSummonArea } from "./areaCalculator";
 import { completedElementalsForTeam } from "./elementalSystem";
@@ -78,12 +78,20 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     const touchingLeader = distance(summoned.position, enemyLeader.position) <= config.contactSlowRadius;
     const touchingUnits = enemyUnitsInContact(state, config, summoned);
     const touchingSummonedUnits = enemySummonedUnitsInContact(state, config, summoned);
-    const hasAttackTarget = touchingLeader || touchingUnits.length > 0 || touchingSummonedUnits.length > 0;
+    const touchingElementals = enemyElementalsInContact(state, config, summoned);
+    const hasAttackTarget =
+      touchingLeader ||
+      touchingUnits.length > 0 ||
+      touchingSummonedUnits.length > 0 ||
+      touchingElementals.length > 0;
     if (hasAttackTarget && summoned.attackTimerSeconds <= Number.EPSILON) {
       for (const target of touchingUnits) {
         target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage);
       }
       for (const target of touchingSummonedUnits) {
+        target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage);
+      }
+      for (const target of touchingElementals) {
         target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage);
       }
       if (touchingLeader) {
@@ -93,7 +101,12 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     }
 
     if (!touchingLeader) {
-      const speedMultiplier = touchingUnits.length > 0 || touchingSummonedUnits.length > 0 ? config.contactSlowMultiplier : 1;
+      const speedMultiplier =
+        touchingUnits.length > 0 ||
+        touchingSummonedUnits.length > 0 ||
+        touchingElementals.length > 0
+          ? config.contactSlowMultiplier
+          : 1;
       summoned.position = moveTowards(summoned.position, summoned.destination, summoned.moveSpeed * speedMultiplier * deltaSeconds);
     }
   }
@@ -104,6 +117,21 @@ function enemyUnitsInContact(state: BattleState, config: BattleConfig, summoned:
   const enemyTeam = oppositeTeam(summoned.team);
   return state.units.filter(
     (unit) => unit.team === enemyTeam && isUnitAlive(unit) && distance(summoned.position, unit.position) <= config.contactSlowRadius
+  );
+}
+
+function enemyElementalsInContact(
+  state: BattleState,
+  config: BattleConfig,
+  summoned: SummonedUnitState
+): ElementalState[] {
+  const enemyTeam = oppositeTeam(summoned.team);
+  return state.elementals.filter(
+    (elemental) =>
+      elemental.team === enemyTeam &&
+      elemental.isComplete &&
+      elemental.currentHp > 0 &&
+      distance(summoned.position, elemental.position) <= config.contactSlowRadius
   );
 }
 
