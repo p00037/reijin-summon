@@ -229,7 +229,7 @@ export class BattleHud {
     if (enabled) {
       button.background.setInteractive({ useHandCursor: true });
     } else {
-      button.background.disableInteractive();
+      button.background.setFillStyle(0x1e293b, 1).disableInteractive(true);
     }
   }
 }
