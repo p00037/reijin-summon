@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive } from "../core/battleState";
+import { canCommitDragMovement, shouldKeepMoveMarker } from "../input/dragMovement";
 import type {
   BattleState,
   ElementalId,
@@ -51,6 +52,8 @@ export class BattleScene extends Phaser.Scene {
   private summonedCardPositions = new Map<number, Vec2>();
   private summonedCardRotations = new Map<number, number>();
   private selectedUnitId: PlayerUnitId | null = null;
+  private draggedUnitId: PlayerUnitId | null = null;
+  private moveMarkers = new Map<PlayerUnitId, Vec2>();
   private cpuPlanTimerSeconds = 0;
 
   constructor() {
@@ -79,6 +82,8 @@ export class BattleScene extends Phaser.Scene {
     this.summonedCardPositions = new Map();
     this.summonedCardRotations = new Map();
     this.selectedUnitId = null;
+    this.draggedUnitId = null;
+    this.moveMarkers = new Map();
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
 
@@ -92,9 +97,10 @@ export class BattleScene extends Phaser.Scene {
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
-    this.hud.setStatus("Select unit, then click field.");
+    this.hud.setStatus("Drag a player unit to move.");
 
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointer(pointer));
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
+    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer));
     this.draw();
   }
 
@@ -115,26 +121,40 @@ export class BattleScene extends Phaser.Scene {
     this.draw();
   }
 
-  private handlePointer(pointer: Phaser.Input.Pointer): void {
+  private handlePointerDown(pointer: Phaser.Input.Pointer): void {
+    this.draggedUnitId = null;
     if (this.hud.contains(pointer.x, pointer.y) || this.session.state.result !== "InProgress") {
       return;
     }
 
-    const clickedUnit = this.findPlayerUnitNear(pointer.x, pointer.y);
-    if (clickedUnit) {
-      this.selectedUnitId = clickedUnit.unitId;
-      this.hud.setStatus(`${clickedUnit.unitType} selected.`);
+    const unit = this.findPlayerUnitNear(pointer.x, pointer.y);
+    if (!unit) {
+      this.hud.setStatus("Drag a player unit to move.");
       return;
     }
 
-    if (!this.selectedUnitId) {
-      this.hud.setStatus("Select a player unit first.");
+    this.selectedUnitId = unit.unitId;
+    this.draggedUnitId = unit.unitId;
+    this.hud.setStatus(`${unit.unitType} selected. Drag to move.`);
+  }
+
+  private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    const draggedUnitId = this.draggedUnitId;
+    this.draggedUnitId = null;
+    if (!draggedUnitId) {
       return;
     }
 
-    const unit = this.session.state.units.find((candidate) => candidate.unitId === this.selectedUnitId);
-    if (!unit || !isUnitAlive(unit)) {
-      this.hud.setStatus("That unit is waiting to respawn.");
+    const unit = this.session.state.units.find(
+      (candidate) => candidate.unitId === draggedUnitId
+    );
+    const canCommit = canCommitDragMovement({
+      matchInProgress: this.session.state.result === "InProgress",
+      overHud: this.hud.contains(pointer.x, pointer.y),
+      insideBattlefield: this.fieldBounds().contains(pointer.x, pointer.y),
+      targetUnitAlive: unit !== undefined && isUnitAlive(unit)
+    });
+    if (!canCommit || !unit) {
       return;
     }
 
@@ -142,9 +162,10 @@ export class BattleScene extends Phaser.Scene {
     this.session.applyCommand({
       commandType: "MoveUnit",
       team: "Player",
-      unitId: this.selectedUnitId,
+      unitId: draggedUnitId,
       targetPosition
     });
+    this.moveMarkers.set(draggedUnitId, { ...targetPosition });
     this.hud.setStatus(`${unit.unitType} moving.`);
   }
 
@@ -226,6 +247,8 @@ export class BattleScene extends Phaser.Scene {
     this.drawLeaders(state.leaders);
     this.drawElementals(state.elementals);
     this.drawSummonedUnits(state.summonedUnits);
+    this.pruneMoveMarkers(state.units);
+    this.drawMoveMarkers();
     this.drawUnits(state.units);
     this.drawAttackEvents(state);
 
@@ -321,6 +344,25 @@ export class BattleScene extends Phaser.Scene {
       this.battlefieldOverlay.lineStyle(2, color, 1);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 30);
       this.drawHpBar(screen.x - 28, screen.y + 34, 56, summoned.currentHp / summoned.maxHp, color);
+    }
+  }
+
+  private pruneMoveMarkers(units: UnitState[]): void {
+    for (const [unitId] of this.moveMarkers) {
+      const unit = units.find((candidate) => candidate.unitId === unitId);
+      if (!unit || !shouldKeepMoveMarker(unit)) {
+        this.moveMarkers.delete(unitId);
+      }
+    }
+  }
+
+  private drawMoveMarkers(): void {
+    this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.9);
+    for (const marker of this.moveMarkers.values()) {
+      const screen = this.worldToScreen(marker);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 10);
+      this.battlefieldOverlay.lineBetween(screen.x - 6, screen.y, screen.x + 6, screen.y);
+      this.battlefieldOverlay.lineBetween(screen.x, screen.y - 6, screen.x, screen.y + 6);
     }
   }
 
