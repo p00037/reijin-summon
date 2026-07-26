@@ -488,7 +488,7 @@ test("通常ユニットは敵リーダーへの攻撃を1秒ごとに行う", (
   assert.equal(attacker.leaderAttackTimerSeconds, 1);
 });
 
-test("通常ユニットは通常ユニット攻撃後に通常ユニット用0.5秒タイマーを設定する", () => {
+test("通常ユニットは敵召喚獣への攻撃後に通常対象用0.5秒タイマーを設定する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const attacker = findUnit(state, "PlayerRanged");
