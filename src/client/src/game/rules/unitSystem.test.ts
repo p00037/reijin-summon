@@ -66,12 +66,16 @@ test("撃破された通常ユニットは復活タイマー後にスポーン�
   unit.mode = "Defeated";
   unit.respawnTimerSeconds = 10;
   unit.position = { x: 0, y: 0 };
+  unit.attackTimerSeconds = 0.25;
+  unit.leaderAttackTimerSeconds = 0.75;
 
   tickRespawns(state, 10);
 
   assert.equal(unit.mode, "Active");
   assert.equal(unit.currentHp, unit.stats.maxHp);
   assert.deepEqual(unit.position, unit.spawnPosition);
+  assert.equal(unit.attackTimerSeconds, 0);
+  assert.equal(unit.leaderAttackTimerSeconds, 0);
 });
 
 test("戦闘tickは撃破済みユニットの復活タイマーを巻き戻さない", () => {
@@ -428,4 +432,153 @@ test("attack timer gates combat damage", () => {
   tickCombat(state, config, 0.25);
 
   assert.equal(enemy.currentHp, enemy.stats.maxHp - attacker.stats.attackDamage);
+});
+
+test("通常ユニットは通常ユニットへの攻撃を0.5秒ごとに行う", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerMelee");
+  const enemy = findUnit(state, "CpuMelee");
+  attacker.position = { x: 0, y: 0 };
+  attacker.destination = { ...attacker.position };
+  enemy.position = { x: 1, y: 0 };
+  enemy.destination = { ...enemy.position };
+  for (const ally of state.units.filter((unit) => unit.team === "Player" && unit.unitId !== attacker.unitId)) {
+    ally.attackTimerSeconds = 10;
+    ally.leaderAttackTimerSeconds = 10;
+  }
+  for (const candidate of state.units.filter(
+    (unit) => unit.team === "Cpu" && unit.unitId !== enemy.unitId
+  )) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+
+  tickCombat(state, config, 0);
+  const afterFirstAttack = enemy.currentHp;
+  tickCombat(state, config, 0.49);
+  assert.equal(enemy.currentHp, afterFirstAttack);
+  tickCombat(state, config, 0.01);
+
+  assert.equal(enemy.currentHp, afterFirstAttack - attacker.stats.attackDamage);
+  assert.equal(attacker.attackTimerSeconds, 0.5);
+});
+
+test("通常ユニットは敵リーダーへの攻撃を1秒ごとに行う", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerMelee");
+  attacker.position = { x: 0, y: 4.1 };
+  attacker.destination = { ...attacker.position };
+  for (const enemy of state.units.filter((unit) => unit.team === "Cpu")) {
+    enemy.currentHp = 0;
+    enemy.mode = "Defeated";
+  }
+
+  tickCombat(state, config, 0);
+  const afterFirstAttack = findLeader(state, "Cpu").currentHp;
+  tickCombat(state, config, 0.99);
+  assert.equal(findLeader(state, "Cpu").currentHp, afterFirstAttack);
+  tickCombat(state, config, 0.01);
+
+  assert.equal(
+    findLeader(state, "Cpu").currentHp,
+    afterFirstAttack - attacker.stats.attackDamage * config.directLeaderDamageMultiplier
+  );
+  assert.equal(attacker.leaderAttackTimerSeconds, 1);
+});
+
+test("通常ユニットは通常ユニット攻撃後に通常ユニット用0.5秒タイマーを設定する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerRanged");
+  attacker.position = { x: 0, y: 0 };
+  attacker.destination = { ...attacker.position };
+  findLeader(state, "Cpu").position = { x: 10, y: 0 };
+  for (const enemy of state.units.filter((unit) => unit.team === "Cpu")) {
+    enemy.currentHp = 0;
+    enemy.mode = "Defeated";
+  }
+  state.summonedUnits.push({
+    summonedUnitId: 1,
+    team: "Cpu",
+    position: { x: 1, y: 0 },
+    destination: { x: 0, y: 0 },
+    maxHp: 1000,
+    currentHp: 1000,
+    attackDamage: 99,
+    leaderAttackDamage: 300,
+    attackIntervalSeconds: 0.5,
+    attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
+    moveSpeed: 0,
+    healthDecayPerSecond: 0
+  });
+
+  tickCombat(state, config, 0);
+
+  assert.equal(state.summonedUnits[0].currentHp, 1000 - attacker.stats.attackDamage);
+  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.equal(attacker.leaderAttackTimerSeconds, 0);
+});
+
+test("通常ユニットは通常ユニット用と敵リーダー用のタイマーを独立して減らす", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerRanged");
+  const enemy = findUnit(state, "CpuMelee");
+  attacker.position = { x: 0, y: 0 };
+  attacker.destination = { ...attacker.position };
+  enemy.position = { x: 0.5, y: 0 };
+  enemy.destination = { ...enemy.position };
+  findLeader(state, "Cpu").position = { x: 2, y: 0 };
+  for (const candidate of state.units.filter(
+    (unit) => unit.team === "Cpu" && unit.unitId !== enemy.unitId
+  )) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+
+  tickCombat(state, config, 0);
+  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.equal(attacker.leaderAttackTimerSeconds, 0);
+
+  enemy.position = { x: 10, y: 0 };
+  tickCombat(state, config, 0);
+  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.equal(attacker.leaderAttackTimerSeconds, 1);
+
+  enemy.position = { x: 0.5, y: 0 };
+  tickCombat(state, config, 0.5);
+  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.equal(attacker.leaderAttackTimerSeconds, 0.5);
+
+  enemy.position = { x: 10, y: 0 };
+  tickCombat(state, config, 10);
+  assert.equal(attacker.attackTimerSeconds, 0);
+  assert.equal(attacker.leaderAttackTimerSeconds, 1);
+});
+
+test("通常ユニットは攻撃対象がなくても両方のタイマーを減らす", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerMelee");
+  attacker.position = { x: -6, y: 0 };
+  attacker.destination = { ...attacker.position };
+  attacker.attackTimerSeconds = 0.25;
+  attacker.leaderAttackTimerSeconds = 0.75;
+  findLeader(state, "Cpu").position = { x: 6, y: 0 };
+  for (const enemy of state.units.filter((unit) => unit.team === "Cpu")) {
+    enemy.currentHp = 0;
+    enemy.mode = "Defeated";
+  }
+
+  tickCombat(state, config, 0.5);
+  assert.equal(attacker.attackTimerSeconds, 0);
+  assert.equal(attacker.leaderAttackTimerSeconds, 0.25);
+
+  tickCombat(state, config, 1);
+  assert.equal(attacker.attackTimerSeconds, 0);
+  assert.equal(attacker.leaderAttackTimerSeconds, 0);
 });

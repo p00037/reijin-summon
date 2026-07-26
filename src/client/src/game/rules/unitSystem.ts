@@ -94,15 +94,18 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       continue;
     }
     unit.attackTimerSeconds = Math.max(0, unit.attackTimerSeconds - deltaSeconds);
-    if (unit.attackTimerSeconds > 0) {
-      continue;
-    }
+    unit.leaderAttackTimerSeconds = Math.max(0, unit.leaderAttackTimerSeconds - deltaSeconds);
     if (!canAttack(state, config, unit)) {
       continue;
     }
 
     const target = findAttackTarget(state, unit);
     if (!target) {
+      continue;
+    }
+
+    const attackTimerSeconds = target.kind === "Leader" ? unit.leaderAttackTimerSeconds : unit.attackTimerSeconds;
+    if (attackTimerSeconds > Number.EPSILON) {
       continue;
     }
 
@@ -116,7 +119,11 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       origin: { ...unit.position },
       targetPosition: { ...target.position }
     });
-    unit.attackTimerSeconds = unit.stats.attackIntervalSeconds;
+    if (target.kind === "Leader") {
+      unit.leaderAttackTimerSeconds = config.unitLeaderAttackIntervalSeconds;
+    } else {
+      unit.attackTimerSeconds = unit.stats.attackIntervalSeconds;
+    }
   }
 
   for (const unit of state.units) {
@@ -232,6 +239,7 @@ export function tickRespawns(state: BattleState, deltaSeconds: number): void {
     unit.position = { ...unit.spawnPosition };
     unit.destination = { ...unit.spawnPosition };
     unit.attackTimerSeconds = 0;
+    unit.leaderAttackTimerSeconds = 0;
     resetUnitHealingTimers(unit);
     unit.buildTimerSeconds = 0;
     unit.pendingElementalId = null;
