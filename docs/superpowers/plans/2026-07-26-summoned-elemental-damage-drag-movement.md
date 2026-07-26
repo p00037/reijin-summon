@@ -266,17 +266,6 @@ for (const target of touchingElementals) {
 }
 ```
 
-速度倍率の条件も次へ置き換える。
-
-```ts
-const speedMultiplier =
-  touchingUnits.length > 0 ||
-  touchingSummonedUnits.length > 0 ||
-  touchingElementals.length > 0
-    ? config.contactSlowMultiplier
-    : 1;
-```
-
 ファイル末尾へ抽出関数を追加する。
 
 ```ts
@@ -289,12 +278,12 @@ function enemyElementalsInContact(
   return state.elementals.filter(
     (elemental) =>
       elemental.team === enemyTeam &&
-      elemental.isComplete &&
-      elemental.currentHp > 0 &&
       distance(summoned.position, elemental.position) <= config.contactSlowRadius
   );
 }
 ```
+
+この段階ではTDDの最小実装として、完成状態とHPによる除外、および接触減速をまだ追加しない。
 
 - [ ] **Step 4: 最初のGREENを確認する**
 
@@ -332,6 +321,31 @@ test("召喚獣は対象外エレメンタルを攻撃しない", () => {
     state.elementals.map((elemental) => elemental.currentHp),
     [1000, 1000, 0, 1000]
   );
+});
+
+test("召喚獣は撃破済みエレメンタルだけとの接触を攻撃扱いにしない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addSummonedUnit(state, "Player", 1000);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.destination = { x: 7, y: 0 };
+  summoned.attackTimerSeconds = 0;
+  summoned.moveSpeed = 1;
+  summoned.healthDecayPerSecond = 0;
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.1, y: 0 },
+    maxHp: 1000,
+    currentHp: 0,
+    isComplete: true
+  });
+
+  tickSummonedUnits(state, config, 1);
+
+  assert.equal(summoned.attackTimerSeconds, 0);
+  assert.equal(summoned.position.x, 1);
 });
 
 test("召喚獣は敵ユニットと敵エレメンタルを同時攻撃し接触中は減速する", () => {
@@ -388,7 +402,7 @@ test("召喚獣は敵エレメンタルだけに接触している場合も減�
 });
 ```
 
-- [ ] **Step 6: 新しいテストが既存の最小実装を検証することを確認する**
+- [ ] **Step 6: 対象外条件と減速のREDを確認する**
 
 Run:
 
@@ -396,20 +410,43 @@ Run:
 node --import tsx --test src/client/src/game/rules/summonSystem.test.ts
 ```
 
-Expected: 全件PASS。FAILした場合は対象抽出条件、ダメージループ、速度倍率条件のうち、失敗した期待値に対応する実装だけを修正する。
+Expected: 未完成エレメンタルが攻撃されること、撃破済みエレメンタルで攻撃タイマーが再設定されること、完成済み敵エレメンタルだけとの接触で通常速度のまま移動することによりFAIL。同時攻撃の回帰テストは、この段階でもPASSしてよい。
 
-- [ ] **Step 7: クライアント全テストと型検査を実行する**
+- [ ] **Step 7: 対象外条件と接触減速を最小実装する**
+
+`enemyElementalsInContact` のfilterへ完成状態とHP条件を追加する。
+
+```ts
+elemental.team === enemyTeam &&
+elemental.isComplete &&
+elemental.currentHp > 0 &&
+distance(summoned.position, elemental.position) <= config.contactSlowRadius
+```
+
+速度倍率の条件を次へ置き換える。
+
+```ts
+const speedMultiplier =
+  touchingUnits.length > 0 ||
+  touchingSummonedUnits.length > 0 ||
+  touchingElementals.length > 0
+    ? config.contactSlowMultiplier
+    : 1;
+```
+
+- [ ] **Step 8: Task 2のGREENとクライアント回帰を確認する**
 
 Run:
 
 ```powershell
+node --import tsx --test src/client/src/game/rules/summonSystem.test.ts
 npm.cmd test -w src/client
 npm.cmd run typecheck -w src/client
 ```
 
-Expected: 全テストPASS、型エラー0件。
+Expected: 関連テストとクライアント全テストがPASS、型エラー0件。
 
-- [ ] **Step 8: Task 2をコミットする**
+- [ ] **Step 9: Task 2をコミットする**
 
 ```powershell
 git add -- src/client/src/game/rules/summonSystem.ts src/client/src/game/rules/summonSystem.test.ts
