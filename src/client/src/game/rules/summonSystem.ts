@@ -37,6 +37,8 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
     leaderAttackDamage: config.summonedUnitLeaderAttackDamage,
     attackIntervalSeconds: config.summonedUnitAttackIntervalSeconds,
     attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: config.summonedUnitLeaderAttackIntervalSeconds,
+    leaderAttackTimerSeconds: 0,
     moveSpeed: config.summonedUnitMoveSpeed,
     healthDecayPerSecond: config.summonedUnitHealthDecayPerSecond
   });

@@ -58,9 +58,11 @@ export type BattleConfig = {
   summonedUnitAttackDamage: number;
   summonedUnitLeaderAttackDamage: number;
   summonedUnitAttackIntervalSeconds: number;
+  summonedUnitLeaderAttackIntervalSeconds: number;
   summonedUnitHealthDecayPerSecond: number;
   summonedUnitMoveSpeed: number;
   unitRespawnSeconds: number;
+  unitLeaderAttackIntervalSeconds: number;
   elementalMaxHp: number;
   directLeaderDamageMultiplier: number;
   playerLeaderPosition: Vec2;
@@ -102,6 +104,7 @@ export type UnitState = {
   buildTimerSeconds: number;
   respawnTimerSeconds: number;
   attackTimerSeconds: number;
+  leaderAttackTimerSeconds: number;
   leaderHealingElapsedSeconds: number;
   restHealingElapsedSeconds: number;
   pendingElementalId: ElementalId | null;
@@ -127,6 +130,8 @@ export type SummonedUnitState = {
   leaderAttackDamage: number;
   attackIntervalSeconds: number;
   attackTimerSeconds: number;
+  leaderAttackIntervalSeconds: number;
+  leaderAttackTimerSeconds: number;
   moveSpeed: number;
   healthDecayPerSecond: number;
 };

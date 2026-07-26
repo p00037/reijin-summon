@@ -22,8 +22,10 @@ test("完成済みエレメンタルが2つあれば召喚できる", () => {
   assert.equal(summoned.moveSpeed, 8.2 / 12);
   assert.equal(summoned.attackDamage, 99);
   assert.equal(summoned.leaderAttackDamage, 300);
-  assert.equal(summoned.attackIntervalSeconds, 2);
+  assert.equal(summoned.attackIntervalSeconds, 0.5);
   assert.equal(summoned.attackTimerSeconds, 0);
+  assert.equal(summoned.leaderAttackIntervalSeconds, 2);
+  assert.equal(summoned.leaderAttackTimerSeconds, 0);
   assert.equal(summoned.healthDecayPerSecond, 120);
 });
 
@@ -41,6 +43,8 @@ test("召喚ユニットは攻撃可能時に敵リーダーへ1回分のダメ�
     leaderAttackDamage: 135,
     attackIntervalSeconds: 2,
     attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -114,6 +118,8 @@ test("このtickで消滅する召喚ユニットは接触ダメージを与え�
     leaderAttackDamage: 135,
     attackIntervalSeconds: 2,
     attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -157,6 +163,8 @@ test("召喚獣は2Cごとに通常対象へ99、召喚士へ300ダメージを�
     leaderAttackDamage: 300,
     attackIntervalSeconds: 2,
     attackTimerSeconds: 2,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 2,
     moveSpeed: 8.2 / 12,
     healthDecayPerSecond: 0
   });
@@ -265,6 +273,8 @@ test("非接触の召喚ユニットは敵リーダーへ移動する", () => {
     leaderAttackDamage: 135,
     attackIntervalSeconds: 2,
     attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -294,6 +304,8 @@ test("召喚ユニットは接触した敵通常ユニットへ攻撃し、移�
     leaderAttackDamage: 90,
     attackIntervalSeconds: 2,
     attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
     moveSpeed: 1,
     healthDecayPerSecond: 10
   });
@@ -321,6 +333,8 @@ test("召喚ユニット同士は接触中に互いへ攻撃し、移動速度�
       leaderAttackDamage: 30,
       attackIntervalSeconds: 2,
       attackTimerSeconds: 0,
+      leaderAttackIntervalSeconds: 2,
+      leaderAttackTimerSeconds: 0,
       moveSpeed: 1,
       healthDecayPerSecond: 10
     },
@@ -335,6 +349,8 @@ test("召喚ユニット同士は接触中に互いへ攻撃し、移動速度�
       leaderAttackDamage: 40,
       attackIntervalSeconds: 2,
       attackTimerSeconds: 0,
+      leaderAttackIntervalSeconds: 2,
+      leaderAttackTimerSeconds: 0,
       moveSpeed: 1,
       healthDecayPerSecond: 10
     }
@@ -566,6 +582,8 @@ function addSummonedUnit(state: BattleState, team: TeamId, currentHp: number): v
     leaderAttackDamage: 300,
     attackIntervalSeconds: 2,
     attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
     moveSpeed: 8.2 / 12,
     healthDecayPerSecond: 120
   });

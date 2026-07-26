@@ -6,7 +6,7 @@ const statsByType: Record<UnitType, UnitStats> = {
     moveSpeed: 8.2 / 40,
     attackDamage: 61,
     attackRange: 1.25,
-    attackIntervalSeconds: 1.2,
+    attackIntervalSeconds: 0.5,
     elementalBuildSeconds: 5.7,
     elementalAttackMultiplier: 2
   },
@@ -15,7 +15,7 @@ const statsByType: Record<UnitType, UnitStats> = {
     moveSpeed: 8.2 / 22,
     attackDamage: 53,
     attackRange: 1,
-    attackIntervalSeconds: 0.8,
+    attackIntervalSeconds: 0.5,
     elementalBuildSeconds: 7.2,
     elementalAttackMultiplier: 1
   },
@@ -24,7 +24,7 @@ const statsByType: Record<UnitType, UnitStats> = {
     moveSpeed: 8.2 / 32,
     attackDamage: 36,
     attackRange: 3.5,
-    attackIntervalSeconds: 1.4,
+    attackIntervalSeconds: 0.5,
     elementalBuildSeconds: 6.7,
     elementalAttackMultiplier: 1
   }
@@ -46,10 +46,12 @@ export function createDefaultBattleConfig(): BattleConfig {
     summonedUnitHpPerFieldPercent: 60,
     summonedUnitAttackDamage: 99,
     summonedUnitLeaderAttackDamage: 300,
-    summonedUnitAttackIntervalSeconds: 2,
+    summonedUnitAttackIntervalSeconds: 0.5,
+    summonedUnitLeaderAttackIntervalSeconds: 2,
     summonedUnitHealthDecayPerSecond: 120,
     summonedUnitMoveSpeed: 8.2 / 12,
     unitRespawnSeconds: 10,
+    unitLeaderAttackIntervalSeconds: 1,
     elementalMaxHp: 1000,
     directLeaderDamageMultiplier: 0.25,
     playerLeaderPosition: { x: 0, y: -4.1 },

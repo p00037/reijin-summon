@@ -27,6 +27,9 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(config.elementalPlacementRadius, 0.30375);
   assert.equal(config.elementalContactRadius, 0.30375);
   assert.equal(config.contactSlowRadius, 0.45);
+  assert.equal(config.unitLeaderAttackIntervalSeconds, 1);
+  assert.equal(config.summonedUnitAttackIntervalSeconds, 0.5);
+  assert.equal(config.summonedUnitLeaderAttackIntervalSeconds, 2);
   assert.deepEqual(
     {
       Melee: config.statsByType.Melee,
@@ -39,7 +42,7 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
         moveSpeed: 8.2 / 40,
         attackDamage: 61,
         attackRange: 1.25,
-        attackIntervalSeconds: 1.2,
+        attackIntervalSeconds: 0.5,
         elementalBuildSeconds: 5.7,
         elementalAttackMultiplier: 2
       },
@@ -48,7 +51,7 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
         moveSpeed: 8.2 / 22,
         attackDamage: 53,
         attackRange: 1,
-        attackIntervalSeconds: 0.8,
+        attackIntervalSeconds: 0.5,
         elementalBuildSeconds: 7.2,
         elementalAttackMultiplier: 1
       },
@@ -57,7 +60,7 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
         moveSpeed: 8.2 / 32,
         attackDamage: 36,
         attackRange: 3.5,
-        attackIntervalSeconds: 1.4,
+        attackIntervalSeconds: 0.5,
         elementalBuildSeconds: 6.7,
         elementalAttackMultiplier: 1
       }
@@ -70,6 +73,8 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(config.keeperRestHealingAmount, 60);
   assert.equal(findUnit(state, "PlayerMelee").leaderHealingElapsedSeconds, 0);
   assert.equal(findUnit(state, "PlayerMelee").restHealingElapsedSeconds, 0);
+  assert.equal(findUnit(state, "PlayerMelee").attackTimerSeconds, 0);
+  assert.equal(findUnit(state, "PlayerMelee").leaderAttackTimerSeconds, 0);
 });
 
 test("既定設定と既定状態は可変のステータス参照を共有しない", () => {
