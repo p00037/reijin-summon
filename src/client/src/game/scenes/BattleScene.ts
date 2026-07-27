@@ -49,6 +49,8 @@ export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private battlefieldOverlay!: Phaser.GameObjects.Graphics;
+  private circleOverlay!: Phaser.GameObjects.Graphics;
+  private circleMaskShape!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
   private leaderSprites = new Map<TeamId, Phaser.GameObjects.Image>();
   private elementalSprites = new Map<ElementalId, Phaser.GameObjects.Image>();
@@ -98,12 +100,25 @@ export class BattleScene extends Phaser.Scene {
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
 
+    const layout = calculateBattleLayout(this.scale.width, this.scale.height);
+
     this.battlefield = this.add.graphics();
     this.battlefieldOverlay = this.add.graphics();
     this.battlefieldOverlay.setDepth(battleStatusOverlayDepth);
+    this.circleOverlay = this.add.graphics();
+    this.circleOverlay.setDepth(battleStatusOverlayDepth - 0.5);
+    this.circleMaskShape = this.make.graphics({}, false);
+    this.circleMaskShape
+      .fillStyle(0xffffff, 1)
+      .fillRect(
+        layout.field.x,
+        layout.field.y,
+        layout.field.width,
+        layout.field.height
+      );
+    this.circleOverlay.setMask(this.circleMaskShape.createGeometryMask());
     this.createLeaderSprites();
     this.createUnitImages();
-    const layout = calculateBattleLayout(this.scale.width, this.scale.height);
     this.hud = new BattleHud(this, layout, {
       onBuild: () => this.handleBuild(),
       onSummon: () => this.handleSummon(),
@@ -232,6 +247,7 @@ export class BattleScene extends Phaser.Scene {
     const state = this.session.state;
     this.battlefield.clear();
     this.battlefieldOverlay.clear();
+    this.circleOverlay.clear();
     this.drawField();
     this.drawArea("Player");
     this.drawArea("Cpu");
@@ -295,14 +311,14 @@ export class BattleScene extends Phaser.Scene {
     const screenRadius = this.worldRadiusToScreen(presentation.radius);
     for (const leader of leaders) {
       const screen = this.worldToScreen(leader.position);
-      this.battlefieldOverlay.fillStyle(presentation.fillColor, presentation.fillAlpha);
-      this.battlefieldOverlay.fillCircle(screen.x, screen.y, screenRadius);
-      this.battlefieldOverlay.lineStyle(
+      this.circleOverlay.fillStyle(presentation.fillColor, presentation.fillAlpha);
+      this.circleOverlay.fillCircle(screen.x, screen.y, screenRadius);
+      this.circleOverlay.lineStyle(
         presentation.strokeWidth,
         presentation.strokeColor,
         presentation.strokeAlpha
       );
-      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, screenRadius);
+      this.circleOverlay.strokeCircle(screen.x, screen.y, screenRadius);
     }
   }
 
@@ -311,10 +327,10 @@ export class BattleScene extends Phaser.Scene {
       const screen = this.worldToScreen(leader.position);
       const color = leader.team === "Player" ? 0x3b82f6 : 0xef4444;
       this.updateLeaderSprite(leader, screen);
-      this.battlefieldOverlay.lineStyle(3, color, 0.75);
-      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 28);
-      this.battlefieldOverlay.lineStyle(3, 0xf8fafc, 0.9);
-      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 25);
+      this.circleOverlay.lineStyle(3, color, 0.75);
+      this.circleOverlay.strokeCircle(screen.x, screen.y, 28);
+      this.circleOverlay.lineStyle(3, 0xf8fafc, 0.9);
+      this.circleOverlay.strokeCircle(screen.x, screen.y, 25);
       this.drawHpBar(screen.x - 30, screen.y - 38, 60, leader.currentHp / leader.maxHp, color);
     }
   }
