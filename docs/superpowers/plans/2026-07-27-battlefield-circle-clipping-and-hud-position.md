@@ -27,8 +27,6 @@
 - `src/client/src/game/ui/battleHud.ts`: `BattleLayout` が返す矩形を使ってゲージを生成する。
 - `src/client/src/game/ui/battleHudModel.ts`: 残り時間を数字だけに整形する。
 - `src/client/src/game/ui/battleHudModel.test.ts`: 残り時間の切り上げと0下限を検証する。
-- `src/client/src/game/render/battlefieldCircleClip.ts`: フィールドから円レイヤー用クリップ矩形を生成する純粋関数を提供する。
-- `src/client/src/game/render/battlefieldCircleClip.test.ts`: クリップ矩形がフィールドと一致し、入力を共有参照しないことを検証する。
 - `src/client/src/game/scenes/BattleScene.ts`: 円専用 `Graphics` と Geometry Mask を生成し、回復円と召喚士リングを専用レイヤーへ描く。
 
 ### Task 1: HUD矩形をBattleLayoutへ集約する
@@ -244,82 +242,25 @@ git commit -m "feat: 残り時間を数字だけで表示"
 ### Task 3: 円専用レイヤーをフィールドへクリップする
 
 **Files:**
-- Create: `src/client/src/game/render/battlefieldCircleClip.ts`
-- Create: `src/client/src/game/render/battlefieldCircleClip.test.ts`
 - Modify: `src/client/src/game/scenes/BattleScene.ts`
 
 **Interfaces:**
-- Consumes: `UiRect`
-- Produces: `battlefieldCircleClipRect(field: UiRect): UiRect`
+- Consumes: `BattleLayout.field: UiRect`
 - Produces: `BattleScene.circleOverlay: Phaser.GameObjects.Graphics`
 
-- [ ] **Step 1: クリップ矩形の失敗テストを書く**
+- [ ] **Step 1: BattleSceneへ円専用レイヤーとGeometry Maskを追加する**
 
-`battlefieldCircleClip.test.ts` を次の内容で作成する。
-
-```ts
-import test from "node:test";
-import assert from "node:assert/strict";
-import { battlefieldCircleClipRect } from "./battlefieldCircleClip";
-
-test("円レイヤーのクリップ範囲はフィールド矩形と同じ値を持つ", () => {
-  const field = { x: 222.4, y: 56, width: 515.2, height: 368 };
-
-  const clip = battlefieldCircleClipRect(field);
-
-  assert.deepEqual(clip, field);
-  assert.notEqual(clip, field);
-});
-```
-
-- [ ] **Step 2: クリップ矩形テストが期待どおり失敗することを確認する**
-
-Run:
-
-```powershell
-npm test -w src/client
-```
-
-Expected: `battlefieldCircleClip` モジュールが存在しないためFAIL。
-
-- [ ] **Step 3: クリップ矩形の純粋関数を実装する**
-
-`battlefieldCircleClip.ts` を次の内容で作成する。
+プロパティを追加する。
 
 ```ts
-import type { UiRect } from "../ui/battleLayout";
-
-export function battlefieldCircleClipRect(field: UiRect): UiRect {
-  return { ...field };
-}
-```
-
-- [ ] **Step 4: クリップ矩形テストを通す**
-
-Run:
-
-```powershell
-npm test -w src/client
-```
-
-Expected: PASS。
-
-- [ ] **Step 5: BattleSceneへ円専用レイヤーとGeometry Maskを追加する**
-
-インポートとプロパティを追加する。
-
-```ts
-import { battlefieldCircleClipRect } from "../render/battlefieldCircleClip";
-
 private circleOverlay!: Phaser.GameObjects.Graphics;
 private circleMaskShape!: Phaser.GameObjects.Graphics;
 ```
 
-`create()` で `layout` を一度だけ計算してから、円レイヤーとマスク形状を生成する。既存の `battlefield` と `battlefieldOverlay` はそのまま維持する。
+`create()` で `layout` を一度だけ計算してから、円レイヤーとマスク形状を生成する。クリップ値は `layout.field` を直接使用し、既存の `battlefield` と `battlefieldOverlay` はそのまま維持する。
 
 ```ts
 const layout = calculateBattleLayout(this.scale.width, this.scale.height);
-const clip = battlefieldCircleClipRect(layout.field);
 
 this.battlefield = this.add.graphics();
 this.battlefieldOverlay = this.add.graphics();
@@ -329,7 +270,12 @@ this.circleOverlay.setDepth(battleStatusOverlayDepth - 0.5);
 this.circleMaskShape = this.make.graphics({ add: false });
 this.circleMaskShape
   .fillStyle(0xffffff, 1)
-  .fillRect(clip.x, clip.y, clip.width, clip.height);
+  .fillRect(
+    layout.field.x,
+    layout.field.y,
+    layout.field.width,
+    layout.field.height
+  );
 this.circleOverlay.setMask(this.circleMaskShape.createGeometryMask());
 ```
 
@@ -365,7 +311,7 @@ this.circleOverlay.lineStyle(3, 0xf8fafc, 0.9);
 this.circleOverlay.strokeCircle(screen.x, screen.y, 25);
 ```
 
-- [ ] **Step 6: クライアント全体を検証する**
+- [ ] **Step 2: クライアント全体を検証する**
 
 Run:
 
@@ -377,7 +323,7 @@ npm run build -w src/client
 
 Expected: 全テストPASS、型エラーなし、Viteビルド成功。
 
-- [ ] **Step 7: 実画面で描画と対象外範囲を確認する**
+- [ ] **Step 3: 実画面で描画と対象外範囲を確認する**
 
 Run:
 
@@ -394,9 +340,9 @@ npm run dev:client
 - 残り時間が中央に数字だけで表示される。
 - フィールド、ユニット、召喚獣、エレメントのサイズと戦闘挙動が従来どおりである。
 
-- [ ] **Step 8: 円クリップ変更をコミットする**
+- [ ] **Step 4: 円クリップ変更をコミットする**
 
 ```powershell
-git add -- src/client/src/game/render/battlefieldCircleClip.ts src/client/src/game/render/battlefieldCircleClip.test.ts src/client/src/game/scenes/BattleScene.ts
+git add -- src/client/src/game/scenes/BattleScene.ts
 git commit -m "feat: 召喚士の円をフィールド内へクリップ"
 ```
