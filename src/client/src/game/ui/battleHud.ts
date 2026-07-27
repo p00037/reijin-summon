@@ -57,28 +57,22 @@ export class BattleHud {
     this.scene = scene;
     this.layout = layout;
 
-    const hpBarWidth = 320;
-    const hpBarHeight = 28;
-    const hpBarY = layout.topBar.y + 10;
-    const playerHpX = 20;
-    const cpuHpX = layout.topBar.x + layout.topBar.width - 20 - hpBarWidth;
-
     this.topBackground = createPanel(scene, layout.topBar);
     this.bottomBackground = createPanel(scene, layout.bottomBar);
     this.playerHp = createGauge(
       scene,
-      playerHpX,
-      hpBarY,
-      hpBarWidth,
-      hpBarHeight,
+      layout.playerHp.x,
+      layout.playerHp.y,
+      layout.playerHp.width,
+      layout.playerHp.height,
       0x22c55e
     );
     this.cpuHp = createGauge(
       scene,
-      cpuHpX,
-      hpBarY,
-      hpBarWidth,
-      hpBarHeight,
+      layout.cpuHp.x,
+      layout.cpuHp.y,
+      layout.cpuHp.width,
+      layout.cpuHp.height,
       0xef4444
     );
     this.timeText = scene.add
@@ -91,15 +85,12 @@ export class BattleHud {
       .setOrigin(0.5)
       .setDepth(hudDepth);
 
-    const summonWidth = 360;
-    const summonX = (layout.bottomBar.width - summonWidth) / 2;
-    const summonY = layout.bottomBar.y + 10;
     this.summonGauge = createGauge(
       scene,
-      summonX,
-      summonY,
-      summonWidth,
-      28,
+      layout.summonGauge.x,
+      layout.summonGauge.y,
+      layout.summonGauge.width,
+      layout.summonGauge.height,
       0xfacc15
     );
     this.resultText = scene.add
