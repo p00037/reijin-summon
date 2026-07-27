@@ -26,7 +26,7 @@ test("HP・残り時間・召喚ゲージを日本語へ整形する", () => {
     text: "敵 1650 / 2000",
     ratio: 0.825
   });
-  assert.equal(model.remainingTimeText, "残り 238秒");
+  assert.equal(model.remainingTimeText, "238");
   assert.deepEqual(model.summonGauge, { text: "召喚ゲージ 63%", ratio: 0.639 });
 });
 
@@ -41,7 +41,7 @@ test("HP・時間・召喚ゲージを表示範囲へ制限する", () => {
 
   assert.equal(model.playerHp.ratio, 0);
   assert.equal(model.cpuHp.ratio, 1);
-  assert.equal(model.remainingTimeText, "残り 0秒");
+  assert.equal(model.remainingTimeText, "0");
   assert.deepEqual(model.summonGauge, { text: "召喚ゲージ 100%", ratio: 1 });
 });
 

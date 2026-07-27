@@ -35,7 +35,7 @@ export function createBattleHudModel(
   return {
     playerHp: leaderGauge("自分", playerLeader.currentHp, playerLeader.maxHp),
     cpuHp: leaderGauge("敵", cpuLeader.currentHp, cpuLeader.maxHp),
-    remainingTimeText: `残り ${Math.max(0, Math.ceil(state.remainingSeconds))}秒`,
+    remainingTimeText: `${Math.max(0, Math.ceil(state.remainingSeconds))}`,
     summonGauge: {
       text: `召喚ゲージ ${Math.floor(summonGauge * 100)}%`,
       ratio: summonGauge
