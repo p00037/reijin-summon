@@ -3,20 +3,20 @@ import type { BattleConfig, BattleState, LeaderState, TeamId, UnitId, UnitState,
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
     remainingSeconds: config.matchDurationSeconds,
-    playerSummonCooldownSeconds: 0,
-    cpuSummonCooldownSeconds: 0,
+    playerSummonGauge: 0,
+    cpuSummonGauge: 0,
     result: "InProgress",
     leaders: [
       createLeader("Player", config.playerLeaderPosition, config.leaderMaxHp),
       createLeader("Cpu", config.cpuLeaderPosition, config.leaderMaxHp)
     ],
     units: [
-      createUnit("PlayerMelee", "Player", "Melee", { x: -5, y: 1.5 }, config),
-      createUnit("PlayerSpeed", "Player", "Speed", { x: -5, y: 0 }, config),
-      createUnit("PlayerRanged", "Player", "Ranged", { x: -5, y: -1.5 }, config),
-      createUnit("CpuMelee", "Cpu", "Melee", { x: 5, y: 1.5 }, config),
-      createUnit("CpuSpeed", "Cpu", "Speed", { x: 5, y: 0 }, config),
-      createUnit("CpuRanged", "Cpu", "Ranged", { x: 5, y: -1.5 }, config)
+      createUnit("PlayerMelee", "Player", "Melee", { x: -2.4, y: -3 }, config),
+      createUnit("PlayerSpeed", "Player", "Speed", { x: 0, y: -3 }, config),
+      createUnit("PlayerRanged", "Player", "Ranged", { x: 2.4, y: -3 }, config),
+      createUnit("CpuMelee", "Cpu", "Melee", { x: -2.4, y: 3 }, config),
+      createUnit("CpuSpeed", "Cpu", "Speed", { x: 0, y: 3 }, config),
+      createUnit("CpuRanged", "Cpu", "Ranged", { x: 2.4, y: 3 }, config)
     ],
     elementals: [],
     summonedUnits: [],
@@ -53,15 +53,15 @@ export function oppositeTeam(team: TeamId): TeamId {
   return team === "Player" ? "Cpu" : "Player";
 }
 
-export function getSummonCooldown(state: BattleState, team: TeamId): number {
-  return team === "Player" ? state.playerSummonCooldownSeconds : state.cpuSummonCooldownSeconds;
+export function getSummonGauge(state: BattleState, team: TeamId): number {
+  return team === "Player" ? state.playerSummonGauge : state.cpuSummonGauge;
 }
 
-export function setSummonCooldown(state: BattleState, team: TeamId, seconds: number): void {
+export function setSummonGauge(state: BattleState, team: TeamId, gauge: number): void {
   if (team === "Player") {
-    state.playerSummonCooldownSeconds = seconds;
+    state.playerSummonGauge = gauge;
   } else {
-    state.cpuSummonCooldownSeconds = seconds;
+    state.cpuSummonGauge = gauge;
   }
 }
 
@@ -96,6 +96,9 @@ function createUnit(
     buildTimerSeconds: 0,
     respawnTimerSeconds: 0,
     attackTimerSeconds: 0,
+    leaderAttackTimerSeconds: 0,
+    leaderHealingElapsedSeconds: 0,
+    restHealingElapsedSeconds: 0,
     pendingElementalId: null
   };
 }

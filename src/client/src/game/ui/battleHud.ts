@@ -1,5 +1,13 @@
 import Phaser from "phaser";
-import type { BattleState, PlayerUnitId, UnitState } from "../core/types";
+import type { BattleState, PlayerUnitId } from "../core/types";
+import type { BattleLayout, UiRect } from "./battleLayout";
+import { isPointInHud } from "./battleLayout";
+import type { BattleHudModel } from "./battleHudModel";
+import {
+  createBattleHudModel,
+  elementButtonTextureKey,
+  summonButtonTextureKey
+} from "./battleHudModel";
 
 export type BattleHudCallbacks = {
   onBuild: () => void;
@@ -7,107 +15,187 @@ export type BattleHudCallbacks = {
   onRetry: () => void;
 };
 
-type HudButton = {
+type HudGauge = {
   background: Phaser.GameObjects.Rectangle;
-  label: Phaser.GameObjects.Text;
+  fill: Phaser.GameObjects.Rectangle;
+  text: Phaser.GameObjects.Text;
+  width: number;
+};
+
+type ImageHudButton = {
+  background: Phaser.GameObjects.Rectangle;
+  image: Phaser.GameObjects.Image;
   enabled: boolean;
 };
 
-const hudHeight = 132;
-const buttonWidth = 88;
-const buttonHeight = 38;
+type RetryHudButton = {
+  background: Phaser.GameObjects.Rectangle;
+  label: Phaser.GameObjects.Text;
+};
+
+const hudDepth = 3;
 
 export class BattleHud {
-  readonly top: number;
-
   private readonly scene: Phaser.Scene;
-  private readonly background: Phaser.GameObjects.Rectangle;
-  private readonly titleText: Phaser.GameObjects.Text;
-  private readonly statusText: Phaser.GameObjects.Text;
-  private readonly unitText: Phaser.GameObjects.Text;
-  private readonly cooldownText: Phaser.GameObjects.Text;
-  private readonly playerText: Phaser.GameObjects.Text;
-  private readonly cpuText: Phaser.GameObjects.Text;
+  private readonly layout: BattleLayout;
+  private readonly topBackground: Phaser.GameObjects.Rectangle;
+  private readonly bottomBackground: Phaser.GameObjects.Rectangle;
+  private readonly playerHp: HudGauge;
+  private readonly cpuHp: HudGauge;
   private readonly timeText: Phaser.GameObjects.Text;
+  private readonly summonGauge: HudGauge;
   private readonly resultText: Phaser.GameObjects.Text;
-  private readonly buildButton: HudButton;
-  private readonly summonButton: HudButton;
-  private readonly retryButton: HudButton;
+  private readonly buildButton: ImageHudButton;
+  private readonly summonButton: ImageHudButton;
+  private readonly retryButton: RetryHudButton;
 
-  constructor(scene: Phaser.Scene, callbacks: BattleHudCallbacks) {
+  constructor(
+    scene: Phaser.Scene,
+    layout: BattleLayout,
+    callbacks: BattleHudCallbacks
+  ) {
     this.scene = scene;
-    const { width, height } = scene.scale;
-    this.top = height - hudHeight;
+    this.layout = layout;
 
-    this.background = scene.add
-      .rectangle(0, this.top, width, hudHeight, 0x0f172a, 0.94)
-      .setOrigin(0, 0)
-      .setStrokeStyle(1, 0x334155, 1);
+    this.topBackground = createPanel(scene, layout.topBar);
+    this.bottomBackground = createPanel(scene, layout.bottomBar);
+    this.playerHp = createGauge(
+      scene,
+      layout.playerHp.x,
+      layout.playerHp.y,
+      layout.playerHp.width,
+      layout.playerHp.height,
+      0x22c55e
+    );
+    this.cpuHp = createGauge(
+      scene,
+      layout.cpuHp.x,
+      layout.cpuHp.y,
+      layout.cpuHp.width,
+      layout.cpuHp.height,
+      0xef4444
+    );
+    this.timeText = scene.add
+      .text(
+        layout.topBar.x + layout.topBar.width / 2,
+        layout.topBar.y + layout.topBar.height / 2,
+        "",
+        titleStyle(18, "#f8fafc")
+      )
+      .setOrigin(0.5)
+      .setDepth(hudDepth);
 
-    this.titleText = scene.add.text(24, this.top + 10, "Battle Control", titleStyle(17, "#f8fafc"));
-    this.statusText = scene.add.text(24, this.top + 34, "Status: Select a player unit.", titleStyle(13, "#cbd5e1"));
-    this.unitText = scene.add.text(24, this.top + 58, "Selected: none", titleStyle(13, "#93c5fd"));
-    this.cooldownText = scene.add.text(24, this.top + 82, "", titleStyle(13, "#fde68a"));
-    this.playerText = scene.add.text(330, this.top + 18, "", titleStyle(13, "#bfdbfe"));
-    this.cpuText = scene.add.text(330, this.top + 42, "", titleStyle(13, "#fecaca"));
-    this.timeText = scene.add.text(330, this.top + 66, "", titleStyle(13, "#f8fafc"));
-    this.resultText = scene.add.text(330, this.top + 90, "", titleStyle(13, "#cbd5e1"));
+    this.summonGauge = createGauge(
+      scene,
+      layout.summonGauge.x,
+      layout.summonGauge.y,
+      layout.summonGauge.width,
+      layout.summonGauge.height,
+      0xfacc15
+    );
+    this.resultText = scene.add
+      .text(
+        scene.scale.width / 2,
+        scene.scale.height / 2,
+        "",
+        titleStyle(48, "#f8fafc")
+      )
+      .setOrigin(0.5)
+      .setDepth(100)
+      .setStroke("#020617", 8);
 
-    this.buildButton = this.createButton(width - 306, this.top + 48, "Build", callbacks.onBuild);
-    this.summonButton = this.createButton(width - 202, this.top + 48, "Summon", callbacks.onSummon);
-    this.retryButton = this.createButton(width - 98, this.top + 48, "Retry", callbacks.onRetry);
+    this.buildButton = this.createImageButton(
+      layout.buildButton,
+      elementButtonTextureKey,
+      callbacks.onBuild
+    );
+    this.summonButton = this.createImageButton(
+      layout.summonButton,
+      summonButtonTextureKey,
+      callbacks.onSummon
+    );
+    this.retryButton = this.createRetryButton(layout.retryButton, callbacks.onRetry);
   }
 
   contains(x: number, y: number): boolean {
-    return x >= 0 && x <= this.scene.scale.width && y >= this.top && y <= this.scene.scale.height;
+    return isPointInHud(this.layout, x, y);
   }
 
-  setStatus(message: string): void {
-    this.statusText.setText(`Status: ${message}`);
-  }
-
-  update(state: BattleState, selectedUnitId: PlayerUnitId | null): void {
-    const selectedUnit = selectedUnitId ? state.units.find((unit) => unit.unitId === selectedUnitId) : null;
-    this.unitText.setText(`Selected: ${formatSelectedUnit(selectedUnit)}`);
-    this.cooldownText.setText(`Summon CD: ${state.playerSummonCooldownSeconds.toFixed(1)}s`);
-    this.playerText.setText(`Player HP: ${leaderHp(state, "Player")}  Elem: ${countElementals(state, "Player")}`);
-    this.cpuText.setText(`CPU HP: ${leaderHp(state, "Cpu")}  Elem: ${countElementals(state, "Cpu")}`);
-    this.timeText.setText(`Time: ${Math.ceil(state.remainingSeconds)}s`);
-    this.resultText.setText(`Result: ${formatResult(state.result)}`);
-
-    const canUseUnit = Boolean(selectedUnit && selectedUnit.mode === "Active" && selectedUnit.currentHp > 0 && state.result === "InProgress");
-    this.setButtonEnabled(this.buildButton, canUseUnit);
-    this.setButtonEnabled(this.summonButton, state.result === "InProgress");
+  update(
+    state: BattleState,
+    selectedUnitId: PlayerUnitId | null,
+    canSummonPlayer: boolean
+  ): void {
+    const model = createBattleHudModel(state, selectedUnitId, canSummonPlayer);
+    this.applyModel(model);
   }
 
   destroy(): void {
-    this.background.destroy();
-    this.titleText.destroy();
-    this.statusText.destroy();
-    this.unitText.destroy();
-    this.cooldownText.destroy();
-    this.playerText.destroy();
-    this.cpuText.destroy();
+    this.topBackground.destroy();
+    this.bottomBackground.destroy();
+    destroyGauge(this.playerHp);
+    destroyGauge(this.cpuHp);
     this.timeText.destroy();
+    destroyGauge(this.summonGauge);
     this.resultText.destroy();
     this.buildButton.background.destroy();
-    this.buildButton.label.destroy();
+    this.buildButton.image.destroy();
     this.summonButton.background.destroy();
-    this.summonButton.label.destroy();
+    this.summonButton.image.destroy();
     this.retryButton.background.destroy();
     this.retryButton.label.destroy();
   }
 
-  private createButton(x: number, y: number, label: string, onClick: () => void): HudButton {
+  private applyModel(model: BattleHudModel): void {
+    this.playerHp.text.setText(model.playerHp.text);
+    this.playerHp.fill.width = this.playerHp.width * model.playerHp.ratio;
+    this.cpuHp.text.setText(model.cpuHp.text);
+    this.cpuHp.fill.width = this.cpuHp.width * model.cpuHp.ratio;
+    this.timeText.setText(model.remainingTimeText);
+    this.summonGauge.text.setText(model.summonGauge.text);
+    this.summonGauge.fill.width = this.summonGauge.width * model.summonGauge.ratio;
+    this.resultText.setText(model.resultText);
+    this.setImageButtonEnabled(this.buildButton, model.canBuild);
+    this.setImageButtonEnabled(this.summonButton, model.canSummon);
+  }
+
+  private createImageButton(
+    rect: UiRect,
+    textureKey: string,
+    onClick: () => void
+  ): ImageHudButton {
+    const background = this.createButtonBackground(rect, onClick);
+    const image = this.scene.add
+      .image(rect.x + rect.width / 2, rect.y + rect.height / 2, textureKey)
+      .setDisplaySize(rect.width - 6, rect.height - 6)
+      .setDepth(hudDepth);
+    return { background, image, enabled: true };
+  }
+
+  private createRetryButton(rect: UiRect, onClick: () => void): RetryHudButton {
+    const background = this.createButtonBackground(rect, onClick);
+    const label = this.scene.add
+      .text(
+        rect.x + rect.width / 2,
+        rect.y + rect.height / 2,
+        "R",
+        titleStyle(24, "#f8fafc")
+      )
+      .setOrigin(0.5)
+      .setDepth(hudDepth);
+    return { background, label };
+  }
+
+  private createButtonBackground(
+    rect: UiRect,
+    onClick: () => void
+  ): Phaser.GameObjects.Rectangle {
     const background = this.scene.add
-      .rectangle(x, y, buttonWidth, buttonHeight, 0x1e293b, 1)
+      .rectangle(rect.x, rect.y, rect.width, rect.height, 0x1e293b, 1)
       .setOrigin(0, 0)
       .setStrokeStyle(1, 0x60a5fa, 1)
+      .setDepth(hudDepth)
       .setInteractive({ useHandCursor: true });
-    const text = this.scene.add
-      .text(x + buttonWidth / 2, y + buttonHeight / 2, label, titleStyle(15, "#f8fafc"))
-      .setOrigin(0.5);
-
     background.on("pointerover", () => {
       if (background.input?.enabled) {
         background.setFillStyle(0x334155, 1);
@@ -119,24 +207,61 @@ export class BattleHud {
         onClick();
       }
     });
-
-    return { background, label: text, enabled: true };
+    return background;
   }
 
-  private setButtonEnabled(button: HudButton, enabled: boolean): void {
+  private setImageButtonEnabled(button: ImageHudButton, enabled: boolean): void {
     if (button.enabled === enabled) {
       return;
     }
     button.enabled = enabled;
     button.background.setAlpha(enabled ? 1 : 0.45);
-    button.label.setAlpha(enabled ? 1 : 0.6);
+    button.image.setAlpha(enabled ? 1 : 0.45);
     if (enabled) {
       button.background.setInteractive({ useHandCursor: true });
     } else {
-      button.background.disableInteractive();
-      button.background.setFillStyle(0x1e293b, 1);
+      button.background.setFillStyle(0x1e293b, 1).disableInteractive(true);
     }
   }
+}
+
+function createPanel(scene: Phaser.Scene, rect: UiRect): Phaser.GameObjects.Rectangle {
+  return scene.add
+    .rectangle(rect.x, rect.y, rect.width, rect.height, 0x0f172a, 0.94)
+    .setOrigin(0, 0)
+    .setStrokeStyle(1, 0x334155, 1)
+    .setDepth(hudDepth);
+}
+
+function createGauge(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color: number
+): HudGauge {
+  const innerWidth = width - 4;
+  const background = scene.add
+    .rectangle(x, y, width, height, 0x020617, 1)
+    .setOrigin(0, 0)
+    .setStrokeStyle(1, 0x475569, 1)
+    .setDepth(hudDepth);
+  const fill = scene.add
+    .rectangle(x + 2, y + 2, 0, height - 4, color, 1)
+    .setOrigin(0, 0)
+    .setDepth(hudDepth);
+  const text = scene.add
+    .text(x + width / 2, y + height / 2, "", titleStyle(15, "#f8fafc"))
+    .setOrigin(0.5)
+    .setDepth(hudDepth);
+  return { background, fill, text, width: innerWidth };
+}
+
+function destroyGauge(gauge: HudGauge): void {
+  gauge.background.destroy();
+  gauge.fill.destroy();
+  gauge.text.destroy();
 }
 
 function titleStyle(fontSize: number, color: string): Phaser.Types.GameObjects.Text.TextStyle {
@@ -145,39 +270,4 @@ function titleStyle(fontSize: number, color: string): Phaser.Types.GameObjects.T
     fontFamily: "Arial, sans-serif",
     fontSize: `${fontSize}px`
   };
-}
-
-function formatSelectedUnit(unit: UnitState | null | undefined): string {
-  if (!unit) {
-    return "none";
-  }
-  if (unit.mode === "Defeated") {
-    return `${unit.unitType} respawn ${unit.respawnTimerSeconds.toFixed(1)}s`;
-  }
-  if (unit.mode === "BuildingElemental") {
-    return `${unit.unitType} building ${unit.buildTimerSeconds.toFixed(1)}s`;
-  }
-  return `${unit.unitType} HP ${Math.ceil(unit.currentHp)}/${unit.stats.maxHp}`;
-}
-
-function leaderHp(state: BattleState, team: "Player" | "Cpu"): string {
-  const leader = state.leaders.find((candidate) => candidate.team === team);
-  return leader ? `${Math.ceil(leader.currentHp)}/${leader.maxHp}` : "-";
-}
-
-function countElementals(state: BattleState, team: "Player" | "Cpu"): number {
-  return state.elementals.filter((elemental) => elemental.team === team && elemental.isComplete && elemental.currentHp > 0).length;
-}
-
-function formatResult(result: BattleState["result"]): string {
-  switch (result) {
-    case "PlayerWin":
-      return "Player victory";
-    case "CpuWin":
-      return "CPU victory";
-    case "Draw":
-      return "Draw";
-    case "InProgress":
-      return "In progress";
-  }
 }

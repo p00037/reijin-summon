@@ -1,5 +1,6 @@
 import { findUnit, isUnitAlive } from "../core/battleState";
 import type { BattleConfig, BattleState, ElementalId, ElementalState, TeamId, UnitId } from "../core/types";
+import { distanceSq } from "../core/vector";
 
 const elementalIds: ElementalId[] = [
   "Elemental1",
@@ -9,12 +10,19 @@ const elementalIds: ElementalId[] = [
   "Elemental5",
   "Elemental6",
   "Elemental7",
-  "Elemental8"
+  "Elemental8",
+  "Elemental9",
+  "Elemental10",
+  "Elemental11",
+  "Elemental12"
 ];
 
 export function tryBeginElementalBuild(state: BattleState, config: BattleConfig, unitId: UnitId): boolean {
   const unit = findUnit(state, unitId);
   if (!isUnitAlive(unit) || unit.mode !== "Active") {
+    return false;
+  }
+  if (!canPlaceElementalAtUnit(state, config, unitId)) {
     return false;
   }
   const completedCount = countCompletedElementals(state, unit.team);
@@ -27,9 +35,28 @@ export function tryBeginElementalBuild(state: BattleState, config: BattleConfig,
     return false;
   }
   unit.mode = "BuildingElemental";
-  unit.buildTimerSeconds = config.elementalBuildSeconds;
+  unit.buildTimerSeconds = unit.stats.elementalBuildSeconds;
   unit.pendingElementalId = nextId;
   return true;
+}
+
+export function canPlaceElementalAtUnit(state: BattleState, config: BattleConfig, unitId: UnitId): boolean {
+  const position = findUnit(state, unitId).position;
+  const placementRadiusSq = config.elementalPlacementRadius * config.elementalPlacementRadius;
+  const overlapsCompletedElemental = state.elementals.some(
+    (elemental) =>
+      elemental.isComplete &&
+      elemental.currentHp > 0 &&
+      distanceSq(position, elemental.position) <= placementRadiusSq
+  );
+  const overlapsPendingElemental = state.units.some(
+    (unit) =>
+      unit.unitId !== unitId &&
+      unit.mode === "BuildingElemental" &&
+      isUnitAlive(unit) &&
+      distanceSq(position, unit.position) <= placementRadiusSq
+  );
+  return !overlapsCompletedElemental && !overlapsPendingElemental;
 }
 
 export function tickElementalBuilds(state: BattleState, config: BattleConfig, deltaSeconds: number): void {

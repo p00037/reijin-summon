@@ -1,6 +1,6 @@
 import { findLeader, isUnitAlive } from "../core/battleState";
 import type { BattleCommand, BattleConfig, BattleState, CpuUnitId, UnitState } from "../core/types";
-import { countCompletedElementals } from "../rules/elementalSystem";
+import { canPlaceElementalAtUnit, countCompletedElementals } from "../rules/elementalSystem";
 import { canSummon } from "../rules/summonSystem";
 
 export function planCpuCommands(state: BattleState, config: BattleConfig): BattleCommand[] {
@@ -15,7 +15,10 @@ export function planCpuCommands(state: BattleState, config: BattleConfig): Battl
   }
 
   if (countCpuElementalsIncludingPending(state) < config.maxElementalsPerTeam) {
-    return [{ commandType: "BeginElementalBuild", team: "Cpu", unitId: firstAvailableUnit.unitId }];
+    const placementUnit = cpuUnits.find((unit) => canPlaceElementalAtUnit(state, config, unit.unitId));
+    if (placementUnit) {
+      return [{ commandType: "BeginElementalBuild", team: "Cpu", unitId: placementUnit.unitId }];
+    }
   }
 
   const playerLeader = findLeader(state, "Player");

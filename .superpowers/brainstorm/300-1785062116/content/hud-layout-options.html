@@ -1,0 +1,110 @@
+<style>
+  .hud-options { display:grid; grid-template-columns:repeat(3,minmax(260px,1fr)); gap:18px; }
+  .hud-card { cursor:pointer; border:2px solid #334155; border-radius:14px; overflow:hidden; background:#0f172a; transition:.18s ease; }
+  .hud-card:hover { border-color:#60a5fa; transform:translateY(-2px); }
+  .hud-card.selected { border-color:#facc15; box-shadow:0 0 0 3px rgba(250,204,21,.22); }
+  .hud-card-body { padding:14px 16px 16px; }
+  .hud-card-body h3 { margin:0 0 6px; font-size:16px; }
+  .hud-card-body p { margin:0; font-size:13px; color:#94a3b8; line-height:1.5; }
+  .game { position:relative; aspect-ratio:16/9; overflow:hidden; background:
+      radial-gradient(circle at 28% 68%,rgba(37,99,235,.28),transparent 28%),
+      radial-gradient(circle at 74% 30%,rgba(220,38,38,.26),transparent 30%),
+      linear-gradient(145deg,#29384a,#172231 58%,#14251f); }
+  .game:after { content:""; position:absolute; inset:9%; border:1px solid rgba(255,255,255,.16); transform:rotate(-2deg); }
+  .unit { position:absolute; width:32px; height:44px; background:#475569; border:2px solid #93c5fd; transform:rotate(12deg); box-shadow:0 4px 12px #0008; }
+  .unit.red { border-color:#fca5a5; transform:rotate(-18deg); }
+  .hp-top { position:absolute; left:16px; right:16px; top:8px; height:30px; display:grid; grid-template-columns:1fr 76px 1fr; gap:10px; align-items:center; z-index:3; }
+  .hp { height:24px; position:relative; background:#020617dd; border:2px solid #64748b; overflow:hidden; }
+  .hp .fill { position:absolute; inset:0 18% 0 0; background:linear-gradient(90deg,#16a34a,#4ade80); }
+  .hp.enemy .fill { inset:0 0 0 31%; background:linear-gradient(90deg,#fb7185,#dc2626); }
+  .hp span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; font-weight:700; text-shadow:0 1px 2px #000; }
+  .timer { color:#fff; text-align:center; font-size:17px; font-weight:800; text-shadow:0 2px 3px #000; }
+  .gauge { position:absolute; z-index:3; bottom:8px; left:50%; transform:translateX(-50%); width:48%; height:25px; background:#020617e8; border:2px solid #eab308; }
+  .gauge .fill { position:absolute; inset:0 37% 0 0; background:linear-gradient(90deg,#b45309,#facc15); }
+  .gauge span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:700; }
+  .buttons { position:absolute; right:10px; bottom:40px; z-index:4; display:flex; flex-direction:column; gap:7px; }
+  .button-image,.retry { width:39px; height:39px; border:2px solid #cbd5e1; border-radius:6px; object-fit:cover; box-shadow:0 3px 8px #000b; }
+  .retry { display:flex; align-items:center; justify-content:center; background:#1e293b; color:#fff; font-size:20px; font-weight:800; }
+  .dock .game-inner { position:absolute; inset:42px 66px 38px 10px; border:1px solid rgba(255,255,255,.18); background:#ffffff08; }
+  .dock .buttons { right:13px; bottom:42px; }
+  .bands .game { padding-top:42px; padding-bottom:38px; box-sizing:border-box; }
+  .bands .playfield { position:absolute; inset:42px 0 38px; background:#ffffff05; }
+  .bands .hp-top { top:7px; }
+  .bands .gauge { bottom:7px; width:60%; }
+  .bands .buttons { right:10px; bottom:47px; }
+  @media (max-width:1000px) { .hud-options { grid-template-columns:1fr; } }
+</style>
+
+<h2>HUD配置はどれが近いですか？</h2>
+<p class="subtitle">クリックで選択できます。Aを推奨しています。</p>
+
+<div class="hud-options">
+  <div class="hud-card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="game">
+      <div class="hp-top">
+        <div class="hp"><div class="fill"></div><span>自分 1800 / 2000</span></div>
+        <div class="timer">残り 238</div>
+        <div class="hp enemy"><div class="fill"></div><span>敵 1380 / 2000</span></div>
+      </div>
+      <div class="unit" style="left:26%;top:45%"></div>
+      <div class="unit red" style="left:67%;top:30%"></div>
+      <div class="unit" style="left:48%;top:63%;transform:rotate(-30deg)"></div>
+      <div class="buttons">
+        <img class="button-image" src="/files/element_button.png" alt="エレメント生成">
+        <img class="button-image" src="/files/summon_button.png" alt="召喚">
+        <div class="retry">R</div>
+      </div>
+      <div class="gauge"><div class="fill"></div><span>召喚ゲージ 63%</span></div>
+    </div>
+    <div class="hud-card-body">
+      <h3>A — フィールド内オーバーレイ（推奨）</h3>
+      <p>参考画像に最も近い配置。戦場を広く保ち、右下ボタンと下中央ゲージをフィールド上へ重ねます。</p>
+    </div>
+  </div>
+
+  <div class="hud-card dock" data-choice="b" onclick="toggleSelect(this)">
+    <div class="game">
+      <div class="hp-top">
+        <div class="hp"><div class="fill"></div><span>自分 1800 / 2000</span></div>
+        <div class="timer">残り 238</div>
+        <div class="hp enemy"><div class="fill"></div><span>敵 1380 / 2000</span></div>
+      </div>
+      <div class="game-inner"></div>
+      <div class="unit" style="left:24%;top:48%"></div>
+      <div class="unit red" style="left:63%;top:31%"></div>
+      <div class="buttons">
+        <img class="button-image" src="/files/element_button.png" alt="エレメント生成">
+        <img class="button-image" src="/files/summon_button.png" alt="召喚">
+        <div class="retry">R</div>
+      </div>
+      <div class="gauge"><div class="fill"></div><span>召喚ゲージ 63%</span></div>
+    </div>
+    <div class="hud-card-body">
+      <h3>B — 右端ドック</h3>
+      <p>ボタン用の細い余白を確保し、ユニットと重なりにくくします。その分だけ戦場表示が少し狭くなります。</p>
+    </div>
+  </div>
+
+  <div class="hud-card bands" data-choice="c" onclick="toggleSelect(this)">
+    <div class="game">
+      <div class="playfield"></div>
+      <div class="hp-top">
+        <div class="hp"><div class="fill"></div><span>自分 1800 / 2000</span></div>
+        <div class="timer">残り 238</div>
+        <div class="hp enemy"><div class="fill"></div><span>敵 1380 / 2000</span></div>
+      </div>
+      <div class="unit" style="left:26%;top:45%"></div>
+      <div class="unit red" style="left:67%;top:30%"></div>
+      <div class="buttons">
+        <img class="button-image" src="/files/element_button.png" alt="エレメント生成">
+        <img class="button-image" src="/files/summon_button.png" alt="召喚">
+        <div class="retry">R</div>
+      </div>
+      <div class="gauge"><div class="fill"></div><span>召喚ゲージ 63%</span></div>
+    </div>
+    <div class="hud-card-body">
+      <h3>C — 固定上下バー</h3>
+      <p>HUDと戦場を完全に分離して読みやすくしますが、プレイ領域が上下方向に最も狭くなります。</p>
+    </div>
+  </div>
+</div>

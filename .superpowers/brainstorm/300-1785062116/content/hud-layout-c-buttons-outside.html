@@ -1,0 +1,59 @@
+<style>
+  .final-wrap { max-width:980px; margin:0 auto; }
+  .final-game { position:relative; width:100%; aspect-ratio:16/9; border:2px solid #475569; border-radius:14px; overflow:hidden; background:#07111f; }
+  .top-band { position:absolute; inset:0 0 auto; height:8.5%; background:#0f172af5; border-bottom:1px solid #475569; display:grid; grid-template-columns:1fr 120px 1fr; gap:16px; padding:8px 18px; box-sizing:border-box; z-index:3; align-items:center; }
+  .hp { height:25px; background:#020617; border:2px solid #64748b; position:relative; overflow:hidden; }
+  .hp .fill { position:absolute; inset:0 14% 0 0; background:linear-gradient(90deg,#15803d,#4ade80); }
+  .hp.enemy .fill { inset:0 0 0 31%; background:linear-gradient(90deg,#fb7185,#b91c1c); }
+  .hp span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:700; text-shadow:0 1px 2px #000; }
+  .timer { text-align:center; color:white; font-weight:800; font-size:19px; }
+  .field { position:absolute; width:53.7%; height:68.2%; left:23.15%; top:10%; box-sizing:border-box; border:2px solid #64748b; background:
+      radial-gradient(circle at 30% 72%,rgba(37,99,235,.32),transparent 29%),
+      radial-gradient(circle at 72% 27%,rgba(220,38,38,.30),transparent 31%),
+      linear-gradient(145deg,#304358,#17263a 58%,#173327); overflow:hidden; }
+  .field-label { position:absolute; left:8px; top:7px; color:#cbd5e1; font-size:11px; background:#0f172acc; padding:3px 6px; border-radius:4px; }
+  .unit { position:absolute; width:44px; height:60px; background:#475569; border:3px solid #93c5fd; transform:rotate(12deg); box-shadow:0 4px 12px #0008; }
+  .unit.red { border-color:#fca5a5; transform:rotate(-18deg); }
+  .buttons { position:absolute; left:78.4%; top:45.5%; z-index:4; display:flex; flex-direction:column; gap:9px; padding:7px; border:1px solid #334155; border-radius:9px; background:#0f172acc; }
+  .button-image,.retry { width:48px; height:48px; border:2px solid #e2e8f0; border-radius:6px; object-fit:cover; box-shadow:0 3px 8px #000b; }
+  .retry { display:flex; align-items:center; justify-content:center; background:#1e293b; color:#fff; font-size:24px; font-weight:800; }
+  .bottom-band { position:absolute; inset:auto 0 0; height:10%; background:#0f172af5; border-top:1px solid #475569; display:flex; justify-content:center; align-items:center; }
+  .gauge { width:46%; height:26px; background:#020617; border:2px solid #eab308; position:relative; overflow:hidden; }
+  .gauge .fill { position:absolute; inset:0 37% 0 0; background:linear-gradient(90deg,#b45309,#facc15); }
+  .gauge span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:700; }
+  .note-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px; }
+  .note { padding:12px; border:1px solid #334155; border-radius:10px; background:#0f172a; }
+  .note b { display:block; color:#f8fafc; margin-bottom:4px; }
+  .note span { color:#94a3b8; font-size:13px; }
+</style>
+
+<div class="final-wrap">
+  <h2>C案・ボタンをフィールド外へ配置</h2>
+  <p class="subtitle">フィールドの幅・高さは現行のまま。操作ボタンをフィールド右外側へ縦配置します。</p>
+  <div class="final-game">
+    <div class="top-band">
+      <div class="hp"><div class="fill"></div><span>自分 1800 / 2000</span></div>
+      <div class="timer">残り 238</div>
+      <div class="hp enemy"><div class="fill"></div><span>敵 1380 / 2000</span></div>
+    </div>
+    <div class="field">
+      <div class="field-label">戦闘フィールド 515 × 368（現行と同じ）</div>
+      <div class="unit" style="left:24%;top:48%"></div>
+      <div class="unit red" style="left:67%;top:25%"></div>
+      <div class="unit" style="left:48%;top:68%;transform:rotate(-30deg)"></div>
+    </div>
+    <div class="buttons">
+      <img class="button-image" src="/files/element_button.png" alt="エレメント生成">
+      <img class="button-image" src="/files/summon_button.png" alt="召喚">
+      <div class="retry">R</div>
+    </div>
+    <div class="bottom-band">
+      <div class="gauge"><div class="fill"></div><span>召喚ゲージ 63%</span></div>
+    </div>
+  </div>
+  <div class="note-grid">
+    <div class="note"><b>上部</b><span>自分HP・残り時間・敵HPだけを固定表示</span></div>
+    <div class="note"><b>中央</b><span>現行サイズのフィールドと、右外側のボタン列</span></div>
+    <div class="note"><b>下部</b><span>召喚ゲージだけを固定表示</span></div>
+  </div>
+</div>

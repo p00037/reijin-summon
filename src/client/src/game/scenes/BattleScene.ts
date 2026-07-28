@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 import { planCpuCommands } from "../ai/cpuPlanner";
-import { findLeader, isUnitAlive, oppositeTeam } from "../core/battleState";
+import { findLeader, isUnitAlive } from "../core/battleState";
+import {
+  shouldKeepMoveMarker,
+  transitionDragRelease
+} from "../input/dragMovement";
 import type {
   BattleState,
   ElementalId,
@@ -13,53 +17,54 @@ import type {
   Vec2
 } from "../core/types";
 import {
-  meleeAnimationKey,
-  meleeAnimationFrameRate,
-  meleeAnimationKeyForUnit,
-  meleeFrameStart,
-  rangedAnimationKey,
-  rangedAnimationFrameRate,
-  rangedAnimationKeyForUnit,
-  rangedFrameStart,
-  speedAnimationKey,
-  speedAnimationFrameRate,
-  speedAnimationKeyForUnit,
-  speedFrameStart,
-  spriteFlipXForMovement,
-  summonedAnimationKey,
-  summonedAnimationFrameRate,
-  summonedAnimationKeyForUnit,
-  summonedFrameStart
-} from "../render/unitAnimation";
+  battleStatusOverlayDepth,
+  cardBorderColorForTeam,
+  cardBorderDepth,
+  cardBorderWidth,
+  cardImageDepth,
+  summonedCardPresentation,
+  unitCardPresentation
+} from "../render/cardPresentation";
+import { healingAreaPresentation } from "../render/healingAreaPresentation";
+import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
+import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
+import {
+  elementButtonTextureKey,
+  summonButtonTextureKey
+} from "../ui/battleHudModel";
+import { calculateBattleLayout } from "../ui/battleLayout";
 
 const maxFrameDeltaSeconds = 1 / 20;
 const selectionRadiusPx = 28;
-const meleeTextureKey = "melee-octopus";
-const rangedTextureKey = "ranged-mermaid";
-const speedTextureKey = "speed-shark";
-const summonedTextureKey = "summoned-seiryuu";
 const summonerTextureKey = "summoner";
 const elementalTextureKey = "elemental-crystal";
-const meleeSpriteDisplaySize = 52;
-const rangedSpriteDisplaySize = 52;
-const speedSpriteDisplaySize = 52;
-const summonedSpriteDisplaySize = 108;
 const summonerSpriteDisplaySize = 64;
-const elementalSpriteDisplaySize = 44;
+const elementalSpriteDisplaySize = 15;
+const elementButtonPath = "/assets/buttons/element_button.png";
+const summonButtonPath = "/assets/buttons/summon_button.png";
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
+  private battlefieldOverlay!: Phaser.GameObjects.Graphics;
+  private circleOverlay!: Phaser.GameObjects.Graphics;
+  private circleMaskShape!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
   private leaderSprites = new Map<TeamId, Phaser.GameObjects.Image>();
   private elementalSprites = new Map<ElementalId, Phaser.GameObjects.Image>();
-  private meleeUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
-  private rangedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
-  private speedUnitSprites = new Map<string, Phaser.GameObjects.Sprite>();
-  private summonedUnitSprites = new Map<number, Phaser.GameObjects.Sprite>();
+  private unitImages = new Map<string, Phaser.GameObjects.Image>();
+  private unitCardBorders = new Map<string, Phaser.GameObjects.Rectangle>();
+  private summonedUnitImages = new Map<number, Phaser.GameObjects.Image>();
+  private summonedUnitCardBorders = new Map<number, Phaser.GameObjects.Rectangle>();
+  private unitCardPositions = new Map<string, Vec2>();
+  private unitCardRotations = new Map<string, number>();
+  private summonedCardPositions = new Map<number, Vec2>();
+  private summonedCardRotations = new Map<number, number>();
   private selectedUnitId: PlayerUnitId | null = null;
+  private draggedUnitId: PlayerUnitId | null = null;
+  private moveMarkers = new Map<PlayerUnitId, Vec2>();
   private cpuPlanTimerSeconds = 0;
 
   constructor() {
@@ -67,63 +72,64 @@ export class BattleScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.spritesheet(meleeTextureKey, "/assets/units/octopus.png", {
-      frameWidth: 280,
-      frameHeight: 280,
-      margin: 1,
-      spacing: 0
-    });
-    this.load.spritesheet(rangedTextureKey, "/assets/units/mermaid.png", {
-      frameWidth: 280,
-      frameHeight: 280,
-      margin: 1,
-      spacing: 0
-    });
-    this.load.spritesheet(speedTextureKey, "/assets/units/shark.png", {
-      frameWidth: 280,
-      frameHeight: 280,
-      margin: 1,
-      spacing: 0
-    });
-    this.load.spritesheet(summonedTextureKey, "/assets/units/seiryuu.png", {
-      frameWidth: 442,
-      frameHeight: 442,
-      margin: 0,
-      spacing: 0
-    });
+    for (const presentation of Object.values(unitCardPresentation)) {
+      this.load.image(presentation.textureKey, presentation.path);
+    }
+    this.load.image(summonedCardPresentation.textureKey, summonedCardPresentation.path);
     this.load.image(summonerTextureKey, "/assets/summoners/summoner.png");
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
+    this.load.image(elementButtonTextureKey, elementButtonPath);
+    this.load.image(summonButtonTextureKey, summonButtonPath);
   }
 
   create(): void {
     this.session = new GameSession();
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
-    this.meleeUnitSprites = new Map();
-    this.rangedUnitSprites = new Map();
-    this.speedUnitSprites = new Map();
-    this.summonedUnitSprites = new Map();
+    this.unitImages = new Map();
+    this.unitCardBorders = new Map();
+    this.summonedUnitImages = new Map();
+    this.summonedUnitCardBorders = new Map();
+    this.unitCardPositions = new Map();
+    this.unitCardRotations = new Map();
+    this.summonedCardPositions = new Map();
+    this.summonedCardRotations = new Map();
     this.selectedUnitId = null;
+    this.draggedUnitId = null;
+    this.moveMarkers = new Map();
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main.setBackgroundColor("#101827");
 
+    const layout = calculateBattleLayout(this.scale.width, this.scale.height);
+
     this.battlefield = this.add.graphics();
-    this.createMeleeAnimations();
-    this.createRangedAnimations();
-    this.createSpeedAnimations();
-    this.createSummonedAnimations();
+    this.battlefieldOverlay = this.add.graphics();
+    this.battlefieldOverlay.setDepth(battleStatusOverlayDepth);
+    this.circleOverlay = this.add.graphics();
+    this.circleOverlay.setDepth(battleStatusOverlayDepth - 0.5);
+    this.circleMaskShape = this.make.graphics({}, false);
+    this.circleMaskShape
+      .fillStyle(0xffffff, 1)
+      .fillRect(
+        layout.field.x,
+        layout.field.y,
+        layout.field.width,
+        layout.field.height
+      );
+    this.circleOverlay.setMask(this.circleMaskShape.createGeometryMask());
     this.createLeaderSprites();
-    this.createMeleeUnitSprites();
-    this.createRangedUnitSprites();
-    this.createSpeedUnitSprites();
-    this.hud = new BattleHud(this, {
+    this.createUnitImages();
+    this.hud = new BattleHud(this, layout, {
       onBuild: () => this.handleBuild(),
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
-    this.hud.setStatus("Select unit, then click field.");
 
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointer(pointer));
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
+    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer));
+    this.input.on("pointerupoutside", () => {
+      this.draggedUnitId = null;
+    });
     this.draw();
   }
 
@@ -144,37 +150,46 @@ export class BattleScene extends Phaser.Scene {
     this.draw();
   }
 
-  private handlePointer(pointer: Phaser.Input.Pointer): void {
+  private handlePointerDown(pointer: Phaser.Input.Pointer): void {
+    this.draggedUnitId = null;
     if (this.hud.contains(pointer.x, pointer.y) || this.session.state.result !== "InProgress") {
       return;
     }
 
-    const clickedUnit = this.findPlayerUnitNear(pointer.x, pointer.y);
-    if (clickedUnit) {
-      this.selectedUnitId = clickedUnit.unitId;
-      this.hud.setStatus(`${clickedUnit.unitType} selected.`);
+    const unit = this.findPlayerUnitNear(pointer.x, pointer.y);
+    if (!unit) {
       return;
     }
 
-    if (!this.selectedUnitId) {
-      this.hud.setStatus("Select a player unit first.");
+    this.selectedUnitId = unit.unitId;
+    this.draggedUnitId = unit.unitId;
+  }
+
+  private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    const draggedUnitId = this.draggedUnitId;
+    const unit = this.session.state.units.find(
+      (candidate) => candidate.unitId === draggedUnitId
+    );
+    const transition = transitionDragRelease(
+      {
+        draggedUnitId,
+        moveMarkers: this.moveMarkers
+      },
+      {
+        matchInProgress: this.session.state.result === "InProgress",
+        overHud: this.hud.contains(pointer.x, pointer.y),
+        insideBattlefield: this.fieldBounds().contains(pointer.x, pointer.y),
+        targetUnitAlive: unit !== undefined && isUnitAlive(unit)
+      },
+      this.screenToWorld(pointer.x, pointer.y)
+    );
+    this.draggedUnitId = transition.draggedUnitId;
+    this.moveMarkers = transition.moveMarkers;
+    if (!transition.command || !unit) {
       return;
     }
 
-    const unit = this.session.state.units.find((candidate) => candidate.unitId === this.selectedUnitId);
-    if (!unit || !isUnitAlive(unit)) {
-      this.hud.setStatus("That unit is waiting to respawn.");
-      return;
-    }
-
-    const targetPosition = this.screenToWorld(pointer.x, pointer.y);
-    this.session.applyCommand({
-      commandType: "MoveUnit",
-      team: "Player",
-      unitId: this.selectedUnitId,
-      targetPosition
-    });
-    this.hud.setStatus(`${unit.unitType} moving.`);
+    this.session.applyCommand(transition.command);
   }
 
   private handleBuild(): void {
@@ -182,13 +197,14 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!this.selectedUnitId) {
-      this.hud.setStatus("Select a player unit before building.");
       return;
     }
 
     const unit = this.session.state.units.find((candidate) => candidate.unitId === this.selectedUnitId);
     if (!unit || unit.mode !== "Active" || !isUnitAlive(unit)) {
-      this.hud.setStatus("Only active player units can build.");
+      return;
+    }
+    if (!canPlaceElementalAtUnit(this.session.state, this.session.config, this.selectedUnitId)) {
       return;
     }
 
@@ -197,7 +213,6 @@ export class BattleScene extends Phaser.Scene {
       team: "Player",
       unitId: this.selectedUnitId
     });
-    this.hud.setStatus(`${unit.unitType} is building an elemental.`);
   }
 
   private handleSummon(): void {
@@ -205,25 +220,10 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!this.session.canSummon("Player")) {
-      this.hud.setStatus(this.summonBlockerText());
       return;
     }
 
     this.session.applyCommand({ commandType: "Summon", team: "Player" });
-    this.hud.setStatus("Summoned unit deployed.");
-  }
-
-  private summonBlockerText(): string {
-    const completed = this.session.countCompletedElementals("Player");
-    const required = this.session.config.requiredElementalsToSummon;
-    if (completed < required) {
-      return `Need ${required - completed} more elemental${required - completed === 1 ? "" : "s"} to summon.`;
-    }
-    const cooldown = this.session.state.playerSummonCooldownSeconds;
-    if (cooldown > 0) {
-      return `Summon cooldown: ${cooldown.toFixed(1)}s.`;
-    }
-    return "Cannot summon while the leader is defeated.";
   }
 
   private findPlayerUnitNear(x: number, y: number): (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null {
@@ -246,16 +246,25 @@ export class BattleScene extends Phaser.Scene {
   private draw(): void {
     const state = this.session.state;
     this.battlefield.clear();
+    this.battlefieldOverlay.clear();
+    this.circleOverlay.clear();
     this.drawField();
     this.drawArea("Player");
     this.drawArea("Cpu");
+    this.drawHealingAreas(state.leaders);
     this.drawLeaders(state.leaders);
     this.drawElementals(state.elementals);
     this.drawSummonedUnits(state.summonedUnits);
+    this.pruneMoveMarkers(state.units);
+    this.drawMoveMarkers();
     this.drawUnits(state.units);
     this.drawAttackEvents(state);
 
-    this.hud.update(state, this.selectedUnitId);
+    this.hud.update(
+      state,
+      this.selectedUnitId,
+      this.session.canSummon("Player")
+    );
   }
 
   private drawField(): void {
@@ -265,13 +274,13 @@ export class BattleScene extends Phaser.Scene {
     this.battlefield.lineStyle(1, 0x334155, 1);
     this.battlefield.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-    const centerX = bounds.x + bounds.width / 2;
+    const centerY = bounds.y + bounds.height / 2;
     this.battlefield.lineStyle(2, 0x475569, 0.7);
-    this.battlefield.lineBetween(centerX, bounds.y, centerX, bounds.y + bounds.height);
+    this.battlefield.lineBetween(bounds.x, centerY, bounds.x + bounds.width, centerY);
     for (let offset = -3; offset <= 3; offset += 1) {
-      const y = bounds.y + bounds.height / 2 + offset * (bounds.height / 7);
+      const x = bounds.x + bounds.width / 2 + offset * (bounds.width / 7);
       this.battlefield.lineStyle(1, 0x1f2a44, 0.9);
-      this.battlefield.lineBetween(bounds.x, y, bounds.x + bounds.width, y);
+      this.battlefield.lineBetween(x, bounds.y, x, bounds.y + bounds.height);
     }
   }
 
@@ -297,15 +306,31 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  private drawHealingAreas(leaders: LeaderState[]): void {
+    const presentation = healingAreaPresentation(this.session.config.leaderHealingRadius);
+    const screenRadius = this.worldRadiusToScreen(presentation.radius);
+    for (const leader of leaders) {
+      const screen = this.worldToScreen(leader.position);
+      this.circleOverlay.fillStyle(presentation.fillColor, presentation.fillAlpha);
+      this.circleOverlay.fillCircle(screen.x, screen.y, screenRadius);
+      this.circleOverlay.lineStyle(
+        presentation.strokeWidth,
+        presentation.strokeColor,
+        presentation.strokeAlpha
+      );
+      this.circleOverlay.strokeCircle(screen.x, screen.y, screenRadius);
+    }
+  }
+
   private drawLeaders(leaders: LeaderState[]): void {
     for (const leader of leaders) {
       const screen = this.worldToScreen(leader.position);
       const color = leader.team === "Player" ? 0x3b82f6 : 0xef4444;
       this.updateLeaderSprite(leader, screen);
-      this.battlefield.lineStyle(3, color, 0.75);
-      this.battlefield.strokeCircle(screen.x, screen.y, 28);
-      this.battlefield.lineStyle(3, 0xf8fafc, 0.9);
-      this.battlefield.strokeCircle(screen.x, screen.y, 25);
+      this.circleOverlay.lineStyle(3, color, 0.75);
+      this.circleOverlay.strokeCircle(screen.x, screen.y, 28);
+      this.circleOverlay.lineStyle(3, 0xf8fafc, 0.9);
+      this.circleOverlay.strokeCircle(screen.x, screen.y, 25);
       this.drawHpBar(screen.x - 30, screen.y - 38, 60, leader.currentHp / leader.maxHp, color);
     }
   }
@@ -316,21 +341,40 @@ export class BattleScene extends Phaser.Scene {
       const screen = this.worldToScreen(elemental.position);
       const color = elemental.team === "Player" ? 0x7dd3fc : 0xfda4af;
       this.updateElementalSprite(elemental, screen);
-      this.battlefield.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
-      this.battlefield.strokeCircle(screen.x, screen.y, 18);
+      this.battlefieldOverlay.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 13);
       this.drawHpBar(screen.x - 18, screen.y + 18, 36, elemental.currentHp / elemental.maxHp, color);
     }
   }
 
   private drawSummonedUnits(summonedUnits: SummonedUnitState[]): void {
-    this.destroyRemovedSummonedSprites(summonedUnits);
+    this.destroyRemovedSummonedUnitImages(summonedUnits);
     for (const summoned of summonedUnits) {
       const screen = this.worldToScreen(summoned.position);
       const color = summoned.team === "Player" ? 0x22d3ee : 0xfb7185;
-      this.updateSummonedUnitSprite(summoned, screen);
-      this.battlefield.lineStyle(2, color, 1);
-      this.battlefield.strokeCircle(screen.x, screen.y, 30);
+      this.updateSummonedUnitImage(summoned, screen);
+      this.battlefieldOverlay.lineStyle(2, color, 1);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 30);
       this.drawHpBar(screen.x - 28, screen.y + 34, 56, summoned.currentHp / summoned.maxHp, color);
+    }
+  }
+
+  private pruneMoveMarkers(units: UnitState[]): void {
+    for (const [unitId] of this.moveMarkers) {
+      const unit = units.find((candidate) => candidate.unitId === unitId);
+      if (!unit || !shouldKeepMoveMarker(unit)) {
+        this.moveMarkers.delete(unitId);
+      }
+    }
+  }
+
+  private drawMoveMarkers(): void {
+    this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.9);
+    for (const marker of this.moveMarkers.values()) {
+      const screen = this.worldToScreen(marker);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 10);
+      this.battlefieldOverlay.lineBetween(screen.x - 6, screen.y, screen.x + 6, screen.y);
+      this.battlefieldOverlay.lineBetween(screen.x, screen.y - 6, screen.x, screen.y + 6);
     }
   }
 
@@ -341,162 +385,51 @@ export class BattleScene extends Phaser.Scene {
       const color = unit.team === "Player" ? 0x60a5fa : 0xf87171;
       const alpha = unit.mode === "Defeated" ? 0.28 : 1;
 
-      this.updateMeleeUnitSprite(unit, screen, alpha);
-      this.updateRangedUnitSprite(unit, screen, alpha);
-      this.updateSpeedUnitSprite(unit, screen, alpha);
+      this.updateUnitImage(unit, screen, alpha);
 
       if (isSelected) {
-        this.battlefield.lineStyle(3, 0xfacc15, 1);
-        this.battlefield.strokeCircle(screen.x, screen.y, 24);
+        this.battlefieldOverlay.lineStyle(3, 0xfacc15, 1);
+        this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 24);
       }
 
-      if (unit.unitType === "Melee" && !this.meleeUnitSprites.has(unit.unitId)) {
+      if (!this.unitImages.has(unit.unitId)) {
         this.battlefield.fillStyle(color, alpha);
-        this.battlefield.fillCircle(screen.x, screen.y, 14);
-      } else if (unit.unitType === "Speed" && !this.speedUnitSprites.has(unit.unitId)) {
-        this.battlefield.fillStyle(color, alpha);
-        this.battlefield.fillTriangle(screen.x, screen.y - 15, screen.x - 13, screen.y + 12, screen.x + 13, screen.y + 12);
+        if (unit.unitType === "Speed") {
+          this.battlefield.fillTriangle(screen.x, screen.y - 15, screen.x - 13, screen.y + 12, screen.x + 13, screen.y + 12);
+        } else {
+          this.battlefield.fillCircle(screen.x, screen.y, 14);
+        }
       }
 
       if (unit.mode === "BuildingElemental") {
-        this.battlefield.lineStyle(2, 0xfacc15, 0.95);
-        this.battlefield.strokeCircle(screen.x, screen.y, 20);
+        this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.95);
+        this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 20);
       }
       this.drawHpBar(screen.x - 20, screen.y + 21, 40, unit.currentHp / unit.stats.maxHp, color);
     }
   }
 
-  private createRangedAnimations(): void {
-    this.ensureRangedAnimation("idle", 4, -1);
-    this.ensureRangedAnimation("walk", 4, -1);
-    this.ensureRangedAnimation("attack", 4, 0);
-    this.ensureRangedAnimation("damage", 2, 0);
-    this.ensureRangedAnimation("defeated", 4, 0);
-  }
-
-  private createMeleeAnimations(): void {
-    this.ensureMeleeAnimation("idle", 4, -1);
-    this.ensureMeleeAnimation("walk", 4, -1);
-    this.ensureMeleeAnimation("attack", 4, 0);
-    this.ensureMeleeAnimation("damage", 2, 0);
-    this.ensureMeleeAnimation("defeated", 4, 0);
-  }
-
-  private createSpeedAnimations(): void {
-    this.ensureSpeedAnimation("idle", 4, -1);
-    this.ensureSpeedAnimation("walk", 4, -1);
-    this.ensureSpeedAnimation("attack", 4, 0);
-    this.ensureSpeedAnimation("damage", 2, 0);
-    this.ensureSpeedAnimation("defeated", 4, 0);
-  }
-
-  private createSummonedAnimations(): void {
-    this.ensureSummonedAnimation("walk", 4, -1);
-    this.ensureSummonedAnimation("attack", 4, 0);
-  }
-
-  private ensureRangedAnimation(name: Parameters<typeof rangedAnimationKey>[0], frameCount: number, repeat: number): void {
-    const key = rangedAnimationKey(name);
-    if (this.anims.exists(key)) {
-      return;
-    }
-
-    const start = rangedFrameStart(name);
-    this.anims.create({
-      key,
-      frames: this.anims.generateFrameNumbers(rangedTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: rangedAnimationFrameRate(name),
-      repeat
-    });
-  }
-
-  private ensureMeleeAnimation(name: Parameters<typeof meleeAnimationKey>[0], frameCount: number, repeat: number): void {
-    const key = meleeAnimationKey(name);
-    if (this.anims.exists(key)) {
-      return;
-    }
-
-    const start = meleeFrameStart(name);
-    this.anims.create({
-      key,
-      frames: this.anims.generateFrameNumbers(meleeTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: meleeAnimationFrameRate(name),
-      repeat
-    });
-  }
-
-  private ensureSpeedAnimation(name: Parameters<typeof speedAnimationKey>[0], frameCount: number, repeat: number): void {
-    const key = speedAnimationKey(name);
-    if (this.anims.exists(key)) {
-      return;
-    }
-
-    const start = speedFrameStart(name);
-    this.anims.create({
-      key,
-      frames: this.anims.generateFrameNumbers(speedTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: speedAnimationFrameRate(name),
-      repeat
-    });
-  }
-
-  private ensureSummonedAnimation(name: Parameters<typeof summonedAnimationKey>[0], frameCount: number, repeat: number): void {
-    const key = summonedAnimationKey(name);
-    if (this.anims.exists(key)) {
-      return;
-    }
-
-    const start = summonedFrameStart(name);
-    this.anims.create({
-      key,
-      frames: this.anims.generateFrameNumbers(summonedTextureKey, { start, end: start + frameCount - 1 }),
-      frameRate: summonedAnimationFrameRate(name),
-      repeat
-    });
-  }
-
-  private createRangedUnitSprites(): void {
+  private createUnitImages(): void {
     for (const unit of this.session.state.units) {
-      if (unit.unitType !== "Ranged") {
-        continue;
-      }
-
-      const sprite = this.add.sprite(0, 0, rangedTextureKey, rangedFrameStart("idle"));
-      sprite.setDisplaySize(rangedSpriteDisplaySize, rangedSpriteDisplaySize);
-      sprite.setDepth(1);
-      sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
-      sprite.play("ranged-idle");
-      this.rangedUnitSprites.set(unit.unitId, sprite);
-    }
-  }
-
-  private createMeleeUnitSprites(): void {
-    for (const unit of this.session.state.units) {
-      if (unit.unitType !== "Melee") {
-        continue;
-      }
-
-      const sprite = this.add.sprite(0, 0, meleeTextureKey, meleeFrameStart("idle"));
-      sprite.setDisplaySize(meleeSpriteDisplaySize, meleeSpriteDisplaySize);
-      sprite.setDepth(1);
-      sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
-      sprite.play("melee-idle");
-      this.meleeUnitSprites.set(unit.unitId, sprite);
-    }
-  }
-
-  private createSpeedUnitSprites(): void {
-    for (const unit of this.session.state.units) {
-      if (unit.unitType !== "Speed") {
-        continue;
-      }
-
-      const sprite = this.add.sprite(0, 0, speedTextureKey, speedFrameStart("idle"));
-      sprite.setDisplaySize(speedSpriteDisplaySize, speedSpriteDisplaySize);
-      sprite.setDepth(1);
-      sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
-      sprite.play("speed-idle");
-      this.speedUnitSprites.set(unit.unitId, sprite);
+      const presentation = unitCardPresentation[unit.unitType];
+      const image = this.add.image(0, 0, presentation.textureKey);
+      const displayWidth = image.width / image.height * presentation.displayHeight;
+      image.setDisplaySize(displayWidth, presentation.displayHeight);
+      image.setDepth(cardImageDepth);
+      const border = this.add.rectangle(
+        0,
+        0,
+        displayWidth + cardBorderWidth * 2,
+        presentation.displayHeight + cardBorderWidth * 2,
+        cardBorderColorForTeam(unit.team)
+      );
+      border.setDepth(cardBorderDepth);
+      const rotation = initialCardRotation(unit.team);
+      image.setRotation(rotation);
+      border.setRotation(rotation);
+      this.unitImages.set(unit.unitId, image);
+      this.unitCardBorders.set(unit.unitId, border);
+      this.unitCardRotations.set(unit.unitId, rotation);
     }
   }
 
@@ -545,135 +478,84 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  private updateRangedUnitSprite(unit: UnitState, screen: Vec2, alpha: number): void {
-    const sprite = this.rangedUnitSprites.get(unit.unitId);
-    if (!sprite) {
+  private updateUnitImage(unit: UnitState, screen: Vec2, alpha: number): void {
+    const image = this.unitImages.get(unit.unitId);
+    if (!image) {
       return;
     }
 
-    const key = rangedAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
-    const currentKey = sprite.anims.currentAnim?.key;
-    const currentAttackOrDamage = currentKey === "ranged-attack" || currentKey === "ranged-damage";
-
-    sprite.setPosition(screen.x, screen.y);
-    sprite.setAlpha(alpha);
-    sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
-
-    if (unit.mode === "Defeated") {
-      if (currentKey !== key) {
-        sprite.play(key);
-      }
-      return;
+    const border = this.unitCardBorders.get(unit.unitId);
+    const rotation = cardRotationForMovement(
+      this.unitCardPositions.get(unit.unitId) ?? screen,
+      screen,
+      this.unitCardRotations.get(unit.unitId) ?? initialCardRotation(unit.team)
+    );
+    if (border) {
+      border.setPosition(screen.x, screen.y);
+      border.setAlpha(alpha);
+      border.setFillStyle(cardBorderColorForTeam(unit.team));
+      border.setRotation(rotation);
     }
-
-    if (currentAttackOrDamage && sprite.anims.isPlaying) {
-      return;
-    }
-
-    if (currentKey !== key || !sprite.anims.isPlaying) {
-      sprite.play(key);
-    }
+    image.setPosition(screen.x, screen.y);
+    image.setAlpha(alpha);
+    image.setRotation(rotation);
+    this.unitCardPositions.set(unit.unitId, { ...screen });
+    this.unitCardRotations.set(unit.unitId, rotation);
   }
 
-  private updateMeleeUnitSprite(unit: UnitState, screen: Vec2, alpha: number): void {
-    const sprite = this.meleeUnitSprites.get(unit.unitId);
-    if (!sprite) {
-      return;
+  private updateSummonedUnitImage(summoned: SummonedUnitState, screen: Vec2): void {
+    let image = this.summonedUnitImages.get(summoned.summonedUnitId);
+    if (!image) {
+      image = this.add.image(0, 0, summonedCardPresentation.textureKey);
+      const displayWidth = image.width / image.height * summonedCardPresentation.displayHeight;
+      image.setDisplaySize(displayWidth, summonedCardPresentation.displayHeight);
+      image.setDepth(cardImageDepth);
+      const border = this.add.rectangle(
+        0,
+        0,
+        displayWidth + cardBorderWidth * 2,
+        summonedCardPresentation.displayHeight + cardBorderWidth * 2,
+        cardBorderColorForTeam(summoned.team)
+      );
+      border.setDepth(cardBorderDepth);
+      const rotation = initialCardRotation(summoned.team);
+      image.setRotation(rotation);
+      border.setRotation(rotation);
+      this.summonedUnitImages.set(summoned.summonedUnitId, image);
+      this.summonedUnitCardBorders.set(summoned.summonedUnitId, border);
+      this.summonedCardRotations.set(summoned.summonedUnitId, rotation);
     }
 
-    const key = meleeAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
-    const currentKey = sprite.anims.currentAnim?.key;
-    const currentAttackOrDamage = currentKey === "melee-attack" || currentKey === "melee-damage";
-
-    sprite.setPosition(screen.x, screen.y);
-    sprite.setAlpha(alpha);
-    sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
-
-    if (unit.mode === "Defeated") {
-      if (currentKey !== key) {
-        sprite.play(key);
-      }
-      return;
+    const border = this.summonedUnitCardBorders.get(summoned.summonedUnitId);
+    const rotation = cardRotationForMovement(
+      this.summonedCardPositions.get(summoned.summonedUnitId) ?? screen,
+      screen,
+      this.summonedCardRotations.get(summoned.summonedUnitId) ?? initialCardRotation(summoned.team)
+    );
+    if (border) {
+      border.setPosition(screen.x, screen.y);
+      border.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
+      border.setFillStyle(cardBorderColorForTeam(summoned.team));
+      border.setRotation(rotation);
     }
-
-    if (currentAttackOrDamage && sprite.anims.isPlaying) {
-      return;
-    }
-
-    if (currentKey !== key || !sprite.anims.isPlaying) {
-      sprite.play(key);
-    }
+    image.setPosition(screen.x, screen.y);
+    image.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
+    image.setRotation(rotation);
+    this.summonedCardPositions.set(summoned.summonedUnitId, { ...screen });
+    this.summonedCardRotations.set(summoned.summonedUnitId, rotation);
   }
 
-  private updateSpeedUnitSprite(unit: UnitState, screen: Vec2, alpha: number): void {
-    const sprite = this.speedUnitSprites.get(unit.unitId);
-    if (!sprite) {
-      return;
-    }
-
-    const key = speedAnimationKeyForUnit(unit, this.session.state.recentAttackEvents);
-    const currentKey = sprite.anims.currentAnim?.key;
-    const currentAttackOrDamage = currentKey === "speed-attack" || currentKey === "speed-damage";
-
-    sprite.setPosition(screen.x, screen.y);
-    sprite.setAlpha(alpha);
-    sprite.setFlipX(spriteFlipXForMovement(unit.team, unit.position, unit.destination));
-
-    if (unit.mode === "Defeated") {
-      if (currentKey !== key) {
-        sprite.play(key);
-      }
-      return;
-    }
-
-    if (currentAttackOrDamage && sprite.anims.isPlaying) {
-      return;
-    }
-
-    if (currentKey !== key || !sprite.anims.isPlaying) {
-      sprite.play(key);
-    }
-  }
-
-  private updateSummonedUnitSprite(summoned: SummonedUnitState, screen: Vec2): void {
-    let sprite = this.summonedUnitSprites.get(summoned.summonedUnitId);
-    if (!sprite) {
-      sprite = this.add.sprite(0, 0, summonedTextureKey, summonedFrameStart("walk"));
-      sprite.setDisplaySize(summonedSpriteDisplaySize, summonedSpriteDisplaySize);
-      sprite.setDepth(1);
-      sprite.play("summoned-walk");
-      this.summonedUnitSprites.set(summoned.summonedUnitId, sprite);
-    }
-
-    const enemyTeam = oppositeTeam(summoned.team);
-    const enemyTargets = [
-      findLeader(this.session.state, enemyTeam),
-      ...this.session.state.units.filter((unit) => unit.team === enemyTeam && isUnitAlive(unit)),
-      ...this.session.state.summonedUnits.filter((candidate) => candidate.team === enemyTeam && candidate.currentHp > 0)
-    ];
-    const key = summonedAnimationKeyForUnit(summoned, enemyTargets, this.session.config.contactSlowRadius);
-    const currentKey = sprite.anims.currentAnim?.key;
-    const currentAttack = currentKey === "summoned-attack";
-
-    sprite.setPosition(screen.x, screen.y);
-    sprite.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
-    sprite.setFlipX(spriteFlipXForMovement(summoned.team, summoned.position, summoned.destination));
-
-    if (currentAttack && sprite.anims.isPlaying) {
-      return;
-    }
-
-    if (currentKey !== key || !sprite.anims.isPlaying) {
-      sprite.play(key);
-    }
-  }
-
-  private destroyRemovedSummonedSprites(summonedUnits: SummonedUnitState[]): void {
+  private destroyRemovedSummonedUnitImages(summonedUnits: SummonedUnitState[]): void {
     const activeIds = new Set(summonedUnits.map((summoned) => summoned.summonedUnitId));
-    for (const [id, sprite] of this.summonedUnitSprites) {
+    for (const [id, image] of this.summonedUnitImages) {
       if (!activeIds.has(id)) {
-        sprite.destroy();
-        this.summonedUnitSprites.delete(id);
+        image.destroy();
+        this.summonedUnitImages.delete(id);
+        const border = this.summonedUnitCardBorders.get(id);
+        border?.destroy();
+        this.summonedUnitCardBorders.delete(id);
+        this.summonedCardPositions.delete(id);
+        this.summonedCardRotations.delete(id);
       }
     }
   }
@@ -689,10 +571,10 @@ export class BattleScene extends Phaser.Scene {
 
   private drawHpBar(x: number, y: number, width: number, ratio: number, color: number): void {
     const clampedRatio = Phaser.Math.Clamp(ratio, 0, 1);
-    this.battlefield.fillStyle(0x020617, 0.9);
-    this.battlefield.fillRect(x, y, width, 5);
-    this.battlefield.fillStyle(color, 1);
-    this.battlefield.fillRect(x, y, width * clampedRatio, 5);
+    this.battlefieldOverlay.fillStyle(0x020617, 0.9);
+    this.battlefieldOverlay.fillRect(x, y, width, 5);
+    this.battlefieldOverlay.fillStyle(color, 1);
+    this.battlefieldOverlay.fillRect(x, y, width * clampedRatio, 5);
   }
 
   private worldToScreen(position: Vec2): Vec2 {
@@ -702,6 +584,13 @@ export class BattleScene extends Phaser.Scene {
       x: Phaser.Math.Linear(bounds.x, bounds.x + bounds.width, (position.x - battlefieldMin.x) / (battlefieldMax.x - battlefieldMin.x)),
       y: Phaser.Math.Linear(bounds.y + bounds.height, bounds.y, (position.y - battlefieldMin.y) / (battlefieldMax.y - battlefieldMin.y))
     };
+  }
+
+  private worldRadiusToScreen(radius: number): number {
+    const { battlefieldMin } = this.session.config;
+    const origin = this.worldToScreen(battlefieldMin);
+    const edge = this.worldToScreen({ x: battlefieldMin.x + radius, y: battlefieldMin.y });
+    return Math.abs(edge.x - origin.x);
   }
 
   private screenToWorld(x: number, y: number): Vec2 {
@@ -716,7 +605,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private fieldBounds(): Phaser.Geom.Rectangle {
-    return new Phaser.Geom.Rectangle(34, 56, this.scale.width - 68, this.hud.top - 76);
+    const field = calculateBattleLayout(this.scale.width, this.scale.height).field;
+    return new Phaser.Geom.Rectangle(field.x, field.y, field.width, field.height);
   }
 }
 

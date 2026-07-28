@@ -18,7 +18,11 @@ export type ElementalId =
   | "Elemental5"
   | "Elemental6"
   | "Elemental7"
-  | "Elemental8";
+  | "Elemental8"
+  | "Elemental9"
+  | "Elemental10"
+  | "Elemental11"
+  | "Elemental12";
 export type CommandType = "MoveUnit" | "BeginElementalBuild" | "Summon";
 export type MatchResult = "InProgress" | "PlayerWin" | "CpuWin" | "Draw";
 export type UnitMode = "Active" | "BuildingElemental" | "Defeated";
@@ -34,21 +38,31 @@ export type UnitStats = {
   attackDamage: number;
   attackRange: number;
   attackIntervalSeconds: number;
+  elementalBuildSeconds: number;
+  elementalAttackMultiplier: number;
 };
 
 export type BattleConfig = {
   matchDurationSeconds: number;
   leaderMaxHp: number;
-  elementalBuildSeconds: number;
+  leaderHealingIntervalSeconds: number;
+  leaderHealingPercent: number;
+  keeperRestHealingIntervalSeconds: number;
+  keeperRestHealingAmount: number;
+  elementalPlacementRadius: number;
+  elementalContactRadius: number;
   maxElementalsPerTeam: number;
-  requiredElementalsToSummon: number;
-  summonCooldownSeconds: number;
-  summonedUnitMinHpMultiplier: number;
-  summonedUnitMaxHpMultiplier: number;
-  summonedUnitHpPerAreaMultiplier: number;
-  summonedUnitAttackDamageMultiplier: number;
-  summonedUnitHealthDecayMinimumHpFactorPerSecond: number;
+  summonGaugeSecondsAtMaxElementals: number;
+  summonedUnitBaseHp: number;
+  summonedUnitHpPerFieldPercent: number;
+  summonedUnitAttackDamage: number;
+  summonedUnitLeaderAttackDamage: number;
+  summonedUnitAttackIntervalSeconds: number;
+  summonedUnitLeaderAttackIntervalSeconds: number;
+  summonedUnitHealthDecayPerSecond: number;
+  summonedUnitMoveSpeed: number;
   unitRespawnSeconds: number;
+  unitLeaderAttackIntervalSeconds: number;
   elementalMaxHp: number;
   directLeaderDamageMultiplier: number;
   playerLeaderPosition: Vec2;
@@ -90,6 +104,9 @@ export type UnitState = {
   buildTimerSeconds: number;
   respawnTimerSeconds: number;
   attackTimerSeconds: number;
+  leaderAttackTimerSeconds: number;
+  leaderHealingElapsedSeconds: number;
+  restHealingElapsedSeconds: number;
   pendingElementalId: ElementalId | null;
 };
 
@@ -110,6 +127,11 @@ export type SummonedUnitState = {
   maxHp: number;
   currentHp: number;
   attackDamage: number;
+  leaderAttackDamage: number;
+  attackIntervalSeconds: number;
+  attackTimerSeconds: number;
+  leaderAttackIntervalSeconds: number;
+  leaderAttackTimerSeconds: number;
   moveSpeed: number;
   healthDecayPerSecond: number;
 };
@@ -122,8 +144,8 @@ export type AttackEvent = {
 
 export type BattleState = {
   remainingSeconds: number;
-  playerSummonCooldownSeconds: number;
-  cpuSummonCooldownSeconds: number;
+  playerSummonGauge: number;
+  cpuSummonGauge: number;
   result: MatchResult;
   leaders: LeaderState[];
   units: UnitState[];
