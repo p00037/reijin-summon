@@ -11,6 +11,7 @@
     "dev:client": "npm run dev -w src/client",
     "dev:server": "npm run dev -w src/server",
     "build": "npm run build -w src/server && npm run build -w src/client",
+    "build:client": "npm run build -w src/client",
     "start": "npm run start -w src/server",
     "typecheck": "npm run typecheck -w src/server && npm run typecheck -w src/client"
   },
