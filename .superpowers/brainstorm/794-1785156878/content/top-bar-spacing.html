@@ -1,0 +1,49 @@
+<style>
+  .top-options { display:grid; gap:18px; }
+  .top-choice { cursor:pointer; border:2px solid var(--border); border-radius:14px; padding:16px; background:var(--card); }
+  .top-choice.selected { border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,.2); }
+  .preview { position:relative; height:78px; background:#0f172a; border:1px solid #334155; border-radius:8px; overflow:hidden; }
+  .hp { position:absolute; top:18px; width:32%; height:36px; border:1px solid; background:#020617; color:#f8fafc; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .hp:before { content:""; position:absolute; inset:3px 25% 3px 3px; z-index:0; opacity:.75; }
+  .hp span { position:relative; z-index:1; }
+  .player { border-color:#22c55e; } .player:before { background:#22c55e; }
+  .enemy { border-color:#ef4444; } .enemy:before { background:#ef4444; }
+  .clock { position:absolute; top:25px; left:50%; transform:translateX(-50%); color:#f8fafc; font-size:22px; font-weight:700; }
+  .mild .player { left:5%; } .mild .enemy { right:5%; }
+  .medium .player { left:8%; } .medium .enemy { right:8%; }
+  .close .player { left:11%; } .close .enemy { right:11%; }
+  .copy { display:flex; align-items:baseline; gap:12px; margin-top:10px; }
+  .copy h3 { margin:0; } .copy p { margin:0; color:var(--muted); }
+</style>
+
+<h2>上部バーのHPをどこまで中央へ寄せますか？</h2>
+<p class="subtitle">時間は「残り」「秒」を削除し、中央に数字だけ表示します。例：残り125秒 → 125</p>
+
+<div class="top-options">
+  <div class="top-choice mild" data-choice="mild" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="hp player"><span>自分 2000 / 2000</span></div>
+      <div class="clock">125</div>
+      <div class="hp enemy"><span>敵 2000 / 2000</span></div>
+    </div>
+    <div class="copy"><h3>A：少し中央寄せ</h3><p>左右から約48px内側。余白を保った控えめな変更です。</p></div>
+  </div>
+
+  <div class="top-choice medium" data-choice="medium" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="hp player"><span>自分 2000 / 2000</span></div>
+      <div class="clock">125</div>
+      <div class="hp enemy"><span>敵 2000 / 2000</span></div>
+    </div>
+    <div class="copy"><h3>B：中央寄せ（推奨）</h3><p>左右から約77px内側。時間表示との間隔も十分確保できます。</p></div>
+  </div>
+
+  <div class="top-choice close" data-choice="close" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="hp player"><span>自分 2000 / 2000</span></div>
+      <div class="clock">125</div>
+      <div class="hp enemy"><span>敵 2000 / 2000</span></div>
+    </div>
+    <div class="copy"><h3>C：強めに中央寄せ</h3><p>左右から約106px内側。中央が密集した見た目になります。</p></div>
+  </div>
+</div>

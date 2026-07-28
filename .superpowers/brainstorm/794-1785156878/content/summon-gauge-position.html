@@ -1,0 +1,66 @@
+<style>
+  .layout-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+  .layout-card { cursor:pointer; border:2px solid var(--border); border-radius:14px; overflow:hidden; background:var(--card); }
+  .layout-card.selected { border-color:#facc15; box-shadow:0 0 0 3px rgba(250,204,21,.2); }
+  .layout-card h3 { margin:14px 14px 4px; }
+  .layout-card p { margin:0 14px 16px; color:var(--muted); font-size:13px; }
+  .battle { position:relative; margin:14px; aspect-ratio:16/9; background:#101827; border-radius:8px; overflow:hidden; }
+  .topbar,.bottombar { position:absolute; left:0; right:0; height:9%; background:#0f172a; border:1px solid #334155; }
+  .topbar { top:0; } .bottombar { bottom:0; }
+  .hp { position:absolute; top:2%; width:33%; height:5%; background:#14532d; border:1px solid #22c55e; }
+  .hp.left { left:2%; } .hp.right { right:2%; background:#7f1d1d; border-color:#ef4444; }
+  .field { position:absolute; left:23%; top:10.5%; width:54%; height:68%; background:#111c31; border:1px solid #475569; overflow:hidden; }
+  .field:after { content:""; position:absolute; left:0; right:0; top:50%; border-top:1px solid #475569; }
+  .leader { position:absolute; left:46%; bottom:-3%; width:8%; aspect-ratio:1; border-radius:50%; background:#3b82f6; z-index:2; }
+  .heal { position:absolute; left:32%; bottom:-20%; width:36%; aspect-ratio:1; border-radius:50%; border:2px solid #86efac; background:rgba(134,239,172,.12); }
+  .ring { position:absolute; left:44%; bottom:-5%; width:12%; aspect-ratio:1; border-radius:50%; border:2px solid #f8fafc; }
+  .gauge { position:absolute; left:31%; width:38%; height:6%; border:1px solid #64748b; background:#020617; color:#fff; font-size:9px; display:flex; align-items:center; justify-content:center; z-index:4; }
+  .gauge:before { content:""; position:absolute; inset:2px 45% 2px 2px; background:#facc15; z-index:-1; }
+  .pos-a .gauge { top:80%; }
+  .pos-b .gauge { top:84%; }
+  .pos-c .gauge { top:72%; left:31%; }
+  .button-col { position:absolute; left:79%; top:47%; display:grid; gap:4px; }
+  .button-col span { width:15px; height:15px; background:#1e293b; border:1px solid #60a5fa; }
+  @media(max-width:900px){ .layout-grid{grid-template-columns:1fr;} }
+</style>
+
+<h2>召喚ゲージをどこまで上げますか？</h2>
+<p class="subtitle">円はすべてフィールド枠で切り取り、外側には表示しない前提です。候補をクリックしてください。</p>
+
+<div class="layout-grid">
+  <div class="layout-card pos-a" data-choice="a" onclick="toggleSelect(this)">
+    <div class="battle">
+      <div class="topbar"></div><div class="bottombar"></div>
+      <div class="hp left"></div><div class="hp right"></div>
+      <div class="field"><div class="heal"></div><div class="ring"></div><div class="leader"></div></div>
+      <div class="gauge">召喚ゲージ 55%</div>
+      <div class="button-col"><span></span><span></span><span></span></div>
+    </div>
+    <h3>A：フィールド直下</h3>
+    <p>下部バーから約60px上へ移動。フィールドとゲージの関係が分かりやすい推奨案です。</p>
+  </div>
+
+  <div class="layout-card pos-b" data-choice="b" onclick="toggleSelect(this)">
+    <div class="battle">
+      <div class="topbar"></div><div class="bottombar"></div>
+      <div class="hp left"></div><div class="hp right"></div>
+      <div class="field"><div class="heal"></div><div class="ring"></div><div class="leader"></div></div>
+      <div class="gauge">召喚ゲージ 55%</div>
+      <div class="button-col"><span></span><span></span><span></span></div>
+    </div>
+    <h3>B：下部バーのすぐ上</h3>
+    <p>現在位置から約40px上へ移動。見た目の変化を抑えた案です。</p>
+  </div>
+
+  <div class="layout-card pos-c" data-choice="c" onclick="toggleSelect(this)">
+    <div class="battle">
+      <div class="topbar"></div><div class="bottombar"></div>
+      <div class="hp left"></div><div class="hp right"></div>
+      <div class="field"><div class="heal"></div><div class="ring"></div><div class="leader"></div></div>
+      <div class="gauge">召喚ゲージ 55%</div>
+      <div class="button-col"><span></span><span></span><span></span></div>
+    </div>
+    <h3>C：フィールド下端に重ねる</h3>
+    <p>最も上へ移動。省スペースですが戦闘画面の一部を覆います。</p>
+  </div>
+</div>
