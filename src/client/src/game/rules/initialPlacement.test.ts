@@ -58,6 +58,32 @@ test("CPUユニットの配置を拒否する", () => {
   assert.deepEqual(findUnit(state, "CpuMelee").position, { x: -2.4, y: 3 });
 });
 
+test("死亡したプレイヤーユニットの配置を拒否して全位置情報を変更しない", () => {
+  const config = createDefaultBattleConfig();
+
+  for (const markAsDead of [
+    (unit: ReturnType<typeof findUnit>) => { unit.mode = "Defeated"; },
+    (unit: ReturnType<typeof findUnit>) => { unit.currentHp = 0; }
+  ]) {
+    const state = createDefaultBattleState(config);
+    const unit = findUnit(state, "PlayerMelee");
+    const positionsBefore = {
+      position: { ...unit.position },
+      spawnPosition: { ...unit.spawnPosition },
+      destination: { ...unit.destination }
+    };
+    markAsDead(unit);
+
+    assert.equal(
+      tryPlaceInitialUnit(state, config, "PlayerMelee", { x: -4, y: -2 }),
+      false
+    );
+    assert.deepEqual(unit.position, positionsBefore.position);
+    assert.deepEqual(unit.spawnPosition, positionsBefore.spawnPosition);
+    assert.deepEqual(unit.destination, positionsBefore.destination);
+  }
+});
+
 test("存在しないユニットIDを配置して状態を変更しない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
