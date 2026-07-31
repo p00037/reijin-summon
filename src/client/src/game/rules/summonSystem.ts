@@ -1,7 +1,7 @@
 import { findLeader, getSummonGauge, isUnitAlive, oppositeTeam, setSummonGauge } from "../core/battleState";
 import type { BattleConfig, BattleState, ElementalState, SummonedUnitState, TeamId, UnitState } from "../core/types";
 import { distance, moveTowards } from "../core/vector";
-import { calculateSummonArea } from "./areaCalculator";
+import { calculateSummonArea, calculateSummonCentroid } from "./areaCalculator";
 import { completedElementalsForTeam } from "./elementalSystem";
 
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
@@ -19,7 +19,9 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   const leader = findLeader(state, team);
   const enemyLeader = findLeader(state, oppositeTeam(team));
   const elementals = completedElementalsForTeam(state, team);
-  const area = calculateSummonArea([leader.position, ...elementals.map((elemental) => elemental.position)]);
+  const summonPoints = [leader.position, ...elementals.map((elemental) => elemental.position)];
+  const area = calculateSummonArea(summonPoints);
+  const summonPosition = calculateSummonCentroid(summonPoints, leader.position);
   const battlefieldArea =
     (config.battlefieldMax.x - config.battlefieldMin.x) *
     (config.battlefieldMax.y - config.battlefieldMin.y);
@@ -29,7 +31,7 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   state.summonedUnits.push({
     summonedUnitId: state.nextSummonedUnitId,
     team,
-    position: { ...leader.position },
+    position: summonPosition,
     destination: { ...enemyLeader.position },
     maxHp,
     currentHp: maxHp,
