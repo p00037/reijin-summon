@@ -32,6 +32,47 @@ test("summoned card is 1.3 times the unit card size", () => {
   );
 });
 
+test("card image textures retain their static mappings", () => {
+  assert.deepEqual(
+    {
+      Speed: {
+        textureKey: unitCardPresentation.Speed.textureKey,
+        path: unitCardPresentation.Speed.path
+      },
+      Melee: {
+        textureKey: unitCardPresentation.Melee.textureKey,
+        path: unitCardPresentation.Melee.path
+      },
+      Ranged: {
+        textureKey: unitCardPresentation.Ranged.textureKey,
+        path: unitCardPresentation.Ranged.path
+      },
+      Summoned: {
+        textureKey: summonedCardPresentation.textureKey,
+        path: summonedCardPresentation.path
+      }
+    },
+    {
+      Speed: {
+        textureKey: "unit-card-speed",
+        path: "/assets/units/blue/blue001.png"
+      },
+      Melee: {
+        textureKey: "unit-card-melee",
+        path: "/assets/units/blue/blue002.png"
+      },
+      Ranged: {
+        textureKey: "unit-card-ranged",
+        path: "/assets/units/blue/blue003.png"
+      },
+      Summoned: {
+        textureKey: "summoned-card",
+        path: "/assets/summons/summon01.png"
+      }
+    }
+  );
+});
+
 test("card image keeps its aspect ratio and aligns to the inner bottom edge", () => {
   const layout = calculateCardImageLayout(
     unitCardPresentation.Melee,
