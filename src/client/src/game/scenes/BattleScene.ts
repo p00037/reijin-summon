@@ -18,9 +18,10 @@ import type {
 } from "../core/types";
 import {
   battleStatusOverlayDepth,
+  calculateCardImageLayout,
   cardBorderColorForTeam,
   cardBorderDepth,
-  cardBorderWidth,
+  cardImageCenterAt,
   cardImageDepth,
   summonedCardPresentation,
   unitCardPresentation
@@ -431,14 +432,18 @@ export class BattleScene extends Phaser.Scene {
     for (const unit of this.session.state.units) {
       const presentation = unitCardPresentation[unit.unitType];
       const image = this.add.image(0, 0, presentation.textureKey);
-      const displayWidth = image.width / image.height * presentation.displayHeight;
-      image.setDisplaySize(displayWidth, presentation.displayHeight);
+      const imageLayout = calculateCardImageLayout(
+        presentation,
+        image.width,
+        image.height
+      );
+      image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
       image.setDepth(cardImageDepth);
       const border = this.add.rectangle(
         0,
         0,
-        displayWidth + cardBorderWidth * 2,
-        presentation.displayHeight + cardBorderWidth * 2,
+        presentation.displayWidth,
+        presentation.displayHeight,
         cardBorderColorForTeam(unit.team)
       );
       border.setDepth(cardBorderDepth);
@@ -514,7 +519,14 @@ export class BattleScene extends Phaser.Scene {
       border.setFillStyle(cardBorderColorForTeam(unit.team));
       border.setRotation(rotation);
     }
-    image.setPosition(screen.x, screen.y);
+    const presentation = unitCardPresentation[unit.unitType];
+    const imageLayout = calculateCardImageLayout(
+      presentation,
+      image.width,
+      image.height
+    );
+    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY);
+    image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);
     this.unitCardPositions.set(unit.unitId, { ...screen });
@@ -525,14 +537,18 @@ export class BattleScene extends Phaser.Scene {
     let image = this.summonedUnitImages.get(summoned.summonedUnitId);
     if (!image) {
       image = this.add.image(0, 0, summonedCardPresentation.textureKey);
-      const displayWidth = image.width / image.height * summonedCardPresentation.displayHeight;
-      image.setDisplaySize(displayWidth, summonedCardPresentation.displayHeight);
+      const imageLayout = calculateCardImageLayout(
+        summonedCardPresentation,
+        image.width,
+        image.height
+      );
+      image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
       image.setDepth(cardImageDepth);
       const border = this.add.rectangle(
         0,
         0,
-        displayWidth + cardBorderWidth * 2,
-        summonedCardPresentation.displayHeight + cardBorderWidth * 2,
+        summonedCardPresentation.displayWidth,
+        summonedCardPresentation.displayHeight,
         cardBorderColorForTeam(summoned.team)
       );
       border.setDepth(cardBorderDepth);
@@ -556,7 +572,13 @@ export class BattleScene extends Phaser.Scene {
       border.setFillStyle(cardBorderColorForTeam(summoned.team));
       border.setRotation(rotation);
     }
-    image.setPosition(screen.x, screen.y);
+    const imageLayout = calculateCardImageLayout(
+      summonedCardPresentation,
+      image.width,
+      image.height
+    );
+    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY);
+    image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
     image.setRotation(rotation);
     this.summonedCardPositions.set(summoned.summonedUnitId, { ...screen });
