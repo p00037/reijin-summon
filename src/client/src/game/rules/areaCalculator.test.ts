@@ -91,3 +91,35 @@ test("orders unique points counter-clockwise from the lower-left point", () => {
     ]
   );
 });
+
+test("does not mutate the points passed to orderPolygonPoints", () => {
+  const points = [
+    { x: 1, y: 1 },
+    { x: -1, y: -1 },
+    { x: 1, y: -1 },
+    { x: -1, y: 1 },
+    { x: 1, y: 1 }
+  ];
+  const snapshot = structuredClone(points);
+
+  orderPolygonPoints(points);
+
+  assert.deepEqual(points, snapshot);
+});
+
+test("does not mutate the points or fallback passed to calculateSummonCentroid", () => {
+  const points = [
+    { x: 2, y: 2 },
+    { x: -2, y: -1 },
+    { x: 2, y: -1 },
+    { x: -2, y: 2 }
+  ];
+  const fallback = { x: 9, y: 9 };
+  const pointsSnapshot = structuredClone(points);
+  const fallbackSnapshot = structuredClone(fallback);
+
+  calculateSummonCentroid(points, fallback);
+
+  assert.deepEqual(points, pointsSnapshot);
+  assert.deepEqual(fallback, fallbackSnapshot);
+});
