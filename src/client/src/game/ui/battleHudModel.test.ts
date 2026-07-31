@@ -98,6 +98,19 @@ test("Countdown disables controls and displays remaining seconds rounded up", ()
   assert.equal(createBattleHudModel(state, null, true).resultText, "1");
 });
 
+test("Countdown prioritizes a completed result and disables both controls", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = "Countdown";
+  state.countdownRemainingSeconds = 4.01;
+  state.result = "PlayerWin";
+
+  const model = createBattleHudModel(state, "PlayerMelee", true);
+
+  assert.equal(model.resultText, "勝利");
+  assert.equal(model.canBuild, false);
+  assert.equal(model.canSummon, false);
+});
+
 test("InProgress restores build and summon availability", () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
   state.phase = "InProgress";
