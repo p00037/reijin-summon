@@ -3,6 +3,8 @@ import type { BattleConfig, BattleState, LeaderState, TeamId, UnitId, UnitState,
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
     remainingSeconds: config.matchDurationSeconds,
+    phase: "Setup",
+    countdownRemainingSeconds: 0,
     playerSummonGauge: 0,
     cpuSummonGauge: 0,
     result: "InProgress",

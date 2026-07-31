@@ -4,6 +4,7 @@ import type { BattleCommand, BattleConfig, BattleState, MatchResult, TeamId, Uni
 import { countCompletedElementals, removeDestroyedElementals, tickElementalBuilds, tryBeginElementalBuild } from "./elementalSystem";
 import { canSummon, tickSummonGauges, tickSummonedUnits, tryExecuteSummon } from "./summonSystem";
 import { applyMoveCommand, calculateUnitHealingElapsed, tickCombat, tickMovement, tickRespawns, tickUnitHealing } from "./unitSystem";
+import { tryPlaceInitialUnit } from "./initialPlacement";
 
 export class GameSession {
   readonly config: BattleConfig;
@@ -20,24 +21,52 @@ export class GameSession {
     }
 
     switch (command.commandType) {
+      case "PlaceInitialUnit":
+        if (this.state.phase === "Setup") {
+          tryPlaceInitialUnit(this.state, this.config, command.unitId, command.targetPosition);
+        }
+        break;
+      case "StartBattle":
+        if (this.state.phase === "Setup") {
+          this.state.phase = "Countdown";
+          this.state.countdownRemainingSeconds = this.config.countdownSeconds;
+        }
+        break;
       case "MoveUnit":
-        applyMoveCommand(this.state, this.config, command);
+        if (this.state.phase === "InProgress") {
+          applyMoveCommand(this.state, this.config, command);
+        }
         break;
       case "BeginElementalBuild":
-        if (findUnit(this.state, command.unitId).team !== command.team) {
+        if (this.state.phase !== "InProgress" || findUnit(this.state, command.unitId).team !== command.team) {
           return;
         }
         tryBeginElementalBuild(this.state, this.config, command.unitId);
         break;
       case "Summon":
-        tryExecuteSummon(this.state, this.config, command.team);
-        this.updateResult();
+        if (this.state.phase === "InProgress") {
+          tryExecuteSummon(this.state, this.config, command.team);
+          this.updateResult();
+        }
         break;
     }
   }
 
   tick(deltaSeconds: number): void {
     if (this.state.result !== "InProgress") {
+      return;
+    }
+    if (this.state.phase === "Setup") {
+      return;
+    }
+    if (this.state.phase === "Countdown") {
+      this.state.countdownRemainingSeconds = Math.max(
+        0,
+        this.state.countdownRemainingSeconds - Math.max(0, deltaSeconds)
+      );
+      if (this.state.countdownRemainingSeconds === 0) {
+        this.state.phase = "InProgress";
+      }
       return;
     }
 
