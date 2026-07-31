@@ -137,7 +137,10 @@ export class BattleScene extends Phaser.Scene {
   update(_time: number, deltaMs: number): void {
     const deltaSeconds = Math.min(deltaMs / 1000, maxFrameDeltaSeconds);
 
-    if (this.session.state.result === "InProgress") {
+    if (
+      this.session.state.result === "InProgress"
+      && this.session.state.phase === "InProgress"
+    ) {
       this.cpuPlanTimerSeconds += deltaSeconds;
       if (this.cpuPlanTimerSeconds >= 1) {
         this.cpuPlanTimerSeconds = 0;
@@ -145,15 +148,19 @@ export class BattleScene extends Phaser.Scene {
           this.session.applyCommand(command);
         }
       }
-      this.session.tick(deltaSeconds);
     }
+    this.session.tick(deltaSeconds);
 
     this.draw();
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     this.draggedUnitId = null;
-    if (this.hud.contains(pointer.x, pointer.y) || this.session.state.result !== "InProgress") {
+    if (
+      this.hud.contains(pointer.x, pointer.y)
+      || this.session.state.result !== "InProgress"
+      || this.session.state.phase === "Countdown"
+    ) {
       return;
     }
 
@@ -177,7 +184,7 @@ export class BattleScene extends Phaser.Scene {
         moveMarkers: this.moveMarkers
       },
       {
-        matchInProgress: this.session.state.result === "InProgress",
+        phase: this.session.state.phase,
         overHud: this.hud.contains(pointer.x, pointer.y),
         insideBattlefield: this.fieldBounds().contains(pointer.x, pointer.y),
         targetUnitAlive: unit !== undefined && isUnitAlive(unit)
@@ -194,7 +201,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleBuild(): void {
-    if (this.session.state.result !== "InProgress") {
+    if (
+      this.session.state.result !== "InProgress"
+      || this.session.state.phase !== "InProgress"
+    ) {
       return;
     }
     if (!this.selectedUnitId) {
@@ -218,6 +228,13 @@ export class BattleScene extends Phaser.Scene {
 
   private handleSummon(): void {
     if (this.session.state.result !== "InProgress") {
+      return;
+    }
+    if (this.session.state.phase === "Setup") {
+      this.session.applyCommand({ commandType: "StartBattle", team: "Player" });
+      return;
+    }
+    if (this.session.state.phase !== "InProgress") {
       return;
     }
     if (!this.session.canSummon("Player")) {

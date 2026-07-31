@@ -1,5 +1,6 @@
 import type {
   BattleCommand,
+  MatchPhase,
   PlayerUnitId,
   UnitState,
   Vec2
@@ -7,7 +8,7 @@ import type {
 import { distanceSq } from "../core/vector";
 
 export type DragReleaseContext = {
-  matchInProgress: boolean;
+  phase: MatchPhase;
   overHud: boolean;
   insideBattlefield: boolean;
   targetUnitAlive: boolean;
@@ -15,7 +16,7 @@ export type DragReleaseContext = {
 
 export function canCommitDragMovement(context: DragReleaseContext): boolean {
   return (
-    context.matchInProgress &&
+    context.phase !== "Countdown" &&
     !context.overHud &&
     context.insideBattlefield &&
     context.targetUnitAlive
@@ -32,7 +33,8 @@ export type DragReleaseTransition = {
   moveMarkers: Map<PlayerUnitId, Vec2>;
   command: Extract<
     BattleCommand,
-    { commandType: "MoveUnit"; team: "Player" }
+    | { commandType: "PlaceInitialUnit"; team: "Player" }
+    | { commandType: "MoveUnit"; team: "Player" }
   > | null;
 };
 
@@ -50,13 +52,23 @@ export function transitionDragRelease(
     };
   }
 
-  const command = {
-    commandType: "MoveUnit" as const,
-    team: "Player" as const,
-    unitId: state.draggedUnitId,
-    targetPosition: { ...targetPosition }
-  };
-  moveMarkers.set(state.draggedUnitId, { ...targetPosition });
+  const command =
+    context.phase === "Setup"
+      ? {
+          commandType: "PlaceInitialUnit" as const,
+          team: "Player" as const,
+          unitId: state.draggedUnitId,
+          targetPosition: { ...targetPosition }
+        }
+      : {
+          commandType: "MoveUnit" as const,
+          team: "Player" as const,
+          unitId: state.draggedUnitId,
+          targetPosition: { ...targetPosition }
+        };
+  if (context.phase === "InProgress") {
+    moveMarkers.set(state.draggedUnitId, { ...targetPosition });
+  }
   return {
     draggedUnitId: null,
     moveMarkers,

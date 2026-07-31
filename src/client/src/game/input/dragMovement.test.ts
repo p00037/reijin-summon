@@ -7,16 +7,16 @@ import {
   transitionDragRelease
 } from "./dragMovement";
 
-test("commits drag movement only for a valid release during the match", () => {
+test("commits drag movement only for a valid release during the battle", () => {
   const valid = {
-    matchInProgress: true,
+    phase: "InProgress" as const,
     overHud: false,
     insideBattlefield: true,
     targetUnitAlive: true
   };
 
   assert.equal(canCommitDragMovement(valid), true);
-  assert.equal(canCommitDragMovement({ ...valid, matchInProgress: false }), false);
+  assert.equal(canCommitDragMovement({ ...valid, phase: "Countdown" }), false);
   assert.equal(canCommitDragMovement({ ...valid, overHud: true }), false);
   assert.equal(canCommitDragMovement({ ...valid, insideBattlefield: false }), false);
   assert.equal(canCommitDragMovement({ ...valid, targetUnitAlive: false }), false);
@@ -49,6 +49,48 @@ test("creates a player move command for a valid drag release", () => {
     targetPosition: { x: 4, y: -2 }
   });
   assert.equal(transition.draggedUnitId, null);
+});
+
+test("creates a player initial placement command for a valid Setup drag release", () => {
+  const transition = transitionDragRelease(
+    {
+      draggedUnitId: "PlayerMelee",
+      moveMarkers: new Map()
+    },
+    {
+      phase: "Setup",
+      overHud: false,
+      insideBattlefield: true,
+      targetUnitAlive: true
+    },
+    { x: -4, y: -2 }
+  );
+
+  assert.deepEqual(transition.command, {
+    commandType: "PlaceInitialUnit",
+    team: "Player",
+    unitId: "PlayerMelee",
+    targetPosition: { x: -4, y: -2 }
+  });
+  assert.equal(transition.moveMarkers.size, 0);
+});
+
+test("does not create a command for a Countdown drag release", () => {
+  const transition = transitionDragRelease(
+    {
+      draggedUnitId: "PlayerMelee",
+      moveMarkers: new Map()
+    },
+    {
+      phase: "Countdown",
+      overHud: false,
+      insideBattlefield: true,
+      targetUnitAlive: true
+    },
+    { x: -4, y: -2 }
+  );
+
+  assert.equal(transition.command, null);
 });
 
 test("sets and updates the dragged unit marker without mutating the prior markers", () => {
@@ -101,7 +143,7 @@ test("invalid drag release clears dragging without issuing a command or changing
 });
 
 const validRelease = {
-  matchInProgress: true,
+  phase: "InProgress" as const,
   overHud: false,
   insideBattlefield: true,
   targetUnitAlive: true
