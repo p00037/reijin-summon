@@ -1,0 +1,189 @@
+<style>
+  .layout-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .layout-card {
+    cursor: pointer;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    background: var(--surface);
+  }
+  .layout-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
+  }
+  .game {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--game-ratio);
+    overflow: hidden;
+    background: #101827;
+    border: 1px solid #475569;
+    margin: 12px 0;
+  }
+  .topbar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 10.25%;
+    background: #0f172a;
+  }
+  .hp {
+    position: absolute;
+    top: 2.1%;
+    height: 6%;
+    border: 1px solid #64748b;
+    background: #020617;
+    color: white;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hp.player { left: var(--hp-edge); width: var(--hp-width); }
+  .hp.cpu { right: var(--hp-edge); width: var(--hp-width); }
+  .hp.player::before,
+  .hp.cpu::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    right: 18%;
+    background: var(--hp-color);
+    z-index: 0;
+  }
+  .hp span { position: relative; z-index: 1; }
+  .time {
+    position: absolute;
+    left: 50%;
+    top: 4.9%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font: 600 12px Arial;
+  }
+  .field {
+    position: absolute;
+    left: var(--field-x);
+    top: var(--field-y);
+    width: var(--field-w);
+    height: var(--field-h);
+    box-sizing: border-box;
+    border: 1px solid #334155;
+    background:
+      linear-gradient(90deg, transparent 49.8%, #26344d 50%, transparent 50.2%),
+      linear-gradient(0deg, transparent 49.8%, #475569 50%, transparent 50.2%),
+      #111c31;
+  }
+  .button {
+    position: absolute;
+    left: var(--button-x);
+    width: var(--button-size);
+    height: var(--button-size);
+    box-sizing: border-box;
+    border: 1px solid #60a5fa;
+    background: #1e293b;
+    color: white;
+    display: grid;
+    place-items: center;
+    font: 700 10px Arial;
+  }
+  .b1 { top: var(--button-y1); }
+  .b2 { top: var(--button-y2); }
+  .b3 { top: var(--button-y3); }
+  .gauge {
+    position: absolute;
+    left: var(--gauge-x);
+    top: var(--gauge-y);
+    width: var(--gauge-w);
+    height: var(--gauge-h);
+    border: 1px solid #475569;
+    box-sizing: border-box;
+    background: linear-gradient(90deg, #facc15 63%, #020617 63%);
+    color: white;
+    display: grid;
+    place-items: center;
+    font: 600 9px Arial;
+  }
+  .dimensions {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  @media (max-width: 900px) {
+    .layout-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<h2>ゲーム画面の余白をどこまで削りますか？</h2>
+<p class="subtitle">戦闘フィールドは515.2×368px、ボタンは52×52pxのままです。HPバーは左右同幅にし、敵HPの右端を右ボタン列の右端以内に収めています。</p>
+
+<div class="layout-grid">
+  <div class="layout-card selected" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <h3>均整の取れた最小余白（推奨）</h3>
+    <div class="game" style="
+      --game-ratio: 644 / 468;
+      --hp-edge: 0.62%; --hp-width: 45.34%; --hp-color: #22c55e;
+      --field-x: 10%; --field-y: 11.97%; --field-w: 80%; --field-h: 78.63%;
+      --button-x: 91.86%; --button-size: 8.07%;
+      --button-y1: 53.85%; --button-y2: 66.67%; --button-y3: 79.49%;
+      --gauge-x: 22.05%; --gauge-y: 92.31%; --gauge-w: 55.9%; --gauge-h: 5.98%;
+    ">
+      <div class="topbar"></div>
+      <div class="hp player"><span>自分 1800 / 2000</span></div>
+      <div class="hp cpu" style="--hp-color:#ef4444"><span>敵 1650 / 2000</span></div>
+      <div class="time">125</div>
+      <div class="field"></div>
+      <div class="button b1">生成</div><div class="button b2">召喚</div><div class="button b3">R</div>
+      <div class="gauge">召喚ゲージ 63%</div>
+    </div>
+    <div class="dimensions">644×468px<br>フィールド左右64.4px／ゲージ下8px</div>
+  </div>
+
+  <div class="layout-card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <h3>少し呼吸を残す</h3>
+    <div class="game" style="
+      --game-ratio: 660 / 476;
+      --hp-edge: 1.21%; --hp-width: 44.24%; --hp-color: #22c55e;
+      --field-x: 10.97%; --field-y: 11.76%; --field-w: 78.06%; --field-h: 77.31%;
+      --button-x: 91%; --button-size: 7.88%;
+      --button-y1: 52.94%; --button-y2: 65.55%; --button-y3: 78.15%;
+      --gauge-x: 22.73%; --gauge-y: 90.76%; --gauge-w: 54.55%; --gauge-h: 5.88%;
+    ">
+      <div class="topbar"></div>
+      <div class="hp player"><span>自分 1800 / 2000</span></div>
+      <div class="hp cpu" style="--hp-color:#ef4444"><span>敵 1650 / 2000</span></div>
+      <div class="time">125</div>
+      <div class="field"></div>
+      <div class="button b1">生成</div><div class="button b2">召喚</div><div class="button b3">R</div>
+      <div class="gauge">召喚ゲージ 63%</div>
+    </div>
+    <div class="dimensions">660×476px<br>フィールド左右72.4px／ゲージ下16px</div>
+  </div>
+
+  <div class="layout-card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <h3>限界まで切り詰める</h3>
+    <div class="game" style="
+      --game-ratio: 644 / 460;
+      --hp-edge: 0%; --hp-width: 46%; --hp-color: #22c55e;
+      --field-x: 10%; --field-y: 12.17%; --field-w: 80%; --field-h: 80%;
+      --button-x: 91.86%; --button-size: 8.07%;
+      --button-y1: 54.78%; --button-y2: 67.83%; --button-y3: 80.87%;
+      --gauge-x: 22.05%; --gauge-y: 93.91%; --gauge-w: 55.9%; --gauge-h: 6.09%;
+    ">
+      <div class="topbar"></div>
+      <div class="hp player"><span>自分 1800 / 2000</span></div>
+      <div class="hp cpu" style="--hp-color:#ef4444"><span>敵 1650 / 2000</span></div>
+      <div class="time">125</div>
+      <div class="field"></div>
+      <div class="button b1">生成</div><div class="button b2">召喚</div><div class="button b3">R</div>
+      <div class="gauge">召喚ゲージ 63%</div>
+    </div>
+    <div class="dimensions">644×460px<br>フィールド左右64.4px／ゲージ下0px</div>
+  </div>
+</div>
+
+<p class="subtitle">カードをクリックして選択してください。迷う場合は、下端の窮屈さが出にくいAがおすすめです。</p>
