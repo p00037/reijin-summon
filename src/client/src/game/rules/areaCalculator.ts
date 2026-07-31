@@ -1,11 +1,67 @@
 import type { Vec2 } from "../core/types";
 
+const polygonAreaEpsilon = 1e-9;
+
 export function calculateSummonArea(points: Vec2[]): number {
   const hull = convexHull(points);
   if (hull.length < 3) {
     return 0;
   }
   return Math.abs(shoelaceArea(hull));
+}
+
+export function orderPolygonPoints(points: Vec2[]): Vec2[] {
+  const unique = points.filter(
+    (point, index) =>
+      points.findIndex(
+        (candidate) => candidate.x === point.x && candidate.y === point.y
+      ) === index
+  );
+  if (unique.length < 2) {
+    return unique.map((point) => ({ ...point }));
+  }
+
+  const center = unique.reduce(
+    (sum, point) => ({ x: sum.x + point.x, y: sum.y + point.y }),
+    { x: 0, y: 0 }
+  );
+  center.x /= unique.length;
+  center.y /= unique.length;
+
+  return unique
+    .map((point) => ({ ...point }))
+    .sort(
+      (a, b) =>
+        Math.atan2(a.y - center.y, a.x - center.x) -
+        Math.atan2(b.y - center.y, b.x - center.x)
+    );
+}
+
+export function calculateSummonCentroid(points: Vec2[], fallback: Vec2): Vec2 {
+  const polygon = orderPolygonPoints(points);
+  if (polygon.length < 3) {
+    return { ...fallback };
+  }
+
+  let crossSum = 0;
+  let weightedX = 0;
+  let weightedY = 0;
+  for (let index = 0; index < polygon.length; index += 1) {
+    const current = polygon[index];
+    const next = polygon[(index + 1) % polygon.length];
+    const cross = current.x * next.y - next.x * current.y;
+    crossSum += cross;
+    weightedX += (current.x + next.x) * cross;
+    weightedY += (current.y + next.y) * cross;
+  }
+  if (Math.abs(crossSum) <= polygonAreaEpsilon) {
+    return { ...fallback };
+  }
+
+  return {
+    x: weightedX / (3 * crossSum),
+    y: weightedY / (3 * crossSum)
+  };
 }
 
 function convexHull(points: Vec2[]): Vec2[] {

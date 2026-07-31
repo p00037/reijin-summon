@@ -27,6 +27,7 @@ import {
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
+import { orderPolygonPoints } from "../rules/areaCalculator";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
@@ -296,7 +297,7 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
-    const ordered = orderPoints(points);
+    const ordered = orderPolygonPoints(points);
     const color = team === "Player" ? 0x38bdf8 : 0xfb7185;
     this.battlefield.lineStyle(2, color, 0.55);
     for (let index = 0; index < ordered.length; index += 1) {
@@ -612,12 +613,4 @@ export class BattleScene extends Phaser.Scene {
 
 function isPlayerUnit(unit: UnitState): unit is UnitState & { unitId: PlayerUnitId; team: "Player" } {
   return unit.team === "Player" && unit.unitId.startsWith("Player");
-}
-
-function orderPoints(points: Vec2[]): Vec2[] {
-  const center = points.reduce(
-    (sum, point) => ({ x: sum.x + point.x / points.length, y: sum.y + point.y / points.length }),
-    { x: 0, y: 0 }
-  );
-  return [...points].sort((a, b) => Math.atan2(a.y - center.y, a.x - center.x) - Math.atan2(b.y - center.y, b.x - center.x));
 }
