@@ -60,6 +60,7 @@ test("勝敗を日本語へ変換して戦闘中は空文字にする", () => {
 test("有効な選択ユニットと既存召喚判定をボタン状態へ反映する", () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
 
+  state.phase = "InProgress";
   assert.equal(createBattleHudModel(state, "PlayerMelee", true).canBuild, true);
   assert.equal(createBattleHudModel(state, "PlayerMelee", true).canSummon, true);
 
@@ -70,6 +71,42 @@ test("有効な選択ユニットと既存召喚判定をボタン状態へ反�
   const finished = createBattleHudModel(state, "PlayerSpeed", true);
   assert.equal(finished.canBuild, false);
   assert.equal(finished.canSummon, false);
+});
+
+test("Setup enables summon confirmation without allowing builds", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+
+  const model = createBattleHudModel(state, "PlayerMelee", false);
+
+  assert.equal(model.canBuild, false);
+  assert.equal(model.canSummon, true);
+  assert.equal(model.resultText, "");
+});
+
+test("Countdown disables controls and displays remaining seconds rounded up", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = "Countdown";
+  state.countdownRemainingSeconds = 4.01;
+
+  const model = createBattleHudModel(state, "PlayerMelee", true);
+
+  assert.equal(model.canBuild, false);
+  assert.equal(model.canSummon, false);
+  assert.equal(model.resultText, "5");
+
+  state.countdownRemainingSeconds = 0.01;
+  assert.equal(createBattleHudModel(state, null, true).resultText, "1");
+});
+
+test("InProgress restores build and summon availability", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = "InProgress";
+
+  const model = createBattleHudModel(state, "PlayerMelee", true);
+
+  assert.equal(model.canBuild, true);
+  assert.equal(model.canSummon, true);
+  assert.equal(model.resultText, "");
 });
 
 test("使用する画像キーはエレメント生成と召喚だけである", () => {
