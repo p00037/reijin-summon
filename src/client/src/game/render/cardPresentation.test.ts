@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   battleStatusOverlayDepth,
+  calculateCardBorderGeometry,
   calculateCardImageLayout,
   cardBorderColorForTeam,
   cardBorderDepth,
@@ -66,6 +67,17 @@ test("card borders distinguish player and CPU teams", () => {
 
 test("card borders leave unused inner space transparent", () => {
   assert.equal(cardBorderFillAlpha, 0);
+});
+
+test("card border geometry keeps rendered outer size within presentation", () => {
+  for (const presentation of [
+    unitCardPresentation.Melee,
+    summonedCardPresentation
+  ]) {
+    const geometry = calculateCardBorderGeometry(presentation);
+    assert.equal(geometry.width + cardBorderWidth, presentation.displayWidth);
+    assert.equal(geometry.height + cardBorderWidth, presentation.displayHeight);
+  }
 });
 
 test("card border is behind cards and status overlay is in front", () => {

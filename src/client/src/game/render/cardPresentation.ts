@@ -68,6 +68,15 @@ export function calculateCardImageLayout(
   };
 }
 
+export function calculateCardBorderGeometry(
+  presentation: CardPresentation
+): { width: number; height: number } {
+  return {
+    width: presentation.displayWidth - cardBorderWidth,
+    height: presentation.displayHeight - cardBorderWidth
+  };
+}
+
 export function cardImageCenterAt(
   cardCenter: { x: number; y: number },
   rotation: number,

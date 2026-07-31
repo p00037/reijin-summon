@@ -18,6 +18,7 @@ import type {
 } from "../core/types";
 import {
   battleStatusOverlayDepth,
+  calculateCardBorderGeometry,
   calculateCardImageLayout,
   cardBorderColorForTeam,
   cardBorderDepth,
@@ -441,11 +442,12 @@ export class BattleScene extends Phaser.Scene {
       );
       image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
       image.setDepth(cardImageDepth);
+      const borderGeometry = calculateCardBorderGeometry(presentation);
       const border = this.add.rectangle(
         0,
         0,
-        presentation.displayWidth,
-        presentation.displayHeight,
+        borderGeometry.width,
+        borderGeometry.height,
         0x000000,
         cardBorderFillAlpha
       );
@@ -548,11 +550,14 @@ export class BattleScene extends Phaser.Scene {
       );
       image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
       image.setDepth(cardImageDepth);
+      const borderGeometry = calculateCardBorderGeometry(
+        summonedCardPresentation
+      );
       const border = this.add.rectangle(
         0,
         0,
-        summonedCardPresentation.displayWidth,
-        summonedCardPresentation.displayHeight,
+        borderGeometry.width,
+        borderGeometry.height,
         0x000000,
         cardBorderFillAlpha
       );
