@@ -17,6 +17,7 @@ export const cardBorderDepth = 0;
 export const cardImageDepth = 1;
 export const battleStatusOverlayDepth = 2;
 export const cardBorderWidth = 2;
+export const cardBorderFillAlpha = 0;
 const unitCardDisplayWidth = 51.52;
 const unitCardDisplayHeight = 368 * 0.25;
 const summonedCardScale = 1.3;

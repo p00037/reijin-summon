@@ -5,6 +5,7 @@ import {
   calculateCardImageLayout,
   cardBorderColorForTeam,
   cardBorderDepth,
+  cardBorderFillAlpha,
   cardBorderWidth,
   cardImageCenterAt,
   cardImageDepth,
@@ -61,6 +62,10 @@ test("card borders distinguish player and CPU teams", () => {
   assert.equal(cardBorderWidth, 2);
   assert.equal(cardBorderColorForTeam("Player"), 0x7dd3fc);
   assert.equal(cardBorderColorForTeam("Cpu"), 0xfda4af);
+});
+
+test("card borders leave unused inner space transparent", () => {
+  assert.equal(cardBorderFillAlpha, 0);
 });
 
 test("card border is behind cards and status overlay is in front", () => {

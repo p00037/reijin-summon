@@ -21,6 +21,8 @@ import {
   calculateCardImageLayout,
   cardBorderColorForTeam,
   cardBorderDepth,
+  cardBorderFillAlpha,
+  cardBorderWidth,
   cardImageCenterAt,
   cardImageDepth,
   summonedCardPresentation,
@@ -444,8 +446,10 @@ export class BattleScene extends Phaser.Scene {
         0,
         presentation.displayWidth,
         presentation.displayHeight,
-        cardBorderColorForTeam(unit.team)
+        0x000000,
+        cardBorderFillAlpha
       );
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(unit.team));
       border.setDepth(cardBorderDepth);
       const rotation = initialCardRotation(unit.team);
       image.setRotation(rotation);
@@ -516,7 +520,7 @@ export class BattleScene extends Phaser.Scene {
     if (border) {
       border.setPosition(screen.x, screen.y);
       border.setAlpha(alpha);
-      border.setFillStyle(cardBorderColorForTeam(unit.team));
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(unit.team));
       border.setRotation(rotation);
     }
     const presentation = unitCardPresentation[unit.unitType];
@@ -549,8 +553,10 @@ export class BattleScene extends Phaser.Scene {
         0,
         summonedCardPresentation.displayWidth,
         summonedCardPresentation.displayHeight,
-        cardBorderColorForTeam(summoned.team)
+        0x000000,
+        cardBorderFillAlpha
       );
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(summoned.team));
       border.setDepth(cardBorderDepth);
       const rotation = initialCardRotation(summoned.team);
       image.setRotation(rotation);
@@ -569,7 +575,7 @@ export class BattleScene extends Phaser.Scene {
     if (border) {
       border.setPosition(screen.x, screen.y);
       border.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
-      border.setFillStyle(cardBorderColorForTeam(summoned.team));
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(summoned.team));
       border.setRotation(rotation);
     }
     const imageLayout = calculateCardImageLayout(
