@@ -22,12 +22,12 @@ export class GameSession {
 
     switch (command.commandType) {
       case "PlaceInitialUnit":
-        if (this.state.phase === "Setup") {
+        if (command.team === "Player" && this.state.phase === "Setup") {
           tryPlaceInitialUnit(this.state, this.config, command.unitId, command.targetPosition);
         }
         break;
       case "StartBattle":
-        if (this.state.phase === "Setup") {
+        if (command.team === "Player" && this.state.phase === "Setup") {
           this.state.phase = "Countdown";
           this.state.countdownRemainingSeconds = this.config.countdownSeconds;
         }

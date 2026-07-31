@@ -62,6 +62,34 @@ test("StartBattleは5秒のカウントダウン後に戦闘を開始する", ()
   assert.equal(session.state.remainingSeconds, 299);
 });
 
+test("CPUを指定した壊れた初期配置コマンドはSetup状態を変更しない", () => {
+  const session = new GameSession();
+  const stateBefore = structuredClone(session.state);
+  const malformedCommand = {
+    commandType: "PlaceInitialUnit",
+    team: "Cpu",
+    unitId: "PlayerMelee",
+    targetPosition: { x: -4, y: -2 }
+  } as unknown as BattleCommand;
+
+  session.applyCommand(malformedCommand);
+
+  assert.deepEqual(session.state, stateBefore);
+});
+
+test("CPUを指定した壊れた戦闘開始コマンドはSetup状態を変更しない", () => {
+  const session = new GameSession();
+  const stateBefore = structuredClone(session.state);
+  const malformedCommand = {
+    commandType: "StartBattle",
+    team: "Cpu"
+  } as unknown as BattleCommand;
+
+  session.applyCommand(malformedCommand);
+
+  assert.deepEqual(session.state, stateBefore);
+});
+
 test("Countdown中の重複開始と初期配置を拒否する", () => {
   const session = new GameSession();
   session.applyCommand({ commandType: "StartBattle", team: "Player" });

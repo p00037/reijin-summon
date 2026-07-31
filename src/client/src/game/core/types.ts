@@ -23,7 +23,6 @@ export type ElementalId =
   | "Elemental10"
   | "Elemental11"
   | "Elemental12";
-export type CommandType = "MoveUnit" | "BeginElementalBuild" | "Summon";
 export type MatchResult = "InProgress" | "PlayerWin" | "CpuWin" | "Draw";
 export type MatchPhase = "Setup" | "Countdown" | "InProgress";
 export type UnitMode = "Active" | "BuildingElemental" | "Defeated";
@@ -88,6 +87,8 @@ export type BattleCommand =
   | { commandType: "PlaceInitialUnit"; team: "Player"; unitId: PlayerUnitId; targetPosition: Vec2 }
   | { commandType: "StartBattle"; team: "Player" }
   | { commandType: "Summon"; team: TeamId };
+
+export type CommandType = BattleCommand["commandType"];
 
 export type LeaderState = {
   leaderId: LeaderId;
