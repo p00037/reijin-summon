@@ -44,6 +44,9 @@ export type UnitStats = {
 
 export type BattleConfig = {
   matchDurationSeconds: number;
+  countdownSeconds: number;
+  initialPlacementMargin: number;
+  initialPlacementMinDistance: number;
   leaderMaxHp: number;
   leaderHealingIntervalSeconds: number;
   leaderHealingPercent: number;

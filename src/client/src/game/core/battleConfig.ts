@@ -33,6 +33,9 @@ const statsByType: Record<UnitType, UnitStats> = {
 export function createDefaultBattleConfig(): BattleConfig {
   return {
     matchDurationSeconds: 300,
+    countdownSeconds: 5,
+    initialPlacementMargin: 0.6,
+    initialPlacementMinDistance: 1.2,
     leaderMaxHp: 2000,
     leaderHealingIntervalSeconds: 2,
     leaderHealingPercent: 0.1,

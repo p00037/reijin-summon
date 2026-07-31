@@ -10,6 +10,9 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
 
   assert.equal(state.remainingSeconds, 300);
   assert.equal(config.matchDurationSeconds, 300);
+  assert.equal(config.countdownSeconds, 5);
+  assert.equal(config.initialPlacementMargin, 0.6);
+  assert.equal(config.initialPlacementMinDistance, 1.2);
   assert.equal(state.leaders.length, 2);
   assert.equal(state.units.length, 6);
   assert.equal(findLeader(state, "Player").currentHp, 2000);
