@@ -37,9 +37,9 @@ import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 import { gameViewport } from "../gameViewport";
 import {
-  highDpiCanvas,
+  browserSizeCanvas,
   toLogicalCanvasPoint
-} from "../highDpiCanvas";
+} from "../browserSizeCanvas";
 import {
   elementButtonTextureKey,
   summonButtonTextureKey
@@ -110,7 +110,7 @@ export class BattleScene extends Phaser.Scene {
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main
       .setOrigin(0, 0)
-      .setZoom(highDpiCanvas.renderScale)
+      .setZoom(browserSizeCanvas.renderScale)
       .setBackgroundColor("#101827");
 
     const layout = calculateBattleLayout(gameViewport.width, gameViewport.height);
@@ -168,7 +168,7 @@ export class BattleScene extends Phaser.Scene {
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     this.draggedUnitId = null;
-    const point = toLogicalCanvasPoint(pointer, highDpiCanvas.renderScale);
+    const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
     if (
       this.hud.contains(point.x, point.y)
       || this.session.state.result !== "InProgress"
@@ -187,7 +187,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
-    const point = toLogicalCanvasPoint(pointer, highDpiCanvas.renderScale);
+    const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
     const draggedUnitId = this.draggedUnitId;
     const unit = this.session.state.units.find(
       (candidate) => candidate.unitId === draggedUnitId

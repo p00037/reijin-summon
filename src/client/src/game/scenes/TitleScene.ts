@@ -1,5 +1,8 @@
 import Phaser from "phaser";
-import { highDpiCanvas, withHighDpiTextResolution } from "../highDpiCanvas";
+import {
+  browserSizeCanvas,
+  withCanvasTextResolution
+} from "../browserSizeCanvas";
 import { gameViewport } from "../gameViewport";
 
 export class TitleScene extends Phaser.Scene {
@@ -11,11 +14,11 @@ export class TitleScene extends Phaser.Scene {
     const { width, height } = gameViewport;
     this.cameras.main
       .setOrigin(0, 0)
-      .setZoom(highDpiCanvas.renderScale)
+      .setZoom(browserSizeCanvas.renderScale)
       .setBackgroundColor("#101827");
 
     this.add
-      .text(width / 2, height / 2 - 80, "The Eternal Wheel MVP", withHighDpiTextResolution({
+      .text(width / 2, height / 2 - 80, "The Eternal Wheel MVP", withCanvasTextResolution({
         color: "#f8fafc",
         fontFamily: "Arial, sans-serif",
         fontSize: "40px"
@@ -23,7 +26,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 - 30, "Command units, build elementals, and summon a decisive force.", withHighDpiTextResolution({
+      .text(width / 2, height / 2 - 30, "Command units, build elementals, and summon a decisive force.", withCanvasTextResolution({
         color: "#cbd5e1",
         fontFamily: "Arial, sans-serif",
         fontSize: "16px"
@@ -37,7 +40,7 @@ export class TitleScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x93c5fd, 1)
       .setInteractive({ useHandCursor: true });
     const label = this.add
-      .text(width / 2, height / 2 + 48, "Start Battle", withHighDpiTextResolution({
+      .text(width / 2, height / 2 + 48, "Start Battle", withCanvasTextResolution({
         color: "#ffffff",
         fontFamily: "Arial, sans-serif",
         fontSize: "18px"
