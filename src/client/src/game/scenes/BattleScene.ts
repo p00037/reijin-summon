@@ -35,6 +35,11 @@ import { orderPolygonPoints } from "../rules/areaCalculator";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
+import { gameViewport } from "../gameViewport";
+import {
+  browserSizeCanvas,
+  toLogicalCanvasPoint
+} from "../browserSizeCanvas";
 import {
   elementButtonTextureKey,
   summonButtonTextureKey
@@ -103,9 +108,12 @@ export class BattleScene extends Phaser.Scene {
     this.draggedUnitId = null;
     this.moveMarkers = new Map();
     this.cpuPlanTimerSeconds = 0;
-    this.cameras.main.setBackgroundColor("#101827");
+    this.cameras.main
+      .setOrigin(0, 0)
+      .setZoom(browserSizeCanvas.renderScale)
+      .setBackgroundColor("#101827");
 
-    const layout = calculateBattleLayout(this.scale.width, this.scale.height);
+    const layout = calculateBattleLayout(gameViewport.width, gameViewport.height);
 
     this.battlefield = this.add.graphics();
     this.battlefieldOverlay = this.add.graphics();
@@ -160,15 +168,16 @@ export class BattleScene extends Phaser.Scene {
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     this.draggedUnitId = null;
+    const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
     if (
-      this.hud.contains(pointer.x, pointer.y)
+      this.hud.contains(point.x, point.y)
       || this.session.state.result !== "InProgress"
       || this.session.state.phase === "Countdown"
     ) {
       return;
     }
 
-    const unit = this.findPlayerUnitNear(pointer.x, pointer.y);
+    const unit = this.findPlayerUnitNear(point.x, point.y);
     if (!unit) {
       return;
     }
@@ -178,6 +187,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
     const draggedUnitId = this.draggedUnitId;
     const unit = this.session.state.units.find(
       (candidate) => candidate.unitId === draggedUnitId
@@ -189,11 +199,11 @@ export class BattleScene extends Phaser.Scene {
       },
       {
         phase: this.session.state.phase,
-        overHud: this.hud.contains(pointer.x, pointer.y),
-        insideBattlefield: this.fieldBounds().contains(pointer.x, pointer.y),
+        overHud: this.hud.contains(point.x, point.y),
+        insideBattlefield: this.fieldBounds().contains(point.x, point.y),
         targetUnitAlive: unit !== undefined && isUnitAlive(unit)
       },
-      this.screenToWorld(pointer.x, pointer.y)
+      this.screenToWorld(point.x, point.y)
     );
     this.draggedUnitId = transition.draggedUnitId;
     this.moveMarkers = transition.moveMarkers;
@@ -656,7 +666,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private fieldBounds(): Phaser.Geom.Rectangle {
-    const field = calculateBattleLayout(this.scale.width, this.scale.height).field;
+    const field = calculateBattleLayout(
+      gameViewport.width,
+      gameViewport.height
+    ).field;
     return new Phaser.Geom.Rectangle(field.x, field.y, field.width, field.height);
   }
 }

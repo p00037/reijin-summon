@@ -19,12 +19,12 @@ test("HP・残り時間・召喚ゲージを日本語へ整形する", () => {
   const model = createBattleHudModel(state, "PlayerMelee", false);
 
   assert.deepEqual(model.playerHp, {
-    text: "自分 1800 / 2000",
-    ratio: 1799.2 / 2000
+    text: "自分 1800 / 8000",
+    ratio: 1799.2 / 8000
   });
   assert.deepEqual(model.cpuHp, {
-    text: "敵 1650 / 2000",
-    ratio: 0.825
+    text: "敵 1650 / 8000",
+    ratio: 1650 / 8000
   });
   assert.equal(model.remainingTimeText, "238");
   assert.deepEqual(model.summonGauge, { text: "召喚ゲージ 63%", ratio: 0.639 });
@@ -33,7 +33,7 @@ test("HP・残り時間・召喚ゲージを日本語へ整形する", () => {
 test("HP・時間・召喚ゲージを表示範囲へ制限する", () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
   state.leaders[0].currentHp = -10;
-  state.leaders[1].currentHp = 3000;
+  state.leaders[1].currentHp = 9000;
   state.remainingSeconds = -0.2;
   state.playerSummonGauge = 1.4;
 

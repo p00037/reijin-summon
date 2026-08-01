@@ -15,10 +15,13 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(config.countdownSeconds, 5);
   assert.equal(config.initialPlacementMargin, 0.6);
   assert.equal(config.initialPlacementMinDistance, 1.2);
+  assert.equal(config.leaderMaxHp, 8000);
   assert.equal(state.leaders.length, 2);
   assert.equal(state.units.length, 6);
-  assert.equal(findLeader(state, "Player").currentHp, 2000);
-  assert.equal(findLeader(state, "Cpu").currentHp, 2000);
+  assert.equal(findLeader(state, "Player").maxHp, 8000);
+  assert.equal(findLeader(state, "Player").currentHp, 8000);
+  assert.equal(findLeader(state, "Cpu").maxHp, 8000);
+  assert.equal(findLeader(state, "Cpu").currentHp, 8000);
   assert.deepEqual(findLeader(state, "Player").position, { x: 0, y: -4.1 });
   assert.deepEqual(findLeader(state, "Cpu").position, { x: 0, y: 4.1 });
   assert.equal(findUnit(state, "PlayerMelee").unitType, "Melee");

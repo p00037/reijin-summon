@@ -55,7 +55,7 @@ test("攻撃範囲内の敵リーダーへ直接ダメージを与える", () =>
 
   tickCombat(state, config, 1.2);
 
-  assert.equal(findLeader(state, "Cpu").currentHp, 2000 - 61 * 0.25);
+  assert.equal(findLeader(state, "Cpu").currentHp, 8000 - 61 * 0.25);
 });
 
 test("撃破された通常ユニットは復活タイマー後にスポーン位置へ戻る", () => {
