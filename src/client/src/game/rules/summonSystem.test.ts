@@ -51,7 +51,7 @@ test("召喚ユニットは攻撃可能時に敵リーダーへ1回分のダメ�
 
   tickSummonedUnits(state, config, 1);
 
-  assert.equal(findLeader(state, "Cpu").currentHp, 1865);
+  assert.equal(findLeader(state, "Cpu").currentHp, 7865);
   assert.equal(state.summonedUnits[0].currentHp, 90);
 });
 
@@ -126,7 +126,7 @@ test("このtickで消滅する召喚ユニットは接触ダメージを与え�
 
   tickSummonedUnits(state, config, 1);
 
-  assert.equal(findLeader(state, "Cpu").currentHp, 2000);
+  assert.equal(findLeader(state, "Cpu").currentHp, 8000);
   assert.equal(state.summonedUnits.length, 0);
 });
 
@@ -162,20 +162,20 @@ test("召喚獣は通常対象へ0.5C、召喚士へ2Cごとに独立して攻�
 
   tickSummonedUnits(state, config, 0.49);
 
-  assert.equal(findLeader(state, "Cpu").currentHp, 2000);
+  assert.equal(findLeader(state, "Cpu").currentHp, 8000);
   assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp);
 
   tickSummonedUnits(state, config, 0.01);
 
   assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 99);
-  assert.equal(findLeader(state, "Cpu").currentHp, 2000);
+  assert.equal(findLeader(state, "Cpu").currentHp, 8000);
   assert.equal(summoned.attackTimerSeconds, 0.5);
   assert.equal(summoned.leaderAttackTimerSeconds, 1.5);
 
   tickSummonedUnits(state, config, 1.5);
 
   assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 99 * 2);
-  assert.equal(findLeader(state, "Cpu").currentHp, 1700);
+  assert.equal(findLeader(state, "Cpu").currentHp, 7700);
   assert.equal(summoned.attackTimerSeconds, 0.5);
   assert.equal(summoned.leaderAttackTimerSeconds, 2);
 });

@@ -36,7 +36,7 @@ export function createDefaultBattleConfig(): BattleConfig {
     countdownSeconds: 5,
     initialPlacementMargin: 0.6,
     initialPlacementMinDistance: 1.2,
-    leaderMaxHp: 2000,
+    leaderMaxHp: 8000,
     leaderHealingIntervalSeconds: 2,
     leaderHealingPercent: 0.1,
     keeperRestHealingIntervalSeconds: 1.5,
