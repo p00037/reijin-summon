@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { highDpiCanvas } from "../highDpiCanvas";
+import { gameViewport } from "../gameViewport";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -6,8 +8,11 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor("#101827");
+    const { width, height } = gameViewport;
+    this.cameras.main
+      .setOrigin(0, 0)
+      .setZoom(highDpiCanvas.renderScale)
+      .setBackgroundColor("#101827");
 
     this.add
       .text(width / 2, height / 2 - 80, "The Eternal Wheel MVP", {

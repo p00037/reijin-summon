@@ -32,6 +32,16 @@ export function calculateHighDpiCanvas(
   };
 }
 
+export function toLogicalCanvasPoint(
+  point: Readonly<{ x: number; y: number }>,
+  renderScale: number
+): { x: number; y: number } {
+  return {
+    x: point.x / renderScale,
+    y: point.y / renderScale
+  };
+}
+
 export const highDpiCanvas = calculateHighDpiCanvas(
   typeof window === "undefined" ? undefined : window.devicePixelRatio
 );
