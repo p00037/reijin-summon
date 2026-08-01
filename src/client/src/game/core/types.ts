@@ -23,8 +23,8 @@ export type ElementalId =
   | "Elemental10"
   | "Elemental11"
   | "Elemental12";
-export type CommandType = "MoveUnit" | "BeginElementalBuild" | "Summon";
 export type MatchResult = "InProgress" | "PlayerWin" | "CpuWin" | "Draw";
+export type MatchPhase = "Setup" | "Countdown" | "InProgress";
 export type UnitMode = "Active" | "BuildingElemental" | "Defeated";
 
 export type Vec2 = {
@@ -44,6 +44,9 @@ export type UnitStats = {
 
 export type BattleConfig = {
   matchDurationSeconds: number;
+  countdownSeconds: number;
+  initialPlacementMargin: number;
+  initialPlacementMinDistance: number;
   leaderMaxHp: number;
   leaderHealingIntervalSeconds: number;
   leaderHealingPercent: number;
@@ -81,7 +84,11 @@ export type BattleCommand =
   | { commandType: "MoveUnit"; team: "Cpu"; unitId: CpuUnitId; targetPosition: Vec2 }
   | { commandType: "BeginElementalBuild"; team: "Player"; unitId: PlayerUnitId }
   | { commandType: "BeginElementalBuild"; team: "Cpu"; unitId: CpuUnitId }
+  | { commandType: "PlaceInitialUnit"; team: "Player"; unitId: PlayerUnitId; targetPosition: Vec2 }
+  | { commandType: "StartBattle"; team: "Player" }
   | { commandType: "Summon"; team: TeamId };
+
+export type CommandType = BattleCommand["commandType"];
 
 export type LeaderState = {
   leaderId: LeaderId;
@@ -144,6 +151,8 @@ export type AttackEvent = {
 
 export type BattleState = {
   remainingSeconds: number;
+  phase: MatchPhase;
+  countdownRemainingSeconds: number;
   playerSummonGauge: number;
   cpuSummonGauge: number;
   result: MatchResult;

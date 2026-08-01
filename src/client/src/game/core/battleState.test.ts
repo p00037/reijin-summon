@@ -9,7 +9,12 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   const state = createDefaultBattleState(config);
 
   assert.equal(state.remainingSeconds, 300);
+  assert.equal(state.phase, "Setup");
+  assert.equal(state.countdownRemainingSeconds, 0);
   assert.equal(config.matchDurationSeconds, 300);
+  assert.equal(config.countdownSeconds, 5);
+  assert.equal(config.initialPlacementMargin, 0.6);
+  assert.equal(config.initialPlacementMinDistance, 1.2);
   assert.equal(state.leaders.length, 2);
   assert.equal(state.units.length, 6);
   assert.equal(findLeader(state, "Player").currentHp, 2000);
@@ -118,9 +123,23 @@ const validSummonCommand: BattleCommand = {
   team: "Cpu"
 };
 
+const validInitialPlacementCommand: BattleCommand = {
+  commandType: "PlaceInitialUnit",
+  team: "Player",
+  unitId: "PlayerMelee",
+  targetPosition: { x: -4, y: -2 }
+};
+
+const validStartBattleCommand: BattleCommand = {
+  commandType: "StartBattle",
+  team: "Player"
+};
+
 assert.equal(validPlayerMoveCommand.team, "Player");
 assert.equal(validCpuBuildCommand.team, "Cpu");
 assert.equal(validSummonCommand.commandType, "Summon");
+assert.equal(validInitialPlacementCommand.commandType, "PlaceInitialUnit");
+assert.equal(validStartBattleCommand.commandType, "StartBattle");
 
 const invalidPlayerMoveCommand: BattleCommand = {
   commandType: "MoveUnit",

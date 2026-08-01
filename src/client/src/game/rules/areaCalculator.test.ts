@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSummonArea } from "./areaCalculator";
+import {
+  calculateSummonArea,
+  calculateSummonCentroid,
+  orderPolygonPoints
+} from "./areaCalculator";
 
 test("三角形の召喚領域を計算する", () => {
   const area = calculateSummonArea([
@@ -26,4 +30,96 @@ test("内側の点は凸包面積に影響しない", () => {
 
 test("3点未満なら面積は0", () => {
   assert.equal(calculateSummonArea([{ x: 0, y: 0 }, { x: 1, y: 0 }]), 0);
+});
+
+test("calculates the area centroid of a triangle", () => {
+  assert.deepEqual(
+    calculateSummonCentroid(
+      [{ x: 0, y: 0 }, { x: 6, y: 0 }, { x: 0, y: 3 }],
+      { x: 9, y: 9 }
+    ),
+    { x: 2, y: 1 }
+  );
+});
+
+test("calculates the area centroid of a concave polygon in arbitrary order", () => {
+  const centroid = calculateSummonCentroid(
+    [
+      { x: -2, y: -1 },
+      { x: 2, y: -1 },
+      { x: 1, y: 0 },
+      { x: 2, y: 2 },
+      { x: -2, y: 2 }
+    ],
+    { x: 9, y: 9 }
+  );
+
+  assert.equal(Number(centroid.x.toFixed(6)), -0.238095);
+  assert.equal(Number(centroid.y.toFixed(6)), 0.52381);
+});
+
+test("uses the fallback for polygons with fewer than three points or zero area", () => {
+  const fallback = { x: 0, y: -4.1 };
+
+  assert.deepEqual(
+    calculateSummonCentroid([{ x: 0, y: 0 }, { x: 1, y: 0 }], fallback),
+    fallback
+  );
+  assert.deepEqual(
+    calculateSummonCentroid(
+      [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }],
+      fallback
+    ),
+    fallback
+  );
+});
+
+test("orders unique points counter-clockwise from the lower-left point", () => {
+  assert.deepEqual(
+    orderPolygonPoints([
+      { x: 1, y: 1 },
+      { x: -1, y: -1 },
+      { x: 1, y: -1 },
+      { x: -1, y: 1 },
+      { x: 1, y: 1 }
+    ]),
+    [
+      { x: -1, y: -1 },
+      { x: 1, y: -1 },
+      { x: 1, y: 1 },
+      { x: -1, y: 1 }
+    ]
+  );
+});
+
+test("does not mutate the points passed to orderPolygonPoints", () => {
+  const points = [
+    { x: 1, y: 1 },
+    { x: -1, y: -1 },
+    { x: 1, y: -1 },
+    { x: -1, y: 1 },
+    { x: 1, y: 1 }
+  ];
+  const snapshot = structuredClone(points);
+
+  orderPolygonPoints(points);
+
+  assert.deepEqual(points, snapshot);
+});
+
+test("does not mutate the points or fallback passed to calculateSummonCentroid", () => {
+  const points = [
+    { x: 2, y: 2 },
+    { x: -2, y: -1 },
+    { x: 2, y: -1 },
+    { x: -2, y: 2 }
+  ];
+  const fallback = { x: 9, y: 9 };
+  const pointsSnapshot = structuredClone(points);
+  const fallbackSnapshot = structuredClone(fallback);
+
+  calculateSummonCentroid(points, fallback);
+
+  assert.deepEqual(points, pointsSnapshot);
+  assert.deepEqual(fallback, fallbackSnapshot);
 });

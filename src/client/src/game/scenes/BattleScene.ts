@@ -18,15 +18,20 @@ import type {
 } from "../core/types";
 import {
   battleStatusOverlayDepth,
+  calculateCardBorderGeometry,
+  calculateCardImageLayout,
   cardBorderColorForTeam,
   cardBorderDepth,
+  cardBorderFillAlpha,
   cardBorderWidth,
+  cardImageCenterAt,
   cardImageDepth,
   summonedCardPresentation,
   unitCardPresentation
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
+import { orderPolygonPoints } from "../rules/areaCalculator";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
@@ -136,7 +141,10 @@ export class BattleScene extends Phaser.Scene {
   update(_time: number, deltaMs: number): void {
     const deltaSeconds = Math.min(deltaMs / 1000, maxFrameDeltaSeconds);
 
-    if (this.session.state.result === "InProgress") {
+    if (
+      this.session.state.result === "InProgress"
+      && this.session.state.phase === "InProgress"
+    ) {
       this.cpuPlanTimerSeconds += deltaSeconds;
       if (this.cpuPlanTimerSeconds >= 1) {
         this.cpuPlanTimerSeconds = 0;
@@ -144,15 +152,19 @@ export class BattleScene extends Phaser.Scene {
           this.session.applyCommand(command);
         }
       }
-      this.session.tick(deltaSeconds);
     }
+    this.session.tick(deltaSeconds);
 
     this.draw();
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     this.draggedUnitId = null;
-    if (this.hud.contains(pointer.x, pointer.y) || this.session.state.result !== "InProgress") {
+    if (
+      this.hud.contains(pointer.x, pointer.y)
+      || this.session.state.result !== "InProgress"
+      || this.session.state.phase === "Countdown"
+    ) {
       return;
     }
 
@@ -176,7 +188,7 @@ export class BattleScene extends Phaser.Scene {
         moveMarkers: this.moveMarkers
       },
       {
-        matchInProgress: this.session.state.result === "InProgress",
+        phase: this.session.state.phase,
         overHud: this.hud.contains(pointer.x, pointer.y),
         insideBattlefield: this.fieldBounds().contains(pointer.x, pointer.y),
         targetUnitAlive: unit !== undefined && isUnitAlive(unit)
@@ -193,7 +205,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleBuild(): void {
-    if (this.session.state.result !== "InProgress") {
+    if (
+      this.session.state.result !== "InProgress"
+      || this.session.state.phase !== "InProgress"
+    ) {
       return;
     }
     if (!this.selectedUnitId) {
@@ -217,6 +232,13 @@ export class BattleScene extends Phaser.Scene {
 
   private handleSummon(): void {
     if (this.session.state.result !== "InProgress") {
+      return;
+    }
+    if (this.session.state.phase === "Setup") {
+      this.session.applyCommand({ commandType: "StartBattle", team: "Player" });
+      return;
+    }
+    if (this.session.state.phase !== "InProgress") {
       return;
     }
     if (!this.session.canSummon("Player")) {
@@ -296,7 +318,7 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
-    const ordered = orderPoints(points);
+    const ordered = orderPolygonPoints(points);
     const color = team === "Player" ? 0x38bdf8 : 0xfb7185;
     this.battlefield.lineStyle(2, color, 0.55);
     for (let index = 0; index < ordered.length; index += 1) {
@@ -413,16 +435,23 @@ export class BattleScene extends Phaser.Scene {
     for (const unit of this.session.state.units) {
       const presentation = unitCardPresentation[unit.unitType];
       const image = this.add.image(0, 0, presentation.textureKey);
-      const displayWidth = image.width / image.height * presentation.displayHeight;
-      image.setDisplaySize(displayWidth, presentation.displayHeight);
+      const imageLayout = calculateCardImageLayout(
+        presentation,
+        image.width,
+        image.height
+      );
+      image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
       image.setDepth(cardImageDepth);
+      const borderGeometry = calculateCardBorderGeometry(presentation);
       const border = this.add.rectangle(
         0,
         0,
-        displayWidth + cardBorderWidth * 2,
-        presentation.displayHeight + cardBorderWidth * 2,
-        cardBorderColorForTeam(unit.team)
+        borderGeometry.width,
+        borderGeometry.height,
+        0x000000,
+        cardBorderFillAlpha
       );
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(unit.team));
       border.setDepth(cardBorderDepth);
       const rotation = initialCardRotation(unit.team);
       image.setRotation(rotation);
@@ -493,10 +522,17 @@ export class BattleScene extends Phaser.Scene {
     if (border) {
       border.setPosition(screen.x, screen.y);
       border.setAlpha(alpha);
-      border.setFillStyle(cardBorderColorForTeam(unit.team));
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(unit.team));
       border.setRotation(rotation);
     }
-    image.setPosition(screen.x, screen.y);
+    const presentation = unitCardPresentation[unit.unitType];
+    const imageLayout = calculateCardImageLayout(
+      presentation,
+      image.width,
+      image.height
+    );
+    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY);
+    image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);
     this.unitCardPositions.set(unit.unitId, { ...screen });
@@ -507,16 +543,25 @@ export class BattleScene extends Phaser.Scene {
     let image = this.summonedUnitImages.get(summoned.summonedUnitId);
     if (!image) {
       image = this.add.image(0, 0, summonedCardPresentation.textureKey);
-      const displayWidth = image.width / image.height * summonedCardPresentation.displayHeight;
-      image.setDisplaySize(displayWidth, summonedCardPresentation.displayHeight);
+      const imageLayout = calculateCardImageLayout(
+        summonedCardPresentation,
+        image.width,
+        image.height
+      );
+      image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
       image.setDepth(cardImageDepth);
+      const borderGeometry = calculateCardBorderGeometry(
+        summonedCardPresentation
+      );
       const border = this.add.rectangle(
         0,
         0,
-        displayWidth + cardBorderWidth * 2,
-        summonedCardPresentation.displayHeight + cardBorderWidth * 2,
-        cardBorderColorForTeam(summoned.team)
+        borderGeometry.width,
+        borderGeometry.height,
+        0x000000,
+        cardBorderFillAlpha
       );
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(summoned.team));
       border.setDepth(cardBorderDepth);
       const rotation = initialCardRotation(summoned.team);
       image.setRotation(rotation);
@@ -535,10 +580,16 @@ export class BattleScene extends Phaser.Scene {
     if (border) {
       border.setPosition(screen.x, screen.y);
       border.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
-      border.setFillStyle(cardBorderColorForTeam(summoned.team));
+      border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(summoned.team));
       border.setRotation(rotation);
     }
-    image.setPosition(screen.x, screen.y);
+    const imageLayout = calculateCardImageLayout(
+      summonedCardPresentation,
+      image.width,
+      image.height
+    );
+    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY);
+    image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
     image.setRotation(rotation);
     this.summonedCardPositions.set(summoned.summonedUnitId, { ...screen });
@@ -612,12 +663,4 @@ export class BattleScene extends Phaser.Scene {
 
 function isPlayerUnit(unit: UnitState): unit is UnitState & { unitId: PlayerUnitId; team: "Player" } {
   return unit.team === "Player" && unit.unitId.startsWith("Player");
-}
-
-function orderPoints(points: Vec2[]): Vec2[] {
-  const center = points.reduce(
-    (sum, point) => ({ x: sum.x + point.x / points.length, y: sum.y + point.y / points.length }),
-    { x: 0, y: 0 }
-  );
-  return [...points].sort((a, b) => Math.atan2(a.y - center.y, a.x - center.x) - Math.atan2(b.y - center.y, b.x - center.x));
 }

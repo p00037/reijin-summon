@@ -29,8 +29,19 @@ export function createBattleHudModel(
   const selectedUnit = selectedUnitId
     ? state.units.find((unit) => unit.unitId === selectedUnitId)
     : undefined;
-  const inProgress = state.result === "InProgress";
+  const battleInProgress = state.result === "InProgress" && state.phase === "InProgress";
+  const selectedUnitIsUsable =
+    selectedUnit
+    && selectedUnit.team === "Player"
+    && selectedUnit.mode === "Active"
+    && selectedUnit.currentHp > 0;
   const summonGauge = clamp(state.playerSummonGauge, 0, 1);
+  const resultText =
+    state.result !== "InProgress"
+      ? formatResult(state.result)
+      : state.phase === "Countdown"
+        ? `${Math.max(1, Math.ceil(state.countdownRemainingSeconds))}`
+        : "";
 
   return {
     playerHp: leaderGauge("自分", playerLeader.currentHp, playerLeader.maxHp),
@@ -40,15 +51,14 @@ export function createBattleHudModel(
       text: `召喚ゲージ ${Math.floor(summonGauge * 100)}%`,
       ratio: summonGauge
     },
-    resultText: formatResult(state.result),
-    canBuild: Boolean(
-      inProgress
-      && selectedUnit
-      && selectedUnit.team === "Player"
-      && selectedUnit.mode === "Active"
-      && selectedUnit.currentHp > 0
-    ),
-    canSummon: inProgress && canSummonPlayer
+    resultText,
+    canBuild: Boolean(battleInProgress && selectedUnitIsUsable),
+    canSummon:
+      state.result === "InProgress"
+      && (
+        state.phase === "Setup"
+        || (state.phase === "InProgress" && canSummonPlayer)
+      )
   };
 }
 

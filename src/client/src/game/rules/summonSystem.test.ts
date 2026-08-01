@@ -259,7 +259,7 @@ test("2回の召喚は連番IDを割り当てる", () => {
   );
 });
 
-test("召喚ユニットの位置と目的地はリーダー位置のコピーになる", () => {
+test("召喚ユニットの重心位置と目的地はコピーになる", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   addCompletedPlayerElementals(state);
@@ -271,7 +271,7 @@ test("召喚ユニットの位置と目的地はリーダー位置のコピー�
   playerLeader.position.x = 123;
   cpuLeader.position.x = 456;
 
-  assert.deepEqual(summoned.position, { x: 0, y: -4.1 });
+  assert.deepEqual(summoned.position, { x: -2.9999999999999996, y: -1.0333333333333334 });
   assert.deepEqual(summoned.destination, { x: 0, y: 4.1 });
   assert.notEqual(summoned.position, playerLeader.position);
   assert.notEqual(summoned.destination, cpuLeader.position);
@@ -583,6 +583,43 @@ test("summoned units slow down when only an enemy elemental is in contact", () =
   tickSummonedUnits(state, config, 1);
 
   assert.equal(summoned.position.x, config.contactSlowMultiplier);
+});
+
+test("player summon spawns at the centroid of its leader and completed elementals", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Player").position = { x: 0, y: -3 };
+  state.elementals.push(
+    { elementalId: "Elemental1", team: "Player", position: { x: -3, y: 0 }, maxHp: 1000, currentHp: 1000, isComplete: true },
+    { elementalId: "Elemental2", team: "Player", position: { x: 3, y: 0 }, maxHp: 1000, currentHp: 1000, isComplete: true }
+  );
+  state.playerSummonGauge = 1;
+
+  assert.equal(tryExecuteSummon(state, config, "Player"), true);
+  assert.deepEqual(state.summonedUnits[0].position, { x: 0, y: -1 });
+});
+
+test("CPU summon uses the centroid of its own territory", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  findLeader(state, "Cpu").position = { x: 0, y: 3 };
+  state.elementals.push(
+    { elementalId: "Elemental1", team: "Cpu", position: { x: -3, y: 0 }, maxHp: 1000, currentHp: 1000, isComplete: true },
+    { elementalId: "Elemental2", team: "Cpu", position: { x: 3, y: 0 }, maxHp: 1000, currentHp: 1000, isComplete: true }
+  );
+  state.cpuSummonGauge = 1;
+
+  assert.equal(tryExecuteSummon(state, config, "Cpu"), true);
+  assert.deepEqual(state.summonedUnits[0].position, { x: 0, y: 1 });
+});
+
+test("summon without completed elementals spawns at its leader position", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.playerSummonGauge = 1;
+
+  assert.equal(tryExecuteSummon(state, config, "Player"), true);
+  assert.deepEqual(state.summonedUnits[0].position, findLeader(state, "Player").position);
 });
 
 function addCompletedPlayerElementals(state: ReturnType<typeof createDefaultBattleState>): void {
