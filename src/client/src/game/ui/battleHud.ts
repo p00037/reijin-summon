@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import type { BattleState, PlayerUnitId } from "../core/types";
+import { gameViewport } from "../gameViewport";
+import { withHighDpiTextResolution } from "../highDpiCanvas";
 import type { BattleLayout, UiRect } from "./battleLayout";
 import { isPointInHud } from "./battleLayout";
 import type { BattleHudModel } from "./battleHudModel";
@@ -95,8 +97,8 @@ export class BattleHud {
     );
     this.resultText = scene.add
       .text(
-        scene.scale.width / 2,
-        scene.scale.height / 2,
+        gameViewport.width / 2,
+        gameViewport.height / 2,
         "",
         titleStyle(48, "#f8fafc")
       )
@@ -265,9 +267,9 @@ function destroyGauge(gauge: HudGauge): void {
 }
 
 function titleStyle(fontSize: number, color: string): Phaser.Types.GameObjects.Text.TextStyle {
-  return {
+  return withHighDpiTextResolution({
     color,
     fontFamily: "Arial, sans-serif",
     fontSize: `${fontSize}px`
-  };
+  });
 }

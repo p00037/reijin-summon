@@ -42,6 +42,16 @@ export function toLogicalCanvasPoint(
   };
 }
 
+export function withHighDpiTextResolution<T extends object>(
+  style: T,
+  renderScale = highDpiCanvas.renderScale
+): T & { resolution: number } {
+  return {
+    ...style,
+    resolution: renderScale
+  };
+}
+
 export const highDpiCanvas = calculateHighDpiCanvas(
   typeof window === "undefined" ? undefined : window.devicePixelRatio
 );

@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {
   calculateHighDpiCanvas,
   normalizeRenderScale,
-  toLogicalCanvasPoint
+  toLogicalCanvasPoint,
+  withHighDpiTextResolution
 } from "./highDpiCanvas";
 
 test("returns the device pixel ratio within the supported range", () => {
@@ -46,4 +47,18 @@ test("converts physical pointer coordinates to logical canvas coordinates", () =
   const point = toLogicalCanvasPoint({ x: 96.6, y: 84 }, 1.5);
   assert.ok(Math.abs(point.x - 64.4) < 1e-10);
   assert.ok(Math.abs(point.y - 56) < 1e-10);
+});
+
+test("adds the high DPI render scale to HUD text styles", () => {
+  assert.deepEqual(
+    withHighDpiTextResolution(
+      { color: "#ffffff", fontSize: "18px" },
+      1.5
+    ),
+    {
+      color: "#ffffff",
+      fontSize: "18px",
+      resolution: 1.5
+    }
+  );
 });
