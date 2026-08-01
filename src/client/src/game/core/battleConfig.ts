@@ -61,7 +61,7 @@ export function createDefaultBattleConfig(): BattleConfig {
     cpuLeaderPosition: { x: 0, y: 4.1 },
     battlefieldMin: { x: -6.3, y: -4.5 },
     battlefieldMax: { x: 6.3, y: 4.5 },
-    contactSlowRadius: 0.45,
+    contactSlowRadius: 0.54,
     contactSlowMultiplier: 1 / 3,
     leaderVisualSize: 0.8,
     leaderHealingRadius: 0.8 * 2.5,

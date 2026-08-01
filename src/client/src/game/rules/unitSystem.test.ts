@@ -331,7 +331,7 @@ test("移動中でも接敵中のマスターは射程内の敵を攻撃する",
     candidate.currentHp = 0;
     candidate.mode = "Defeated";
   }
-  enemy.position = { x: config.contactSlowRadius, y: 0 };
+  enemy.position = { x: 0.5, y: 0 };
   enemy.destination = { ...enemy.position };
 
   tickCombat(state, config, 1);

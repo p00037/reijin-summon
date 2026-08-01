@@ -310,8 +310,8 @@ test("召喚ユニットは接触した敵通常ユニットへ攻撃し、移�
   findLeader(state, "Cpu").position = { x: 7, y: 0 };
   const enemyUnit = state.units.find((unit) => unit.unitId === "CpuMelee");
   assert.ok(enemyUnit);
-  enemyUnit.position = { x: -5.8, y: 0 };
-  enemyUnit.destination = { x: -5.8, y: 0 };
+  enemyUnit.position = { x: -5.5, y: 0 };
+  enemyUnit.destination = { x: -5.5, y: 0 };
   state.summonedUnits.push({
     summonedUnitId: 1,
     team: "Player",
