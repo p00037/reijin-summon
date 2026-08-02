@@ -339,6 +339,40 @@ test("移動中でも接敵中のマスターは射程内の敵を攻撃する",
   assert.equal(enemy.currentHp, enemy.stats.maxHp - attacker.stats.attackDamage);
 });
 
+test("移動中でも接敵中のマスターは距離0.5の敵召喚獣を攻撃する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerRanged");
+  attacker.position = { x: 0, y: 0 };
+  attacker.destination = { x: 1, y: 0 };
+  attacker.attackTimerSeconds = 0;
+  for (const enemy of state.units.filter((unit) => unit.team === "Cpu")) {
+    enemy.currentHp = 0;
+    enemy.mode = "Defeated";
+  }
+  findLeader(state, "Cpu").position = { x: 10, y: 0 };
+  state.summonedUnits.push({
+    summonedUnitId: 1,
+    team: "Cpu",
+    position: { x: 0.5, y: 0 },
+    destination: { x: 0.5, y: 0 },
+    maxHp: 1000,
+    currentHp: 1000,
+    attackDamage: 90,
+    leaderAttackDamage: 90,
+    attackIntervalSeconds: 0.5,
+    attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
+    moveSpeed: 1,
+    healthDecayPerSecond: 10
+  });
+
+  tickCombat(state, config, 1);
+
+  assert.equal(state.summonedUnits[0].currentHp, 1000 - attacker.stats.attackDamage);
+});
+
 test("combat clears stale attack events before processing", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
