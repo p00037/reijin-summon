@@ -11,6 +11,7 @@ import type {
   Vec2
 } from "../core/types";
 import { clampVec2, distanceSq, moveTowards } from "../core/vector";
+import { areCollisionCirclesTouching } from "./collisionGeometry";
 
 type MoveUnitCommand = Extract<BattleCommand, { commandType: "MoveUnit" }>;
 
@@ -248,22 +249,25 @@ export function tickRespawns(state: BattleState, deltaSeconds: number): void {
 
 function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
   const enemyTeam = oppositeTeam(unit.team);
-  const contactRadiusSq = config.contactSlowRadius * config.contactSlowRadius;
   return (
     state.units.some(
       (candidate) =>
         candidate.team === enemyTeam &&
         candidate.unitId !== unit.unitId &&
         isUnitAlive(candidate) &&
-        distanceSq(unit.position, candidate.position) <= contactRadiusSq
+        areCollisionCirclesTouching(config, unit.position, "Unit", candidate.position, "Unit")
     ) ||
     state.summonedUnits.some(
       (candidate) =>
-        candidate.team === enemyTeam && candidate.currentHp > 0 && distanceSq(unit.position, candidate.position) <= contactRadiusSq
+        candidate.team === enemyTeam &&
+        candidate.currentHp > 0 &&
+        areCollisionCirclesTouching(config, unit.position, "Unit", candidate.position, "SummonedUnit")
     ) ||
     state.elementals.some(
       (candidate) =>
-        candidate.team === enemyTeam && candidate.currentHp > 0 && distanceSq(unit.position, candidate.position) <= contactRadiusSq
+        candidate.team === enemyTeam &&
+        candidate.currentHp > 0 &&
+        areCollisionCirclesTouching(config, unit.position, "Unit", candidate.position, "Point")
     )
   );
 }
