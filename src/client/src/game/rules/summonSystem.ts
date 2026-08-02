@@ -1,7 +1,8 @@
 import { findLeader, getSummonGauge, isUnitAlive, oppositeTeam, setSummonGauge } from "../core/battleState";
 import type { BattleConfig, BattleState, ElementalState, SummonedUnitState, TeamId, UnitState } from "../core/types";
-import { distance, moveTowards } from "../core/vector";
+import { moveTowards } from "../core/vector";
 import { calculateSummonArea, calculateSummonCentroid } from "./areaCalculator";
+import { areCollisionCirclesTouching } from "./collisionGeometry";
 import { completedElementalsForTeam } from "./elementalSystem";
 
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
@@ -83,7 +84,13 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
 
     const enemyLeader = findLeader(state, oppositeTeam(summoned.team));
     summoned.destination = { ...enemyLeader.position };
-    const touchingLeader = distance(summoned.position, enemyLeader.position) <= config.contactSlowRadius;
+    const touchingLeader = areCollisionCirclesTouching(
+      config,
+      summoned.position,
+      "SummonedUnit",
+      enemyLeader.position,
+      "Point"
+    );
     const touchingUnits = enemyUnitsInContact(state, config, summoned);
     const touchingSummonedUnits = enemySummonedUnitsInContact(state, config, summoned);
     const touchingElementals = enemyElementalsInContact(state, config, summoned);
@@ -125,7 +132,16 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
 function enemyUnitsInContact(state: BattleState, config: BattleConfig, summoned: SummonedUnitState): UnitState[] {
   const enemyTeam = oppositeTeam(summoned.team);
   return state.units.filter(
-    (unit) => unit.team === enemyTeam && isUnitAlive(unit) && distance(summoned.position, unit.position) <= config.contactSlowRadius
+    (unit) =>
+      unit.team === enemyTeam &&
+      isUnitAlive(unit) &&
+      areCollisionCirclesTouching(
+        config,
+        summoned.position,
+        "SummonedUnit",
+        unit.position,
+        "Unit"
+      )
   );
 }
 
@@ -140,7 +156,13 @@ function enemyElementalsInContact(
       elemental.team === enemyTeam &&
       elemental.isComplete &&
       elemental.currentHp > 0 &&
-      distance(summoned.position, elemental.position) <= config.contactSlowRadius
+      areCollisionCirclesTouching(
+        config,
+        summoned.position,
+        "SummonedUnit",
+        elemental.position,
+        "Point"
+      )
   );
 }
 
@@ -155,6 +177,12 @@ function enemySummonedUnitsInContact(
       candidate.team === enemyTeam &&
       candidate.summonedUnitId !== summoned.summonedUnitId &&
       candidate.currentHp > 0 &&
-      distance(summoned.position, candidate.position) <= config.contactSlowRadius
+      areCollisionCirclesTouching(
+        config,
+        summoned.position,
+        "SummonedUnit",
+        candidate.position,
+        "SummonedUnit"
+      )
   );
 }

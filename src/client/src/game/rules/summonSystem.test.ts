@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
-import { createDefaultBattleState, findLeader } from "../core/battleState";
+import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
 import type { BattleState, ElementalId, TeamId } from "../core/types";
 import { canSummon, tryExecuteSummon, tickSummonGauges, tickSummonedUnits } from "./summonSystem";
 
@@ -620,6 +620,100 @@ test("summon without completed elementals spawns at its leader position", () => 
 
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
   assert.deepEqual(state.summonedUnits[0].position, findLeader(state, "Player").position);
+});
+
+test("summoned units damage enemy units at the 1.7388 collision boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const enemy = findUnit(state, "CpuMelee");
+  for (const candidate of state.units.filter(
+    (value) => value.team === "Cpu" && value.unitId !== enemy.unitId
+  )) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+  addSummonedUnit(state, "Player", 100);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.moveSpeed = 0;
+  summoned.healthDecayPerSecond = 0;
+  enemy.position = { x: 1.7388, y: 0 };
+  enemy.destination = { ...enemy.position };
+
+  tickSummonedUnits(state, config, 0);
+
+  assert.equal(enemy.currentHp, enemy.stats.maxHp - summoned.attackDamage);
+});
+
+test("summoned units damage each other at the 1.9656 collision boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addSummonedUnit(state, "Player", 100);
+  addSummonedUnit(state, "Cpu", 100);
+  const playerSummoned = state.summonedUnits[0];
+  const cpuSummoned = state.summonedUnits[1];
+  playerSummoned.position = { x: 0, y: 0 };
+  cpuSummoned.position = { x: 1.9656, y: 0 };
+  for (const summoned of state.summonedUnits) {
+    summoned.moveSpeed = 0;
+    summoned.healthDecayPerSecond = 0;
+  }
+
+  tickSummonedUnits(state, config, 0);
+
+  assert.ok(cpuSummoned.currentHp < cpuSummoned.maxHp);
+  assert.ok(playerSummoned.currentHp < playerSummoned.maxHp);
+});
+
+test("summoned units attack leaders at 0.9828 but not just outside the boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addSummonedUnit(state, "Player", 100);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.moveSpeed = 0;
+  summoned.healthDecayPerSecond = 0;
+  const leader = findLeader(state, "Cpu");
+  leader.position = { x: 0.9828, y: 0 };
+
+  tickSummonedUnits(state, config, 0);
+  const hpAtBoundary = leader.currentHp;
+
+  summoned.leaderAttackTimerSeconds = 0;
+  leader.position = { x: 0.9828 + 0.0001, y: 0 };
+  tickSummonedUnits(state, config, 0);
+
+  assert.equal(hpAtBoundary, leader.maxHp - summoned.leaderAttackDamage);
+  assert.equal(leader.currentHp, hpAtBoundary);
+});
+
+test("summoned units attack elementals at 0.9828 but not just outside the boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  addSummonedUnit(state, "Player", 100);
+  const summoned = state.summonedUnits[0];
+  summoned.position = { x: 0, y: 0 };
+  summoned.moveSpeed = 0;
+  summoned.healthDecayPerSecond = 0;
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.9828, y: 0 },
+    maxHp: 100,
+    currentHp: 100,
+    isComplete: true
+  });
+  const elemental = state.elementals[0];
+
+  tickSummonedUnits(state, config, 0);
+  const hpAtBoundary = elemental.currentHp;
+
+  summoned.attackTimerSeconds = 0;
+  elemental.position = { x: 0.9828 + 0.0001, y: 0 };
+  tickSummonedUnits(state, config, 0);
+
+  assert.equal(hpAtBoundary, 100 - summoned.attackDamage);
+  assert.equal(elemental.currentHp, hpAtBoundary);
 });
 
 function addCompletedPlayerElementals(state: ReturnType<typeof createDefaultBattleState>): void {

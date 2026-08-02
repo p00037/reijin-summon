@@ -417,6 +417,118 @@ test("movement is slowed near a live enemy elemental", () => {
   assert.equal(Number(unit.position.x.toFixed(2)), -4.93);
 });
 
+test("movement is slowed at the Unit-to-Unit collision-circle boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  const enemy = findUnit(state, "CpuMelee");
+  unit.position = { x: 0, y: 0 };
+  unit.destination = { x: 3, y: 0 };
+  enemy.position = { x: 1.512, y: 0 };
+  for (const candidate of state.units.filter(
+    (value) => value.team === "Cpu" && value.unitId !== enemy.unitId
+  )) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+
+  tickMovement(state, config, 1);
+
+  assert.equal(
+    Number(unit.position.x.toFixed(6)),
+    Number((unit.stats.moveSpeed * config.contactSlowMultiplier).toFixed(6))
+  );
+});
+
+test("movement is slowed at the Unit-to-SummonedUnit collision-circle boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  for (const candidate of state.units.filter((value) => value.team === "Cpu")) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+  unit.position = { x: 0, y: 0 };
+  unit.destination = { x: 3, y: 0 };
+  state.summonedUnits.push({
+    summonedUnitId: 1,
+    team: "Cpu",
+    position: { x: 1.7388, y: 0 },
+    destination: { x: 1.7388, y: 0 },
+    maxHp: 100,
+    currentHp: 100,
+    attackDamage: 0,
+    leaderAttackDamage: 0,
+    attackIntervalSeconds: 0.5,
+    attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
+    moveSpeed: 0,
+    healthDecayPerSecond: 0
+  });
+
+  tickMovement(state, config, 1);
+
+  assert.equal(
+    Number(unit.position.x.toFixed(6)),
+    Number((unit.stats.moveSpeed * config.contactSlowMultiplier).toFixed(6))
+  );
+});
+
+test("movement is not slowed just beyond the Unit-to-Point collision-circle boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  for (const candidate of state.units.filter((value) => value.team === "Cpu")) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+  unit.position = { x: 0, y: 0 };
+  unit.destination = { x: 3, y: 0 };
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.756 + 0.0001, y: 0 },
+    maxHp: 100,
+    currentHp: 100,
+    isComplete: true
+  });
+
+  tickMovement(state, config, 1);
+
+  assert.equal(
+    Number(unit.position.x.toFixed(6)),
+    Number(unit.stats.moveSpeed.toFixed(6))
+  );
+});
+
+test("movement is slowed at the Unit-to-Point collision-circle boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  for (const candidate of state.units.filter((value) => value.team === "Cpu")) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+  unit.position = { x: 0, y: 0 };
+  unit.destination = { x: 3, y: 0 };
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.756, y: 0 },
+    maxHp: 100,
+    currentHp: 100,
+    isComplete: true
+  });
+
+  tickMovement(state, config, 1);
+
+  assert.equal(
+    Number(unit.position.x.toFixed(6)),
+    Number((unit.stats.moveSpeed * config.contactSlowMultiplier).toFixed(6))
+  );
+});
+
 test("allies and defeated enemies do not slow movement", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
