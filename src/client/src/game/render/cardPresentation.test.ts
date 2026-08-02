@@ -105,6 +105,38 @@ test("card image offsets follow card rotation", () => {
   assert.ok(Math.abs(reversed.y - 194) < 1e-10);
 });
 
+test("unit card image uses the five pixel top offset", async () => {
+  const presentation = await import("./cardPresentation");
+  assert.equal(typeof presentation.unitCardImageTopOffset, "number");
+  assert.equal(presentation.unitCardImageTopOffset, 5);
+
+  assert.deepEqual(cardImageCenterAt({ x: 100, y: 200 }, 0, 10), {
+    x: 100,
+    y: 210
+  });
+  assert.deepEqual(
+    cardImageCenterAt(
+      { x: 100, y: 200 },
+      0,
+      10,
+      presentation.unitCardImageTopOffset!
+    ),
+    {
+      x: 100,
+      y: 205
+    }
+  );
+
+  const reversed = cardImageCenterAt(
+    { x: 100, y: 200 },
+    Math.PI,
+    10,
+    presentation.unitCardImageTopOffset!
+  );
+  assert.ok(Math.abs(reversed.x - 100) < 1e-10);
+  assert.ok(Math.abs(reversed.y - 195) < 1e-10);
+});
+
 test("card borders distinguish player and CPU teams", () => {
   assert.equal(cardBorderWidth, 2);
   assert.equal(cardBorderColorForTeam("Player"), 0x7dd3fc);

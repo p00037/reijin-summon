@@ -27,12 +27,14 @@ import {
   cardImageCenterAt,
   cardImageDepth,
   summonedCardPresentation,
+  unitCardImageTopOffset,
   unitCardPresentation
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
 import { unitSelectionCirclePresentation } from "../render/unitSelectionPresentation";
 import {
   battlefieldHpBarLayout,
+  unitCardHpBarPresentation,
   type BattlefieldHpBarKind
 } from "../render/hpBarPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
@@ -458,7 +460,15 @@ export class BattleScene extends Phaser.Scene {
         this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.95);
         this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 20);
       }
-      this.drawBattlefieldHpBar("Unit", screen, unit.currentHp / unit.stats.maxHp, color);
+      const rotation =
+        this.unitCardRotations.get(unit.unitId) ??
+        initialCardRotation(unit.team);
+      this.drawUnitCardHpBar(
+        screen,
+        rotation,
+        unit.currentHp / unit.stats.maxHp,
+        color
+      );
     }
   }
 
@@ -562,7 +572,12 @@ export class BattleScene extends Phaser.Scene {
       image.width,
       image.height
     );
-    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY, 4);
+    const imageCenter = cardImageCenterAt(
+      screen,
+      rotation,
+      imageLayout.offsetY,
+      unitCardImageTopOffset
+    );
     image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);
@@ -662,6 +677,19 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     this.drawHpBar(layout.x, layout.y, layout.width, ratio, color);
+  }
+
+  private drawUnitCardHpBar(
+    screen: Vec2,
+    rotation: number,
+    ratio: number,
+    color: number
+  ): void {
+    const presentation = unitCardHpBarPresentation(screen, rotation, ratio);
+    this.battlefieldOverlay.fillStyle(0x020617, 0.9);
+    this.battlefieldOverlay.fillPoints(presentation.background, true);
+    this.battlefieldOverlay.fillStyle(color, 1);
+    this.battlefieldOverlay.fillPoints(presentation.fill, true);
   }
 
   private drawHpBar(x: number, y: number, width: number, ratio: number, color: number): void {
