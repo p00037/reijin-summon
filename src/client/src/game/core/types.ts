@@ -73,6 +73,8 @@ export type BattleConfig = {
   battlefieldMin: Vec2;
   battlefieldMax: Vec2;
   contactSlowRadius: number;
+  unitCollisionRadius: number;
+  summonedUnitCollisionRadius: number;
   contactSlowMultiplier: number;
   leaderVisualSize: number;
   leaderHealingRadius: number;

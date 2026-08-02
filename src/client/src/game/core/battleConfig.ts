@@ -62,6 +62,8 @@ export function createDefaultBattleConfig(): BattleConfig {
     battlefieldMin: { x: -6.3, y: -4.5 },
     battlefieldMax: { x: 6.3, y: 4.5 },
     contactSlowRadius: 0.54,
+    unitCollisionRadius: 0.756,
+    summonedUnitCollisionRadius: 0.9828,
     contactSlowMultiplier: 1 / 3,
     leaderVisualSize: 0.8,
     leaderHealingRadius: 0.8 * 2.5,
