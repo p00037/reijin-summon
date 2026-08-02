@@ -502,6 +502,33 @@ test("movement is not slowed just beyond the Unit-to-Point collision-circle boun
   );
 });
 
+test("movement is slowed at the Unit-to-Point collision-circle boundary", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  for (const candidate of state.units.filter((value) => value.team === "Cpu")) {
+    candidate.currentHp = 0;
+    candidate.mode = "Defeated";
+  }
+  unit.position = { x: 0, y: 0 };
+  unit.destination = { x: 3, y: 0 };
+  state.elementals.push({
+    elementalId: "Elemental1",
+    team: "Cpu",
+    position: { x: 0.756, y: 0 },
+    maxHp: 100,
+    currentHp: 100,
+    isComplete: true
+  });
+
+  tickMovement(state, config, 1);
+
+  assert.equal(
+    Number(unit.position.x.toFixed(6)),
+    Number((unit.stats.moveSpeed * config.contactSlowMultiplier).toFixed(6))
+  );
+});
+
 test("allies and defeated enemies do not slow movement", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
