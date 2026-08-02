@@ -27,9 +27,16 @@ import {
   cardImageCenterAt,
   cardImageDepth,
   summonedCardPresentation,
+  unitCardImageTopOffset,
   unitCardPresentation
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
+import { unitSelectionCirclePresentation } from "../render/unitSelectionPresentation";
+import {
+  battlefieldHpBarLayout,
+  unitCardHpBarPresentation,
+  type BattlefieldHpBarKind
+} from "../render/hpBarPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
@@ -363,7 +370,7 @@ export class BattleScene extends Phaser.Scene {
       this.circleOverlay.strokeCircle(screen.x, screen.y, 28);
       this.circleOverlay.lineStyle(3, 0xf8fafc, 0.9);
       this.circleOverlay.strokeCircle(screen.x, screen.y, 25);
-      this.drawHpBar(screen.x - 30, screen.y - 38, 60, leader.currentHp / leader.maxHp, color);
+      this.drawBattlefieldHpBar("Leader", screen, leader.currentHp / leader.maxHp, color);
     }
   }
 
@@ -375,7 +382,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateElementalSprite(elemental, screen);
       this.battlefieldOverlay.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 13);
-      this.drawHpBar(screen.x - 18, screen.y + 18, 36, elemental.currentHp / elemental.maxHp, color);
+      this.drawBattlefieldHpBar("Elemental", screen, elemental.currentHp / elemental.maxHp, color);
     }
   }
 
@@ -387,7 +394,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateSummonedUnitImage(summoned, screen);
       this.battlefieldOverlay.lineStyle(2, color, 1);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 30);
-      this.drawHpBar(screen.x - 28, screen.y + 34, 56, summoned.currentHp / summoned.maxHp, color);
+      this.drawBattlefieldHpBar("SummonedUnit", screen, summoned.currentHp / summoned.maxHp, color);
     }
   }
 
@@ -420,8 +427,24 @@ export class BattleScene extends Phaser.Scene {
       this.updateUnitImage(unit, screen, alpha);
 
       if (isSelected) {
-        this.battlefieldOverlay.lineStyle(3, 0xfacc15, 1);
-        this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 24);
+        const bounds = this.fieldBounds();
+        const { battlefieldMin, battlefieldMax, unitCollisionRadius } =
+          this.session.config;
+        const presentation = unitSelectionCirclePresentation(
+          unitCollisionRadius,
+          bounds.width,
+          battlefieldMax.x - battlefieldMin.x
+        );
+        this.battlefieldOverlay.lineStyle(
+          presentation.strokeWidth,
+          presentation.strokeColor,
+          presentation.strokeAlpha
+        );
+        this.battlefieldOverlay.strokeCircle(
+          screen.x,
+          screen.y,
+          presentation.radius
+        );
       }
 
       if (!this.unitImages.has(unit.unitId)) {
@@ -437,7 +460,15 @@ export class BattleScene extends Phaser.Scene {
         this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.95);
         this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 20);
       }
-      this.drawHpBar(screen.x - 20, screen.y + 21, 40, unit.currentHp / unit.stats.maxHp, color);
+      const rotation =
+        this.unitCardRotations.get(unit.unitId) ??
+        initialCardRotation(unit.team);
+      this.drawUnitCardHpBar(
+        screen,
+        rotation,
+        unit.currentHp / unit.stats.maxHp,
+        color
+      );
     }
   }
 
@@ -541,7 +572,12 @@ export class BattleScene extends Phaser.Scene {
       image.width,
       image.height
     );
-    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY);
+    const imageCenter = cardImageCenterAt(
+      screen,
+      rotation,
+      imageLayout.offsetY,
+      unitCardImageTopOffset
+    );
     image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);
@@ -628,6 +664,32 @@ export class BattleScene extends Phaser.Scene {
       const target = this.worldToScreen(event.targetPosition);
       this.battlefield.lineBetween(origin.x, origin.y, target.x, target.y);
     }
+  }
+
+  private drawBattlefieldHpBar(
+    kind: BattlefieldHpBarKind,
+    screen: Vec2,
+    ratio: number,
+    color: number
+  ): void {
+    const layout = battlefieldHpBarLayout(kind, screen);
+    if (!layout) {
+      return;
+    }
+    this.drawHpBar(layout.x, layout.y, layout.width, ratio, color);
+  }
+
+  private drawUnitCardHpBar(
+    screen: Vec2,
+    rotation: number,
+    ratio: number,
+    color: number
+  ): void {
+    const presentation = unitCardHpBarPresentation(screen, rotation, ratio);
+    this.battlefieldOverlay.fillStyle(0x020617, 0.9);
+    this.battlefieldOverlay.fillPoints(presentation.background, true);
+    this.battlefieldOverlay.fillStyle(color, 1);
+    this.battlefieldOverlay.fillPoints(presentation.fill, true);
   }
 
   private drawHpBar(x: number, y: number, width: number, ratio: number, color: number): void {

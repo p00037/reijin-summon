@@ -18,6 +18,7 @@ export const cardImageDepth = 1;
 export const battleStatusOverlayDepth = 2;
 export const cardBorderWidth = 2;
 export const cardBorderFillAlpha = 0;
+export const unitCardImageTopOffset = 5;
 const unitCardDisplayWidth = 51.52;
 const unitCardDisplayHeight = 368 * 0.25;
 const summonedCardScale = 1.3;
@@ -80,11 +81,13 @@ export function calculateCardBorderGeometry(
 export function cardImageCenterAt(
   cardCenter: { x: number; y: number },
   rotation: number,
-  offsetY: number
+  offsetY: number,
+  topOffset = 0
 ): { x: number; y: number } {
+  const adjustedOffsetY = offsetY - topOffset;
   return {
-    x: cardCenter.x - Math.sin(rotation) * offsetY,
-    y: cardCenter.y + Math.cos(rotation) * offsetY
+    x: cardCenter.x - Math.sin(rotation) * adjustedOffsetY,
+    y: cardCenter.y + Math.cos(rotation) * adjustedOffsetY
   };
 }
 

@@ -34,7 +34,9 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(config.statsByType.Speed.moveSpeed, 8.2 / 22);
   assert.equal(config.elementalPlacementRadius, 0.30375);
   assert.equal(config.elementalContactRadius, 0.30375);
-  assert.equal(config.contactSlowRadius, 0.45);
+  assert.equal("contactSlowRadius" in config, false);
+  assert.equal(config.unitCollisionRadius, 0.756);
+  assert.equal(config.summonedUnitCollisionRadius, 0.9828);
   assert.equal(config.unitLeaderAttackIntervalSeconds, 1);
   assert.equal(config.summonedUnitAttackIntervalSeconds, 0.5);
   assert.equal(config.summonedUnitLeaderAttackIntervalSeconds, 2);
