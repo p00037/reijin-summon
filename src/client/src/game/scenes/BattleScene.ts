@@ -30,6 +30,10 @@ import {
   unitCardPresentation
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
+import {
+  battlefieldHpBarLayout,
+  type BattlefieldHpBarKind
+} from "../render/hpBarPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
@@ -363,7 +367,7 @@ export class BattleScene extends Phaser.Scene {
       this.circleOverlay.strokeCircle(screen.x, screen.y, 28);
       this.circleOverlay.lineStyle(3, 0xf8fafc, 0.9);
       this.circleOverlay.strokeCircle(screen.x, screen.y, 25);
-      this.drawHpBar(screen.x - 30, screen.y - 38, 60, leader.currentHp / leader.maxHp, color);
+      this.drawBattlefieldHpBar("Leader", screen, leader.currentHp / leader.maxHp, color);
     }
   }
 
@@ -375,7 +379,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateElementalSprite(elemental, screen);
       this.battlefieldOverlay.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 13);
-      this.drawHpBar(screen.x - 18, screen.y + 18, 36, elemental.currentHp / elemental.maxHp, color);
+      this.drawBattlefieldHpBar("Elemental", screen, elemental.currentHp / elemental.maxHp, color);
     }
   }
 
@@ -387,7 +391,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateSummonedUnitImage(summoned, screen);
       this.battlefieldOverlay.lineStyle(2, color, 1);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 30);
-      this.drawHpBar(screen.x - 28, screen.y + 34, 56, summoned.currentHp / summoned.maxHp, color);
+      this.drawBattlefieldHpBar("SummonedUnit", screen, summoned.currentHp / summoned.maxHp, color);
     }
   }
 
@@ -437,7 +441,7 @@ export class BattleScene extends Phaser.Scene {
         this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.95);
         this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 20);
       }
-      this.drawHpBar(screen.x - 20, screen.y + 21, 40, unit.currentHp / unit.stats.maxHp, color);
+      this.drawBattlefieldHpBar("Unit", screen, unit.currentHp / unit.stats.maxHp, color);
     }
   }
 
@@ -628,6 +632,19 @@ export class BattleScene extends Phaser.Scene {
       const target = this.worldToScreen(event.targetPosition);
       this.battlefield.lineBetween(origin.x, origin.y, target.x, target.y);
     }
+  }
+
+  private drawBattlefieldHpBar(
+    kind: BattlefieldHpBarKind,
+    screen: Vec2,
+    ratio: number,
+    color: number
+  ): void {
+    const layout = battlefieldHpBarLayout(kind, screen);
+    if (!layout) {
+      return;
+    }
+    this.drawHpBar(layout.x, layout.y, layout.width, ratio, color);
   }
 
   private drawHpBar(x: number, y: number, width: number, ratio: number, color: number): void {
