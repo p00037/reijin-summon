@@ -541,7 +541,7 @@ export class BattleScene extends Phaser.Scene {
       image.width,
       image.height
     );
-    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY);
+    const imageCenter = cardImageCenterAt(screen, rotation, imageLayout.offsetY, 4);
     image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);

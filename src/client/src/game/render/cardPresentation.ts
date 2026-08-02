@@ -80,11 +80,13 @@ export function calculateCardBorderGeometry(
 export function cardImageCenterAt(
   cardCenter: { x: number; y: number },
   rotation: number,
-  offsetY: number
+  offsetY: number,
+  topOffset = 0
 ): { x: number; y: number } {
+  const adjustedOffsetY = offsetY - topOffset;
   return {
-    x: cardCenter.x - Math.sin(rotation) * offsetY,
-    y: cardCenter.y + Math.cos(rotation) * offsetY
+    x: cardCenter.x - Math.sin(rotation) * adjustedOffsetY,
+    y: cardCenter.y + Math.cos(rotation) * adjustedOffsetY
   };
 }
 

@@ -90,14 +90,19 @@ test("card image keeps its aspect ratio and aligns to the inner bottom edge", ()
   );
 });
 
-test("card image bottom offset follows card rotation", () => {
+test("card image offsets follow card rotation", () => {
   assert.deepEqual(cardImageCenterAt({ x: 100, y: 200 }, 0, 10), {
     x: 100,
     y: 210
   });
-  const reversed = cardImageCenterAt({ x: 100, y: 200 }, Math.PI, 10);
+  assert.deepEqual(cardImageCenterAt({ x: 100, y: 200 }, 0, 10, 4), {
+    x: 100,
+    y: 206
+  });
+
+  const reversed = cardImageCenterAt({ x: 100, y: 200 }, Math.PI, 10, 4);
   assert.ok(Math.abs(reversed.x - 100) < 1e-10);
-  assert.ok(Math.abs(reversed.y - 190) < 1e-10);
+  assert.ok(Math.abs(reversed.y - 194) < 1e-10);
 });
 
 test("card borders distinguish player and CPU teams", () => {
