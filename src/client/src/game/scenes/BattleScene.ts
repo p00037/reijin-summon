@@ -428,10 +428,10 @@ export class BattleScene extends Phaser.Scene {
 
       if (isSelected) {
         const bounds = this.fieldBounds();
-        const { battlefieldMin, battlefieldMax, contactSlowRadius } =
+        const { battlefieldMin, battlefieldMax, unitCollisionRadius } =
           this.session.config;
         const presentation = unitSelectionCirclePresentation(
-          contactSlowRadius,
+          unitCollisionRadius,
           bounds.width,
           battlefieldMax.x - battlefieldMin.x
         );
