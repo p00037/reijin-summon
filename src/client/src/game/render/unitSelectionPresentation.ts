@@ -6,13 +6,13 @@ export interface UnitSelectionCirclePresentation {
 }
 
 export function unitSelectionCirclePresentation(
-  contactRadius: number,
+  collisionRadius: number,
   battlefieldScreenWidth: number,
   battlefieldWorldWidth: number
 ): UnitSelectionCirclePresentation {
   return {
     radius: Math.abs(
-      contactRadius * battlefieldScreenWidth / battlefieldWorldWidth
+      collisionRadius * battlefieldScreenWidth / battlefieldWorldWidth
     ),
     strokeWidth: 3,
     strokeColor: 0xfacc15,

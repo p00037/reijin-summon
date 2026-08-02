@@ -33,47 +33,48 @@ test("カード接触半径はカード横幅の1.2倍を直径にする", () =>
   );
 });
 
-test("接触半径は双方の半径を合計する", () => {
-  const config = createDefaultBattleConfig();
-
-  assert.equal(combinedCollisionRadius(config, "Unit", "Unit"), 1.512);
-  assert.equal(
-    combinedCollisionRadius(config, "Unit", "SummonedUnit"),
-    1.7388
-  );
-  assert.equal(
-    combinedCollisionRadius(config, "SummonedUnit", "SummonedUnit"),
-    1.9656
-  );
-  assert.equal(combinedCollisionRadius(config, "Unit", "Point"), 0.756);
-  assert.equal(
-    combinedCollisionRadius(config, "SummonedUnit", "Point"),
-    0.9828
-  );
-});
-
-test("円形の接触判定は半径の和と境界で接触する", () => {
+test("接触半径と円形接触判定は全組み合わせで境界と対称性を満たす", () => {
   const config = createDefaultBattleConfig();
   const origin = { x: 0, y: 0 };
+  const cases = [
+    ["Unit", "Unit", 1.512],
+    ["Unit", "SummonedUnit", 1.7388],
+    ["SummonedUnit", "SummonedUnit", 1.9656],
+    ["Unit", "Point", 0.756],
+    ["SummonedUnit", "Point", 0.9828]
+  ] as const;
 
-  assert.equal(
-    areCollisionCirclesTouching(
-      config,
-      origin,
-      "Unit",
-      { x: 1.7388, y: 0 },
-      "SummonedUnit"
-    ),
-    true
-  );
-  assert.equal(
-    areCollisionCirclesTouching(
-      config,
-      origin,
-      "SummonedUnit",
-      { x: 1.7388 + 0.0001, y: 0 },
-      "Unit"
-    ),
-    false
-  );
+  for (const [firstKind, secondKind, radius] of cases) {
+    assert.equal(combinedCollisionRadius(config, firstKind, secondKind), radius);
+    assert.equal(
+      areCollisionCirclesTouching(
+        config,
+        origin,
+        firstKind,
+        { x: radius, y: 0 },
+        secondKind
+      ),
+      true
+    );
+    assert.equal(
+      areCollisionCirclesTouching(
+        config,
+        origin,
+        firstKind,
+        { x: radius + 0.0001, y: 0 },
+        secondKind
+      ),
+      false
+    );
+    assert.equal(
+      areCollisionCirclesTouching(
+        config,
+        { x: radius, y: 0 },
+        secondKind,
+        origin,
+        firstKind
+      ),
+      true
+    );
+  }
 });

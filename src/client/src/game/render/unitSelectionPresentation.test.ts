@@ -27,10 +27,10 @@ test("unit selection circle scales with the rendered battlefield width", async (
   const module = await loadSelectionPresentation();
   assert.equal(typeof module.unitSelectionCirclePresentation, "function");
   const presentation = module.unitSelectionCirclePresentation!(
-    0.54,
+    0.756,
     1030.4,
     12.6
   );
 
-  assert.equal(Number(presentation.radius.toFixed(2)), 44.16);
+  assert.equal(Number(presentation.radius.toFixed(3)), 61.824);
 });
