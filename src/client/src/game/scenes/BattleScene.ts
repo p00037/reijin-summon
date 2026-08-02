@@ -30,6 +30,7 @@ import {
   unitCardPresentation
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
+import { unitSelectionCirclePresentation } from "../render/unitSelectionPresentation";
 import {
   battlefieldHpBarLayout,
   type BattlefieldHpBarKind
@@ -424,8 +425,24 @@ export class BattleScene extends Phaser.Scene {
       this.updateUnitImage(unit, screen, alpha);
 
       if (isSelected) {
-        this.battlefieldOverlay.lineStyle(3, 0xfacc15, 1);
-        this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 24);
+        const bounds = this.fieldBounds();
+        const { battlefieldMin, battlefieldMax, contactSlowRadius } =
+          this.session.config;
+        const presentation = unitSelectionCirclePresentation(
+          contactSlowRadius,
+          bounds.width,
+          battlefieldMax.x - battlefieldMin.x
+        );
+        this.battlefieldOverlay.lineStyle(
+          presentation.strokeWidth,
+          presentation.strokeColor,
+          presentation.strokeAlpha
+        );
+        this.battlefieldOverlay.strokeCircle(
+          screen.x,
+          screen.y,
+          presentation.radius
+        );
       }
 
       if (!this.unitImages.has(unit.unitId)) {
