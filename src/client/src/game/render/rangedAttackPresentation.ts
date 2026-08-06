@@ -40,6 +40,69 @@ type AttackEventRenderer<TProjectile> = {
   ) => void;
 };
 
+type AttackProjectile<TBlendMode> = {
+  setDisplaySize: (width: number, height: number) => unknown;
+  setRotation: (rotation: number) => unknown;
+  setDepth: (depth: number) => unknown;
+  setBlendMode: (blendMode: TBlendMode) => unknown;
+  destroy: () => void;
+};
+
+type AttackProjectileTween<TProjectile> = {
+  targets: TProjectile;
+  x: number;
+  y: number;
+  duration: number;
+  ease: "Linear";
+  onComplete: () => void;
+};
+
+type AttackEventRendererDependencies<
+  TProjectile,
+  TBlendMode
+> = {
+  drawLine: (origin: Vec2, target: Vec2) => void;
+  createImage: (x: number, y: number, textureKey: string) => TProjectile;
+  addTween: (tween: AttackProjectileTween<TProjectile>) => void;
+  additiveBlendMode: TBlendMode;
+};
+
+export function createAttackEventRenderer<
+  TBlendMode,
+  TProjectile extends AttackProjectile<TBlendMode>
+>(
+  dependencies: AttackEventRendererDependencies<TProjectile, TBlendMode>
+): AttackEventRenderer<TProjectile> {
+  return {
+    drawLine: dependencies.drawLine,
+    createProjectile: (presentation) => {
+      const projectile = dependencies.createImage(
+        presentation.origin.x,
+        presentation.origin.y,
+        rangedAttackProjectileTextureKey
+      );
+      projectile.setDisplaySize(
+        presentation.displayWidth,
+        presentation.displayHeight
+      );
+      projectile.setRotation(presentation.rotation);
+      projectile.setDepth(presentation.depth);
+      projectile.setBlendMode(dependencies.additiveBlendMode);
+      return projectile;
+    },
+    createProjectileTween: (projectile, presentation) => {
+      dependencies.addTween({
+        targets: projectile,
+        x: presentation.target.x,
+        y: presentation.target.y,
+        duration: presentation.durationMs,
+        ease: "Linear",
+        onComplete: () => projectile.destroy()
+      });
+    }
+  };
+}
+
 export function attackEffectPresentation(
   unitType: UnitType | null,
   attackDistance: number,

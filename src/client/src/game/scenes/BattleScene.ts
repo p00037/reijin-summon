@@ -38,6 +38,7 @@ import {
   type BattlefieldHpBarKind
 } from "../render/hpBarPresentation";
 import {
+  createAttackEventRenderer,
   drawAttackEvent,
   rangedAttackProjectileAssetPath,
   rangedAttackProjectileTextureKey
@@ -668,6 +669,22 @@ export class BattleScene extends Phaser.Scene {
 
   private drawAttackEvents(state: BattleState): void {
     this.battlefield.lineStyle(2, 0xf8fafc, 0.8);
+    const renderer = createAttackEventRenderer({
+      drawLine: (origin, target) => {
+        this.battlefield.lineBetween(
+          origin.x,
+          origin.y,
+          target.x,
+          target.y
+        );
+      },
+      createImage: (x, y, textureKey) => this.add.image(x, y, textureKey),
+      addTween: (tween) => {
+        this.tweens.add(tween);
+      },
+      additiveBlendMode: Phaser.BlendModes.ADD
+    });
+
     for (const event of state.recentAttackEvents) {
       const origin = this.worldToScreen(event.origin);
       const target = this.worldToScreen(event.targetPosition);
@@ -680,42 +697,7 @@ export class BattleScene extends Phaser.Scene {
         event.targetPosition,
         origin,
         target,
-        {
-          drawLine: (lineOrigin, lineTarget) => {
-            this.battlefield.lineBetween(
-              lineOrigin.x,
-              lineOrigin.y,
-              lineTarget.x,
-              lineTarget.y
-            );
-          },
-          createProjectile: (presentation) => {
-            const projectile = this.add.image(
-              presentation.origin.x,
-              presentation.origin.y,
-              rangedAttackProjectileTextureKey
-            );
-            projectile
-              .setDisplaySize(
-                presentation.displayWidth,
-                presentation.displayHeight
-              )
-              .setRotation(presentation.rotation)
-              .setDepth(presentation.depth)
-              .setBlendMode(Phaser.BlendModes.ADD);
-            return projectile;
-          },
-          createProjectileTween: (projectile, presentation) => {
-            this.tweens.add({
-              targets: projectile,
-              x: presentation.target.x,
-              y: presentation.target.y,
-              duration: presentation.durationMs,
-              ease: "Linear",
-              onComplete: () => projectile.destroy()
-            });
-          }
-        }
+        renderer
       );
     }
   }
