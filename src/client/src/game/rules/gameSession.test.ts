@@ -117,6 +117,48 @@ test("CPUリーダーHPが0になるとPlayerWinになる", () => {
   assert.equal(session.state.result, "PlayerWin");
 });
 
+test("終了判定を発生させたRanged攻撃イベントは次tickで破棄される", () => {
+  for (const ending of ["FatalAttack", "TimeLimit"] as const) {
+    const session = createStartedSession();
+    const attacker = session.state.units.find(
+      (unit) => unit.unitId === "PlayerRanged"
+    )!;
+    const cpuLeader = session.state.leaders.find(
+      (leader) => leader.team === "Cpu"
+    )!;
+    attacker.position = { ...cpuLeader.position };
+    attacker.destination = { ...attacker.position };
+    for (const enemy of session.state.units.filter(
+      (unit) => unit.team === "Cpu"
+    )) {
+      enemy.position = { x: -6, y: -4 };
+      enemy.destination = { ...enemy.position };
+      enemy.attackTimerSeconds = 10;
+      enemy.leaderAttackTimerSeconds = 10;
+    }
+
+    if (ending === "FatalAttack") {
+      cpuLeader.currentHp = 1;
+    } else {
+      cpuLeader.currentHp = 7000;
+      session.state.remainingSeconds = 0.1;
+    }
+
+    session.tick(ending === "FatalAttack" ? 0 : 0.1);
+
+    assert.equal(session.state.result, "PlayerWin", ending);
+    assert.deepEqual(
+      session.state.recentAttackEvents.map((event) => event.attackerUnitId),
+      ["PlayerRanged"],
+      ending
+    );
+
+    session.tick(0);
+
+    assert.deepEqual(session.state.recentAttackEvents, [], ending);
+  }
+});
+
 test("moving into the leader healing area only counts time after entry", () => {
   const config = createDefaultBattleConfig();
   config.statsByType.Speed.moveSpeed = 1;

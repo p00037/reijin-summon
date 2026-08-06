@@ -53,6 +53,7 @@ export class GameSession {
   }
 
   tick(deltaSeconds: number): void {
+    this.state.recentAttackEvents = [];
     if (this.state.result !== "InProgress") {
       return;
     }
