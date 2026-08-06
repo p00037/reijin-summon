@@ -37,6 +37,11 @@ import {
   unitCardHpBarPresentation,
   type BattlefieldHpBarKind
 } from "../render/hpBarPresentation";
+import {
+  attackEffectPresentation,
+  rangedAttackProjectileAssetPath,
+  rangedAttackProjectileTextureKey
+} from "../render/rangedAttackPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
@@ -97,6 +102,10 @@ export class BattleScene extends Phaser.Scene {
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
     this.load.image(elementButtonTextureKey, elementButtonPath);
     this.load.image(summonButtonTextureKey, summonButtonPath);
+    this.load.image(
+      rangedAttackProjectileTextureKey,
+      rangedAttackProjectileAssetPath
+    );
   }
 
   create(): void {
@@ -662,7 +671,47 @@ export class BattleScene extends Phaser.Scene {
     for (const event of state.recentAttackEvents) {
       const origin = this.worldToScreen(event.origin);
       const target = this.worldToScreen(event.targetPosition);
-      this.battlefield.lineBetween(origin.x, origin.y, target.x, target.y);
+      const attacker = state.units.find(
+        (unit) => unit.unitId === event.attackerUnitId
+      );
+      const presentation = attackEffectPresentation(
+        attacker?.unitType ?? null,
+        origin,
+        target
+      );
+
+      if (presentation.kind === "Line") {
+        this.battlefield.lineBetween(
+          presentation.origin.x,
+          presentation.origin.y,
+          presentation.target.x,
+          presentation.target.y
+        );
+        continue;
+      }
+
+      const projectile = this.add.image(
+        presentation.origin.x,
+        presentation.origin.y,
+        rangedAttackProjectileTextureKey
+      );
+      projectile
+        .setDisplaySize(
+          presentation.displayWidth,
+          presentation.displayHeight
+        )
+        .setRotation(presentation.rotation)
+        .setDepth(presentation.depth)
+        .setBlendMode(Phaser.BlendModes.ADD);
+
+      this.tweens.add({
+        targets: projectile,
+        x: presentation.target.x,
+        y: presentation.target.y,
+        duration: presentation.durationMs,
+        ease: "Linear",
+        onComplete: () => projectile.destroy()
+      });
     }
   }
 
