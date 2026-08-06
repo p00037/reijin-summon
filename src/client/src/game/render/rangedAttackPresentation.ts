@@ -21,17 +21,26 @@ type RangedProjectilePresentation = {
   depth: number;
 };
 
+type NoAttackEffectPresentation = {
+  kind: "None";
+};
+
 export type AttackEffectPresentation =
+  | NoAttackEffectPresentation
   | LineAttackPresentation
   | RangedProjectilePresentation;
 
 export function attackEffectPresentation(
   unitType: UnitType | null,
+  attackDistance: number,
   origin: Vec2,
   target: Vec2
 ): AttackEffectPresentation {
   if (unitType !== "Ranged") {
     return { kind: "Line", origin, target };
+  }
+  if (attackDistance <= 1) {
+    return { kind: "None" };
   }
 
   return {
@@ -41,7 +50,7 @@ export function attackEffectPresentation(
     rotation: Math.atan2(target.y - origin.y, target.x - origin.x),
     displayWidth: 72,
     displayHeight: 72,
-    durationMs: 250,
+    durationMs: 500,
     depth: 3
   };
 }
