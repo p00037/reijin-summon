@@ -16,6 +16,7 @@ import type {
   UnitState,
   Vec2
 } from "../core/types";
+import { distanceSq } from "../core/vector";
 import {
   battleStatusOverlayDepth,
   calculateCardBorderGeometry,
@@ -674,11 +675,19 @@ export class BattleScene extends Phaser.Scene {
       const attacker = state.units.find(
         (unit) => unit.unitId === event.attackerUnitId
       );
+      const attackDistance = Math.sqrt(
+        distanceSq(event.origin, event.targetPosition)
+      );
       const presentation = attackEffectPresentation(
         attacker?.unitType ?? null,
+        attackDistance,
         origin,
         target
       );
+
+      if (presentation.kind === "None") {
+        continue;
+      }
 
       if (presentation.kind === "Line") {
         this.battlefield.lineBetween(
