@@ -16,7 +16,6 @@ import type {
   UnitState,
   Vec2
 } from "../core/types";
-import { distanceSq } from "../core/vector";
 import {
   battleStatusOverlayDepth,
   calculateCardBorderGeometry,
@@ -39,7 +38,7 @@ import {
   type BattlefieldHpBarKind
 } from "../render/hpBarPresentation";
 import {
-  attackEffectPresentation,
+  drawAttackEvent,
   rangedAttackProjectileAssetPath,
   rangedAttackProjectileTextureKey
 } from "../render/rangedAttackPresentation";
@@ -675,52 +674,49 @@ export class BattleScene extends Phaser.Scene {
       const attacker = state.units.find(
         (unit) => unit.unitId === event.attackerUnitId
       );
-      const attackDistance = Math.sqrt(
-        distanceSq(event.origin, event.targetPosition)
-      );
-      const presentation = attackEffectPresentation(
+      drawAttackEvent(
         attacker?.unitType ?? null,
-        attackDistance,
+        event.origin,
+        event.targetPosition,
         origin,
-        target
+        target,
+        {
+          drawLine: (lineOrigin, lineTarget) => {
+            this.battlefield.lineBetween(
+              lineOrigin.x,
+              lineOrigin.y,
+              lineTarget.x,
+              lineTarget.y
+            );
+          },
+          createProjectile: (presentation) => {
+            const projectile = this.add.image(
+              presentation.origin.x,
+              presentation.origin.y,
+              rangedAttackProjectileTextureKey
+            );
+            projectile
+              .setDisplaySize(
+                presentation.displayWidth,
+                presentation.displayHeight
+              )
+              .setRotation(presentation.rotation)
+              .setDepth(presentation.depth)
+              .setBlendMode(Phaser.BlendModes.ADD);
+            return projectile;
+          },
+          createProjectileTween: (projectile, presentation) => {
+            this.tweens.add({
+              targets: projectile,
+              x: presentation.target.x,
+              y: presentation.target.y,
+              duration: presentation.durationMs,
+              ease: "Linear",
+              onComplete: () => projectile.destroy()
+            });
+          }
+        }
       );
-
-      if (presentation.kind === "None") {
-        continue;
-      }
-
-      if (presentation.kind === "Line") {
-        this.battlefield.lineBetween(
-          presentation.origin.x,
-          presentation.origin.y,
-          presentation.target.x,
-          presentation.target.y
-        );
-        continue;
-      }
-
-      const projectile = this.add.image(
-        presentation.origin.x,
-        presentation.origin.y,
-        rangedAttackProjectileTextureKey
-      );
-      projectile
-        .setDisplaySize(
-          presentation.displayWidth,
-          presentation.displayHeight
-        )
-        .setRotation(presentation.rotation)
-        .setDepth(presentation.depth)
-        .setBlendMode(Phaser.BlendModes.ADD);
-
-      this.tweens.add({
-        targets: projectile,
-        x: presentation.target.x,
-        y: presentation.target.y,
-        duration: presentation.durationMs,
-        ease: "Linear",
-        onComplete: () => projectile.destroy()
-      });
     }
   }
 
