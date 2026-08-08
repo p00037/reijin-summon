@@ -1,12 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
-import { createDefaultBattleState, findUnit } from "../core/battleState";
+import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
 import {
+  canReviveUnit,
   defeatedLevelTotal,
   mpRecoverySecondsForDefeatedLevel,
   recordLeaderDamageForMp,
-  tickMpRecovery
+  tickMpRecovery,
+  tryReviveUnit
 } from "./resurrectionSystem";
 
 const expectedSeconds = [25, 24, 21, 19, 16, 13, 9, 5, 4, 3, 3];
@@ -95,3 +97,116 @@ test("leader damage crossing multiple thresholds restores the matching amount of
   assert.equal(state.playerMp, 3);
   assert.equal(state.playerLeaderDamageProgress, 0);
 });
+
+test("MP3を消費して回復エリア内へ全HP復活する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  unit.mode = "Defeated";
+  unit.currentHp = 0;
+  unit.defeatedOrder = 1;
+  unit.attackTimerSeconds = 0.25;
+  unit.leaderAttackTimerSeconds = 0.75;
+  unit.leaderHealingElapsedSeconds = 1;
+  unit.restHealingElapsedSeconds = 1;
+  unit.buildTimerSeconds = 3;
+  unit.pendingElementalId = "Elemental1";
+  state.playerMp = 3;
+  const target = { ...findLeader(state, "Player").position };
+
+  assert.equal(canReviveUnit(state, config, "Player", unit.unitId, target), true);
+  assert.equal(tryReviveUnit(state, config, "Player", unit.unitId, target), true);
+  assert.equal(state.playerMp, 0);
+  assert.equal(unit.mode, "Active");
+  assert.equal(unit.currentHp, unit.stats.maxHp);
+  assert.deepEqual(unit.position, target);
+  assert.deepEqual(unit.destination, target);
+  assert.equal(unit.defeatedOrder, null);
+  assert.equal(unit.attackTimerSeconds, 0);
+  assert.equal(unit.leaderAttackTimerSeconds, 0);
+  assert.equal(unit.leaderHealingElapsedSeconds, 0);
+  assert.equal(unit.restHealingElapsedSeconds, 0);
+  assert.equal(unit.buildTimerSeconds, 0);
+  assert.equal(unit.pendingElementalId, null);
+});
+
+test("MP不足ではMPを消費しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  unit.mode = "Defeated";
+  unit.currentHp = 0;
+  state.playerMp = 2;
+
+  assert.equal(tryReviveUnit(state, config, "Player", unit.unitId, findLeader(state, "Player").position), false);
+  assert.equal(state.playerMp, 2);
+  assert.equal(unit.mode, "Defeated");
+});
+
+test("回復エリア外ではMPを消費しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  unit.mode = "Defeated";
+  unit.currentHp = 0;
+  state.playerMp = 3;
+
+  assert.equal(tryReviveUnit(state, config, "Player", unit.unitId, { x: 0, y: 0 }), false);
+  assert.equal(state.playerMp, 3);
+  assert.equal(unit.mode, "Defeated");
+});
+
+test("生存中のユニットは復活できない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  state.playerMp = 3;
+
+  assert.equal(tryReviveUnit(state, config, "Player", unit.unitId, findLeader(state, "Player").position), false);
+  assert.equal(state.playerMp, 3);
+  assert.equal(unit.mode, "Active");
+});
+
+test("別チームのユニットは復活できない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  unit.mode = "Defeated";
+  unit.currentHp = 0;
+  state.cpuMp = 3;
+
+  assert.equal(tryReviveUnit(state, config, "Cpu", unit.unitId, findLeader(state, "Cpu").position), false);
+  assert.equal(state.cpuMp, 3);
+  assert.equal(unit.mode, "Defeated");
+});
+
+test("戦場外では復活できない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "PlayerMelee");
+  unit.mode = "Defeated";
+  unit.currentHp = 0;
+  state.playerMp = 3;
+  const target = { x: findLeader(state, "Player").position.x, y: config.battlefieldMin.y - 0.1 };
+
+  assert.equal(canReviveUnit(state, config, "Player", unit.unitId, target), false);
+  assert.equal(tryReviveUnit(state, config, "Player", unit.unitId, target), false);
+  assert.equal(state.playerMp, 3);
+  assert.equal(unit.mode, "Defeated");
+});
+
+for (const [label, target] of [
+  ["戦場境界", { x: 0, y: -4.5 }],
+  ["回復半径ちょうど", { x: 2, y: -4.1 }]
+] as const) {
+  test(`${label}では復活できる`, () => {
+    const config = createDefaultBattleConfig();
+    const state = createDefaultBattleState(config);
+    const unit = findUnit(state, "PlayerMelee");
+    unit.mode = "Defeated";
+    unit.currentHp = 0;
+    state.playerMp = 3;
+
+    assert.equal(canReviveUnit(state, config, "Player", unit.unitId, target), true);
+  });
+}

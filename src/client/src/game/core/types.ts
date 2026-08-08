@@ -72,7 +72,6 @@ export type BattleConfig = {
   summonedUnitLeaderAttackIntervalSeconds: number;
   summonedUnitHealthDecayPerSecond: number;
   summonedUnitMoveSpeed: number;
-  unitRespawnSeconds: number;
   maxMp: number;
   leaderDamageMpThresholdRatio: number;
   unitLeaderAttackIntervalSeconds: number;
@@ -121,7 +120,6 @@ export type UnitState = {
   currentHp: number;
   mode: UnitMode;
   buildTimerSeconds: number;
-  respawnTimerSeconds: number;
   defeatedOrder: number | null;
   attackTimerSeconds: number;
   leaderAttackTimerSeconds: number;

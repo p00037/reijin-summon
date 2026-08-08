@@ -230,7 +230,7 @@ test("時間切れ時はリーダーHPの高い側が勝つ", () => {
   assert.equal(session.state.result, "PlayerWin");
 });
 
-test("戦闘中に撃破されたユニットの復活タイマーは同じtickのdeltaを失わない", () => {
+test("戦闘中に撃破されたユニットに撤退順を記録する", () => {
   const session = createStartedSession();
   const playerUnit = session.state.units.find((unit) => unit.unitId === "PlayerMelee")!;
   const cpuUnit = session.state.units.find((unit) => unit.unitId === "CpuMelee")!;
@@ -243,7 +243,7 @@ test("戦闘中に撃破されたユニットの復活タイマーは同じtick�
   session.tick(1);
 
   assert.equal(cpuUnit.mode, "Defeated");
-  assert.equal(cpuUnit.respawnTimerSeconds, session.config.unitRespawnSeconds);
+  assert.equal(cpuUnit.defeatedOrder, 1);
 });
 
 test("BeginElementalBuildはコマンドのteamと実ユニットteamが違う場合は無視する", () => {

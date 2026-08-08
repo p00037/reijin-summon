@@ -135,7 +135,6 @@ function createUnit(
     currentHp: stats.maxHp,
     mode: "Active",
     buildTimerSeconds: 0,
-    respawnTimerSeconds: 0,
     defeatedOrder: null,
     attackTimerSeconds: 0,
     leaderAttackTimerSeconds: 0,

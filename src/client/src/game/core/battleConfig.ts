@@ -59,7 +59,6 @@ export function createDefaultBattleConfig(): BattleConfig {
     summonedUnitLeaderAttackIntervalSeconds: 2,
     summonedUnitHealthDecayPerSecond: 120,
     summonedUnitMoveSpeed: 8.2 / 12,
-    unitRespawnSeconds: 10,
     maxMp: 10,
     leaderDamageMpThresholdRatio: 0.1,
     unitLeaderAttackIntervalSeconds: 1,

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
-import { applyMoveCommand, tickCombat, tickMovement, tickRespawns, tickUnitHealing } from "./unitSystem";
+import { applyMoveCommand, markDefeatedUnits, tickCombat, tickMovement, tickUnitHealing } from "./unitSystem";
 
 test("移動コマンドは生成中を解除し、目標を戦場内にクランプする", () => {
   const config = createDefaultBattleConfig();
@@ -58,40 +58,39 @@ test("攻撃範囲内の敵リーダーへ直接ダメージを与える", () =>
   assert.equal(findLeader(state, "Cpu").currentHp, 8000 - 61 * 0.25);
 });
 
-test("撃破された通常ユニットは復活タイマー後にスポーン位置へ戻る", () => {
+test("HP0の通常ユニットの撤退順を記録して時間では復活しない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
-  const unit = findUnit(state, "PlayerSpeed");
-  unit.currentHp = 0;
-  unit.mode = "Defeated";
-  unit.respawnTimerSeconds = 10;
-  unit.position = { x: 0, y: 0 };
-  unit.attackTimerSeconds = 0.25;
-  unit.leaderAttackTimerSeconds = 0.75;
+  const first = findUnit(state, "PlayerMelee");
+  const second = findUnit(state, "PlayerSpeed");
+  first.currentHp = 0;
+  markDefeatedUnits(state);
+  second.currentHp = 0;
+  markDefeatedUnits(state);
 
-  tickRespawns(state, 10);
-
-  assert.equal(unit.mode, "Active");
-  assert.equal(unit.currentHp, unit.stats.maxHp);
-  assert.deepEqual(unit.position, unit.spawnPosition);
-  assert.equal(unit.attackTimerSeconds, 0);
-  assert.equal(unit.leaderAttackTimerSeconds, 0);
+  assert.equal(first.mode, "Defeated");
+  assert.equal(first.defeatedOrder, 1);
+  assert.equal(second.defeatedOrder, 2);
+  assert.equal(state.nextDefeatedOrder, 3);
+  tickCombat(state, config, 30);
+  assert.equal(first.mode, "Defeated");
+  assert.equal(first.currentHp, 0);
 });
 
-test("戦闘tickは撃破済みユニットの復活タイマーを巻き戻さない", () => {
+test("戦闘tickは撃破済みユニットを復活させない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerSpeed");
   unit.currentHp = 0;
   unit.mode = "Defeated";
-  unit.respawnTimerSeconds = 4;
 
   tickCombat(state, config, 1);
 
-  assert.equal(unit.respawnTimerSeconds, 4);
+  assert.equal(unit.mode, "Defeated");
+  assert.equal(unit.currentHp, 0);
 });
 
-test("生成中ユニットの撃破は生成を解除して復活待ちにする", () => {
+test("生成中ユニットの撃破は生成を解除して撤退順を記録する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerSpeed");
@@ -103,7 +102,7 @@ test("生成中ユニットの撃破は生成を解除して復活待ちにす�
   tickCombat(state, config, 1);
 
   assert.equal(unit.mode, "Defeated");
-  assert.equal(unit.respawnTimerSeconds, 10);
+  assert.equal(unit.defeatedOrder, 1);
   assert.equal(unit.buildTimerSeconds, 0);
   assert.equal(unit.pendingElementalId, null);
 });
@@ -260,26 +259,21 @@ test("building units reset their healing timers and do not recover", () => {
   assert.equal(keeper.restHealingElapsedSeconds, 0);
 });
 
-test("defeat and respawn reset healing timers", () => {
+test("defeat resets healing timers", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const keeper = findUnit(state, "PlayerMelee");
   keeper.currentHp = 0;
+  keeper.attackTimerSeconds = 0.25;
+  keeper.leaderAttackTimerSeconds = 0.75;
   keeper.leaderHealingElapsedSeconds = 1;
   keeper.restHealingElapsedSeconds = 1;
 
   tickCombat(state, config, 0);
 
   assert.equal(keeper.mode, "Defeated");
-  assert.equal(keeper.leaderHealingElapsedSeconds, 0);
-  assert.equal(keeper.restHealingElapsedSeconds, 0);
-
-  keeper.leaderHealingElapsedSeconds = 1;
-  keeper.restHealingElapsedSeconds = 1;
-  keeper.respawnTimerSeconds = 0;
-  tickRespawns(state, 0);
-
-  assert.equal(keeper.mode, "Active");
+  assert.equal(keeper.attackTimerSeconds, 0);
+  assert.equal(keeper.leaderAttackTimerSeconds, 0);
   assert.equal(keeper.leaderHealingElapsedSeconds, 0);
   assert.equal(keeper.restHealingElapsedSeconds, 0);
 });
