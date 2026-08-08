@@ -2,6 +2,8 @@ import type { BattleConfig, UnitStats, UnitType } from "./types";
 
 const statsByType: Record<UnitType, UnitStats> = {
   Melee: {
+    level: 3,
+    revivalCost: 3,
     maxHp: 1100,
     moveSpeed: 8.2 / 40,
     attackDamage: 61,
@@ -11,6 +13,8 @@ const statsByType: Record<UnitType, UnitStats> = {
     elementalAttackMultiplier: 2
   },
   Speed: {
+    level: 3,
+    revivalCost: 3,
     maxHp: 1060,
     moveSpeed: 8.2 / 22,
     attackDamage: 53,
@@ -20,6 +24,8 @@ const statsByType: Record<UnitType, UnitStats> = {
     elementalAttackMultiplier: 1
   },
   Ranged: {
+    level: 3,
+    revivalCost: 3,
     maxHp: 1025,
     moveSpeed: 8.2 / 32,
     attackDamage: 36,
@@ -54,6 +60,8 @@ export function createDefaultBattleConfig(): BattleConfig {
     summonedUnitHealthDecayPerSecond: 120,
     summonedUnitMoveSpeed: 8.2 / 12,
     unitRespawnSeconds: 10,
+    maxMp: 10,
+    leaderDamageMpThresholdRatio: 0.1,
     unitLeaderAttackIntervalSeconds: 1,
     elementalMaxHp: 1000,
     directLeaderDamageMultiplier: 0.25,
