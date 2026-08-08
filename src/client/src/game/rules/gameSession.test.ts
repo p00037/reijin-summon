@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
+import { findLeader, findUnit } from "../core/battleState";
 import type { BattleCommand } from "../core/types";
 import { GameSession } from "./gameSession";
 
@@ -10,6 +11,84 @@ function createStartedSession(config = createDefaultBattleConfig()): GameSession
   session.tick(config.countdownSeconds);
   return session;
 }
+
+test("戦闘中にMP自然回復が進む", () => {
+  const session = new GameSession();
+  session.tick(25);
+  assert.equal(session.state.playerMp, 0);
+  session.applyCommand({ commandType: "StartBattle", team: "Player" });
+  session.tick(session.config.countdownSeconds);
+
+  session.tick(-25);
+  assert.equal(session.state.playerMpRecoveryProgress, 0);
+  assert.equal(session.state.remainingSeconds, session.config.matchDurationSeconds);
+
+  session.tick(25);
+  assert.equal(session.state.playerMp, 1);
+});
+
+test("ReviveUnitコマンドの成功時だけMPを一度消費する", () => {
+  const session = createStartedSession();
+  const unit = findUnit(session.state, "PlayerMelee");
+  unit.mode = "Defeated";
+  unit.currentHp = 0;
+  session.state.playerMp = 6;
+  const command = {
+    commandType: "ReviveUnit" as const,
+    team: "Player" as const,
+    unitId: unit.unitId,
+    targetPosition: { ...findLeader(session.state, "Player").position }
+  };
+
+  session.applyCommand(command);
+  session.applyCommand(command);
+
+  assert.equal(session.state.playerMp, 3);
+  assert.equal(unit.mode, "Active");
+});
+
+test("通常ユニットがリーダーへ与えた実ダメージ800でMP1回復する", () => {
+  const session = createStartedSession();
+  const attacker = findUnit(session.state, "CpuMelee");
+  const leader = findLeader(session.state, "Player");
+  attacker.position = { ...leader.position };
+  attacker.destination = { ...leader.position };
+  attacker.stats.attackDamage = 800;
+  session.config.directLeaderDamageMultiplier = 1;
+  for (const playerUnit of session.state.units.filter((unit) => unit.team === "Player")) {
+    playerUnit.mode = "Defeated";
+    playerUnit.currentHp = 0;
+  }
+
+  session.tick(0);
+
+  assert.equal(session.state.playerMp, 1);
+});
+
+test("召喚獣がリーダーへ与えた実ダメージ800でMP1回復する", () => {
+  const session = createStartedSession();
+  const leader = findLeader(session.state, "Player");
+  session.state.summonedUnits.push({
+    summonedUnitId: 99,
+    team: "Cpu",
+    position: { ...leader.position },
+    destination: { ...leader.position },
+    maxHp: 1000,
+    currentHp: 1000,
+    attackDamage: 0,
+    leaderAttackDamage: 800,
+    attackIntervalSeconds: 0.5,
+    attackTimerSeconds: 0,
+    leaderAttackIntervalSeconds: 2,
+    leaderAttackTimerSeconds: 0,
+    moveSpeed: 0,
+    healthDecayPerSecond: 0
+  });
+
+  session.tick(0);
+
+  assert.equal(session.state.playerMp, 1);
+});
 
 test("Setup中は初期配置だけを受け付けて戦闘時間を進めない", () => {
   const session = new GameSession();

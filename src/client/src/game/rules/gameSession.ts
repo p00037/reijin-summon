@@ -2,8 +2,9 @@ import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findLeader, findUnit, isUnitAlive } from "../core/battleState";
 import type { BattleCommand, BattleConfig, BattleState, MatchResult, TeamId, UnitId } from "../core/types";
 import { countCompletedElementals, removeDestroyedElementals, tickElementalBuilds, tryBeginElementalBuild } from "./elementalSystem";
+import { recordLeaderDamageForMp, tickMpRecovery, tryReviveUnit } from "./resurrectionSystem";
 import { canSummon, tickSummonGauges, tickSummonedUnits, tryExecuteSummon } from "./summonSystem";
-import { applyMoveCommand, calculateUnitHealingElapsed, tickCombat, tickMovement, tickUnitHealing } from "./unitSystem";
+import { applyMoveCommand, calculateUnitHealingElapsed, markDefeatedUnits, tickCombat, tickMovement, tickUnitHealing } from "./unitSystem";
 import { tryPlaceInitialUnit } from "./initialPlacement";
 
 export class GameSession {
@@ -49,6 +50,17 @@ export class GameSession {
           this.updateResult();
         }
         break;
+      case "ReviveUnit":
+        if (this.state.phase === "InProgress") {
+          tryReviveUnit(
+            this.state,
+            this.config,
+            command.team,
+            command.unitId,
+            command.targetPosition
+          );
+        }
+        break;
     }
   }
 
@@ -71,15 +83,32 @@ export class GameSession {
       return;
     }
 
-    const activityStarts = activityStartSecondsByUnit(this.state, deltaSeconds);
-    this.state.remainingSeconds = Math.max(0, this.state.remainingSeconds - deltaSeconds);
-    tickElementalBuilds(this.state, this.config, deltaSeconds);
-    tickSummonGauges(this.state, this.config, deltaSeconds);
-    const movementTimelines = tickMovement(this.state, this.config, deltaSeconds, activityStarts);
+    const elapsedSeconds = Math.max(0, deltaSeconds);
+    tickMpRecovery(this.state, this.config, elapsedSeconds);
+    const playerLeaderHpBeforeCombat = findLeader(this.state, "Player").currentHp;
+    const cpuLeaderHpBeforeCombat = findLeader(this.state, "Cpu").currentHp;
+    const activityStarts = activityStartSecondsByUnit(this.state, elapsedSeconds);
+    this.state.remainingSeconds = Math.max(0, this.state.remainingSeconds - elapsedSeconds);
+    tickElementalBuilds(this.state, this.config, elapsedSeconds);
+    tickSummonGauges(this.state, this.config, elapsedSeconds);
+    const movementTimelines = tickMovement(this.state, this.config, elapsedSeconds, activityStarts);
     const healingElapsed = calculateUnitHealingElapsed(this.state, this.config, movementTimelines);
-    tickUnitHealing(this.state, this.config, deltaSeconds, healingElapsed);
-    tickCombat(this.state, this.config, deltaSeconds);
-    tickSummonedUnits(this.state, this.config, deltaSeconds);
+    tickUnitHealing(this.state, this.config, elapsedSeconds, healingElapsed);
+    tickCombat(this.state, this.config, elapsedSeconds);
+    tickSummonedUnits(this.state, this.config, elapsedSeconds);
+    markDefeatedUnits(this.state);
+    recordLeaderDamageForMp(
+      this.state,
+      this.config,
+      "Player",
+      playerLeaderHpBeforeCombat - findLeader(this.state, "Player").currentHp
+    );
+    recordLeaderDamageForMp(
+      this.state,
+      this.config,
+      "Cpu",
+      cpuLeaderHpBeforeCombat - findLeader(this.state, "Cpu").currentHp
+    );
     removeDestroyedElementals(this.state);
     this.updateResult();
   }
