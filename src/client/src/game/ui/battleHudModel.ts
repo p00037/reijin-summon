@@ -12,6 +12,7 @@ export type HudGaugeModel = {
 export type BattleHudModel = {
   playerHp: HudGaugeModel;
   cpuHp: HudGaugeModel;
+  mp: HudGaugeModel;
   remainingTimeText: string;
   summonGauge: HudGaugeModel;
   resultText: string;
@@ -36,6 +37,8 @@ export function createBattleHudModel(
     && selectedUnit.mode === "Active"
     && selectedUnit.currentHp > 0;
   const summonGauge = clamp(state.playerSummonGauge, 0, 1);
+  const maxMp = 10;
+  const playerMp = clamp(state.playerMp, 0, maxMp);
   const resultText =
     state.result !== "InProgress"
       ? formatResult(state.result)
@@ -46,6 +49,10 @@ export function createBattleHudModel(
   return {
     playerHp: leaderGauge("自分", playerLeader.currentHp, playerLeader.maxHp),
     cpuHp: leaderGauge("敵", cpuLeader.currentHp, cpuLeader.maxHp),
+    mp: {
+      text: `MP ${playerMp} / ${maxMp}`,
+      ratio: playerMp / maxMp
+    },
     remainingTimeText: `${Math.max(0, Math.ceil(state.remainingSeconds))}`,
     summonGauge: {
       text: `召喚ゲージ ${Math.floor(summonGauge * 100)}%`,

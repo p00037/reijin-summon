@@ -6,97 +6,49 @@ export type UiRect = {
 };
 
 export type BattleLayout = {
-  topBar: UiRect;
+  leftPanel: UiRect;
   field: UiRect;
-  bottomBar: UiRect;
+  waitingArea: UiRect;
   playerHp: UiRect;
   cpuHp: UiRect;
+  mp: UiRect;
   summonGauge: UiRect;
+  remainingTime: UiRect;
   buildButton: UiRect;
   summonButton: UiRect;
   retryButton: UiRect;
 };
 
-const topBarHeight = 48;
-const fieldTopGap = 8;
-const fieldWidth = 515.2;
-const fieldHeight = 368;
 const buttonSize = 52;
-const buttonGap = 8;
-const buttonFieldGap = 12;
-const hpBarOuterInset = 4;
-const remainingTimeWidth = 52;
-const hpBarHeight = 28;
-const hpBarTopInset = 10;
-const summonGaugeWidth = 360;
-const summonGaugeHeight = 28;
-const summonGaugeFieldGap = 8;
 
 export function calculateBattleLayout(width: number, height: number): BattleLayout {
-  const field: UiRect = {
-    x: roundToTenth((width - fieldWidth) / 2),
-    y: topBarHeight + fieldTopGap,
-    width: fieldWidth,
-    height: fieldHeight
-  };
-  const fieldBottom = roundToTenth(field.y + field.height);
-  const buttonX = roundToTenth(field.x + field.width + buttonFieldGap);
-  const retryY = roundToTenth(fieldBottom - buttonSize);
-  const hpBarWidth = roundToTenth(
-    (width - hpBarOuterInset * 2 - remainingTimeWidth) / 2
-  );
-  const playerHp: UiRect = {
-    x: hpBarOuterInset,
-    y: hpBarTopInset,
-    width: hpBarWidth,
-    height: hpBarHeight
-  };
-  const cpuHp: UiRect = {
-    x: roundToTenth(width - hpBarOuterInset - hpBarWidth),
-    y: hpBarTopInset,
-    width: hpBarWidth,
-    height: hpBarHeight
-  };
-  const summonGauge: UiRect = {
-    x: roundToTenth((width - summonGaugeWidth) / 2),
-    y: roundToTenth(fieldBottom + summonGaugeFieldGap),
-    width: summonGaugeWidth,
-    height: summonGaugeHeight
-  };
+  const buttonX = roundToTenth(width - buttonSize - 0.4);
 
   return {
-    topBar: { x: 0, y: 0, width, height: topBarHeight },
-    field,
-    bottomBar: {
-      x: 0,
-      y: fieldBottom,
-      width,
-      height: roundToTenth(height - fieldBottom)
+    leftPanel: { x: 6, y: 8, width: 106, height: 326 },
+    cpuHp: { x: 25, y: 28, width: 12, height: 118 },
+    playerHp: { x: 25, y: 174, width: 12, height: 118 },
+    mp: { x: 75, y: 28, width: 12, height: 118 },
+    summonGauge: { x: 75, y: 174, width: 12, height: 118 },
+    field: { x: 120, y: 8, width: 456, height: 326 },
+    waitingArea: {
+      x: 120,
+      y: 342,
+      width: 456,
+      height: roundToTenth(height - 342 - 10)
     },
-    playerHp,
-    cpuHp,
-    summonGauge,
-    buildButton: {
-      x: buttonX,
-      y: retryY - (buttonSize + buttonGap) * 2,
-      width: buttonSize,
-      height: buttonSize
-    },
-    summonButton: {
-      x: buttonX,
-      y: retryY - buttonSize - buttonGap,
-      width: buttonSize,
-      height: buttonSize
-    },
-    retryButton: { x: buttonX, y: retryY, width: buttonSize, height: buttonSize }
+    remainingTime: { x: buttonX, y: 8, width: buttonSize, height: 53 },
+    buildButton: { x: buttonX, y: 69, width: buttonSize, height: buttonSize },
+    summonButton: { x: buttonX, y: 129, width: buttonSize, height: buttonSize },
+    retryButton: { x: buttonX, y: 189, width: buttonSize, height: buttonSize }
   };
 }
 
 export function isPointInHud(layout: BattleLayout, x: number, y: number): boolean {
   return [
-    layout.topBar,
-    layout.bottomBar,
-    layout.summonGauge,
+    layout.leftPanel,
+    layout.waitingArea,
+    layout.remainingTime,
     layout.buildButton,
     layout.summonButton,
     layout.retryButton
