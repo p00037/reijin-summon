@@ -30,6 +30,8 @@ export function canReviveUnit(
     targetPosition.y >= config.battlefieldMin.y &&
     targetPosition.y <= config.battlefieldMax.y;
   return (
+    state.result === "InProgress" &&
+    state.phase === "InProgress" &&
     unit.team === team &&
     unit.mode === "Defeated" &&
     getMpState(state, team).current >= unit.stats.revivalCost &&
@@ -80,15 +82,20 @@ export function tickMpRecovery(state: BattleState, config: BattleConfig, deltaSe
       continue;
     }
 
-    const recoveryProgress = mpState.recoveryProgress + deltaSeconds;
     const recoverySeconds = mpRecoverySecondsForDefeatedLevel(defeatedLevelTotal(state, team));
-    if (recoveryProgress < recoverySeconds) {
-      setMpState(state, team, mpState.current, recoveryProgress, mpState.leaderDamageProgress);
-      continue;
-    }
-
-    const current = Math.min(config.maxMp, mpState.current + 1);
-    setMpState(state, team, current, 0, current >= config.maxMp ? 0 : mpState.leaderDamageProgress);
+    const recoveryProgress =
+      mpState.recoveryProgress + Math.max(0, deltaSeconds) / recoverySeconds;
+    const recoveredMp = Math.floor(recoveryProgress);
+    const current = Math.min(config.maxMp, mpState.current + recoveredMp);
+    const remainingProgress =
+      current >= config.maxMp ? 0 : recoveryProgress - recoveredMp;
+    setMpState(
+      state,
+      team,
+      current,
+      remainingProgress,
+      current >= config.maxMp ? 0 : mpState.leaderDamageProgress
+    );
   }
 }
 
@@ -100,7 +107,7 @@ export function recordLeaderDamageForMp(
 ): void {
   const mpState = getMpState(state, team);
   if (mpState.current >= config.maxMp) {
-    setMpState(state, team, config.maxMp, mpState.recoveryProgress, 0);
+    setMpState(state, team, config.maxMp, 0, 0);
     return;
   }
 
@@ -109,5 +116,11 @@ export function recordLeaderDamageForMp(
   const recoveredMp = Math.floor(leaderDamageProgress / threshold);
   const current = Math.min(config.maxMp, mpState.current + recoveredMp);
   const remainingDamageProgress = current >= config.maxMp ? 0 : leaderDamageProgress % threshold;
-  setMpState(state, team, current, mpState.recoveryProgress, remainingDamageProgress);
+  setMpState(
+    state,
+    team,
+    current,
+    current >= config.maxMp ? 0 : mpState.recoveryProgress,
+    remainingDamageProgress
+  );
 }

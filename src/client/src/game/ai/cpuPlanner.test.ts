@@ -15,6 +15,7 @@ test("CPU revives the oldest defeated unit at its leader when it has enough MP",
   newer.mode = "Defeated";
   newer.currentHp = 0;
   newer.defeatedOrder = 2;
+  state.phase = "InProgress";
   state.cpuMp = 3;
 
   assert.deepEqual(planCpuCommands(state, config), [{
@@ -32,9 +33,14 @@ test("CPU keeps existing planning when MP is insufficient for revival", () => {
   unit.mode = "Defeated";
   unit.currentHp = 0;
   unit.defeatedOrder = 1;
+  state.phase = "InProgress";
   state.cpuMp = 2;
 
-  assert.notEqual(planCpuCommands(state, config)[0]?.commandType, "ReviveUnit");
+  assert.deepEqual(planCpuCommands(state, config), [{
+    commandType: "BeginElementalBuild",
+    team: "Cpu",
+    unitId: "CpuSpeed"
+  }]);
 });
 
 test("CPUは召喚可能なら召喚を最優先する", () => {

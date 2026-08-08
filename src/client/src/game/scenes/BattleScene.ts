@@ -63,6 +63,7 @@ import {
 import { calculateBattleLayout, type UiRect } from "../ui/battleLayout";
 import {
   calculateDefeatedUnitLayout,
+  createDefeatedUnitCardPresentation,
   type DefeatedUnitCardLayout
 } from "../ui/defeatedUnitLayout";
 
@@ -235,7 +236,15 @@ export class BattleScene extends Phaser.Scene {
       const unit = this.session.state.units.find(
         (candidate) => candidate.unitId === defeatedCard.unitId
       );
-      if (unit?.mode === "Defeated") {
+      const presentation = unit
+        ? createDefeatedUnitCardPresentation(
+            this.session.state.result,
+            this.session.state.phase,
+            this.session.state.playerMp,
+            unit.stats.revivalCost
+          )
+        : null;
+      if (unit?.mode === "Defeated" && presentation?.available) {
         this.revivalDraggedUnitId = defeatedCard.unitId;
         this.revivalPointerPosition = point;
       }
@@ -648,9 +657,13 @@ export class BattleScene extends Phaser.Scene {
       && this.revivalPointerPosition
         ? this.revivalPointerPosition
         : slotCenter;
-    const alpha =
-      this.session.state.playerMp >= unit.stats.revivalCost ? 0.78 : 0.35;
-    this.updateDefeatedUnitImage(unit, layout, center, alpha);
+    const presentation = createDefeatedUnitCardPresentation(
+      this.session.state.result,
+      this.session.state.phase,
+      this.session.state.playerMp,
+      unit.stats.revivalCost
+    );
+    this.updateDefeatedUnitImage(unit, layout, center, presentation.alpha);
 
     let label = this.defeatedUnitLabels.get(unit.unitId);
     if (!label) {
@@ -677,7 +690,7 @@ export class BattleScene extends Phaser.Scene {
         center.y + layout.rect.height / 2 - 6 * layout.scale
       )
       .setScale(layout.scale)
-      .setAlpha(alpha)
+      .setAlpha(presentation.alpha)
       .setVisible(true);
   }
 

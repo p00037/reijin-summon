@@ -45,5 +45,6 @@ for (const invalid of [
       { x: 0, y: -4.1 }
     );
     assert.equal(transition.command, null);
+    assert.equal(transition.draggedUnitId, null);
   });
 }
