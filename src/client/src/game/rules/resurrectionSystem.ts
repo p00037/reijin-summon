@@ -29,7 +29,8 @@ export function tickMpRecovery(state: BattleState, config: BattleConfig, deltaSe
       continue;
     }
 
-    setMpState(state, team, Math.min(config.maxMp, mpState.current + 1), 0, mpState.leaderDamageProgress);
+    const current = Math.min(config.maxMp, mpState.current + 1);
+    setMpState(state, team, current, 0, current >= config.maxMp ? 0 : mpState.leaderDamageProgress);
   }
 }
 
@@ -47,10 +48,8 @@ export function recordLeaderDamageForMp(
 
   const leaderDamageProgress = mpState.leaderDamageProgress + damage;
   const threshold = findLeader(state, team).maxHp * config.leaderDamageMpThresholdRatio;
-  if (leaderDamageProgress < threshold) {
-    setMpState(state, team, mpState.current, mpState.recoveryProgress, leaderDamageProgress);
-    return;
-  }
-
-  setMpState(state, team, Math.min(config.maxMp, mpState.current + 1), mpState.recoveryProgress, 0);
+  const recoveredMp = Math.floor(leaderDamageProgress / threshold);
+  const current = Math.min(config.maxMp, mpState.current + recoveredMp);
+  const remainingDamageProgress = current >= config.maxMp ? 0 : leaderDamageProgress % threshold;
+  setMpState(state, team, current, mpState.recoveryProgress, remainingDamageProgress);
 }

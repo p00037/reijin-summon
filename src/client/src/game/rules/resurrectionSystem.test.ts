@@ -51,6 +51,18 @@ test("natural recovery resets progress after reaching maximum MP", () => {
   assert.equal(state.playerMpRecoveryProgress, 0);
 });
 
+test("natural recovery reaching maximum MP resets existing leader damage progress", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.playerMp = 9;
+  state.playerLeaderDamageProgress = 799;
+
+  tickMpRecovery(state, config, 25);
+
+  assert.equal(state.playerMp, 10);
+  assert.equal(state.playerLeaderDamageProgress, 0);
+});
+
 test("leader damage equal to 10 percent of maximum HP restores 1 MP", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
@@ -72,4 +84,14 @@ test("leader damage recovery does not exceed maximum MP", () => {
 
   assert.equal(state.cpuMp, 10);
   assert.equal(state.cpuLeaderDamageProgress, 0);
+});
+
+test("leader damage crossing multiple thresholds restores the matching amount of MP", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+
+  recordLeaderDamageForMp(state, config, "Player", 2400);
+
+  assert.equal(state.playerMp, 3);
+  assert.equal(state.playerLeaderDamageProgress, 0);
 });
