@@ -37,6 +37,12 @@ import {
   unitCardHpBarPresentation,
   type BattlefieldHpBarKind
 } from "../render/hpBarPresentation";
+import {
+  createAttackEventRenderer,
+  drawAttackEvent,
+  rangedAttackProjectileAssetPath,
+  rangedAttackProjectileTextureKey
+} from "../render/rangedAttackPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
@@ -97,6 +103,10 @@ export class BattleScene extends Phaser.Scene {
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
     this.load.image(elementButtonTextureKey, elementButtonPath);
     this.load.image(summonButtonTextureKey, summonButtonPath);
+    this.load.image(
+      rangedAttackProjectileTextureKey,
+      rangedAttackProjectileAssetPath
+    );
   }
 
   create(): void {
@@ -659,10 +669,36 @@ export class BattleScene extends Phaser.Scene {
 
   private drawAttackEvents(state: BattleState): void {
     this.battlefield.lineStyle(2, 0xf8fafc, 0.8);
+    const renderer = createAttackEventRenderer({
+      drawLine: (origin, target) => {
+        this.battlefield.lineBetween(
+          origin.x,
+          origin.y,
+          target.x,
+          target.y
+        );
+      },
+      createImage: (x, y, textureKey) => this.add.image(x, y, textureKey),
+      addTween: (tween) => {
+        this.tweens.add(tween);
+      },
+      additiveBlendMode: Phaser.BlendModes.ADD
+    });
+
     for (const event of state.recentAttackEvents) {
       const origin = this.worldToScreen(event.origin);
       const target = this.worldToScreen(event.targetPosition);
-      this.battlefield.lineBetween(origin.x, origin.y, target.x, target.y);
+      const attacker = state.units.find(
+        (unit) => unit.unitId === event.attackerUnitId
+      );
+      drawAttackEvent(
+        attacker?.unitType ?? null,
+        event.origin,
+        event.targetPosition,
+        origin,
+        target,
+        renderer
+      );
     }
   }
 
