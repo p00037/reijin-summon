@@ -99,7 +99,6 @@ export class BattleScene extends Phaser.Scene {
   private revivalPointerPosition: Vec2 | null = null;
   private defeatedUnitLayouts: DefeatedUnitCardLayout[] = [];
   private defeatedUnitLabels = new Map<PlayerUnitId, Phaser.GameObjects.Text>();
-  private waitingAreaStatusLabel!: Phaser.GameObjects.Text;
   private moveMarkers = new Map<PlayerUnitId, Vec2>();
   private cpuPlanTimerSeconds = 0;
 
@@ -171,20 +170,6 @@ export class BattleScene extends Phaser.Scene {
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
-    this.waitingAreaStatusLabel = this.add
-      .text(
-        layout.waitingArea.x + 8,
-        layout.waitingArea.y + 8,
-        "撤退中",
-        withCanvasTextResolution({
-          color: "#e2e8f0",
-          fontFamily: "Arial, sans-serif",
-          fontSize: "12px"
-        })
-      )
-      .setDepth(6)
-      .setVisible(false);
-
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.handlePointerMove(pointer));
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer));
@@ -447,7 +432,6 @@ export class BattleScene extends Phaser.Scene {
       calculateBattleLayout(gameViewport.width, gameViewport.height).waitingArea,
       defeatedUnitIds
     );
-    this.waitingAreaStatusLabel.setVisible(this.defeatedUnitLayouts.length > 0);
     this.drawUnits(state.units);
     this.drawAttackEvents(state);
 
