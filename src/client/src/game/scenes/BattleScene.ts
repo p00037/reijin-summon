@@ -47,7 +47,11 @@ import {
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
-import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
+import {
+  cardRotationAfterRevival,
+  cardRotationForMovement,
+  initialCardRotation
+} from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 import { gameViewport } from "../gameViewport";
@@ -334,6 +338,11 @@ export class BattleScene extends Phaser.Scene {
       )
     ) {
       this.session.applyCommand(transition.command);
+      this.unitCardPositions.delete(transition.command.unitId);
+      this.unitCardRotations.set(
+        transition.command.unitId,
+        cardRotationAfterRevival("Player")
+      );
     }
   }
 
