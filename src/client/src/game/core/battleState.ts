@@ -140,6 +140,10 @@ function createUnit(
     leaderAttackTimerSeconds: 0,
     leaderHealingElapsedSeconds: 0,
     restHealingElapsedSeconds: 0,
-    pendingElementalId: null
+    pendingElementalId: null,
+    abilityAp: 0,
+    abilityRecoverySeconds: 0,
+    masterRangeBoostRemainingSeconds: 0,
+    seekerAttackBoostRemainingSeconds: 0
   };
 }

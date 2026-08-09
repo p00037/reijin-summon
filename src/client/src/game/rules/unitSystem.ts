@@ -11,6 +11,12 @@ import type {
   Vec2
 } from "../core/types";
 import { clampVec2, distanceSq, moveTowards } from "../core/vector";
+import {
+  effectiveAttackDamage,
+  effectiveAttackRange,
+  effectiveMoveSpeedMultiplier,
+  resetUnitAbilityState
+} from "./abilitySystem";
 import { areCollisionCirclesTouching } from "./collisionGeometry";
 
 type MoveUnitCommand = Extract<BattleCommand, { commandType: "MoveUnit" }>;
@@ -65,8 +71,8 @@ export function tickMovement(
     const activeStartSeconds = Math.min(deltaSeconds, Math.max(0, activityStartSecondsByUnit.get(unit.unitId) ?? 0));
     const activeSeconds = Math.max(0, deltaSeconds - activeStartSeconds);
     const initialPosition = { ...unit.position };
-    const speedMultiplier = hasEnemyContact(state, config, unit) ? config.contactSlowMultiplier : 1;
-    const moveSpeed = unit.stats.moveSpeed * speedMultiplier;
+    const contactMultiplier = hasEnemyContact(state, config, unit) ? config.contactSlowMultiplier : 1;
+    const moveSpeed = unit.stats.moveSpeed * effectiveMoveSpeedMultiplier(state, config, unit) * contactMultiplier;
     const targetDistance = Math.sqrt(distanceSq(unit.position, unit.destination));
     const movementSeconds = moveSpeed > 0 ? Math.min(activeSeconds, targetDistance / moveSpeed) : 0;
     unit.position = moveTowards(unit.position, unit.destination, moveSpeed * activeSeconds);
@@ -105,10 +111,11 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       continue;
     }
 
+    const attackDamage = effectiveAttackDamage(unit);
     const damage =
       target.kind === "Elemental"
-        ? unit.stats.attackDamage * unit.stats.elementalAttackMultiplier
-        : unit.stats.attackDamage;
+        ? attackDamage * unit.stats.elementalAttackMultiplier
+        : attackDamage;
     applyDamage(target, damage, config);
     state.recentAttackEvents.push({
       attackerUnitId: unit.unitId,
@@ -252,7 +259,8 @@ function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitSta
 
 function findAttackTarget(state: BattleState, attacker: UnitState): AttackTarget | null {
   const enemyTeam = oppositeTeam(attacker.team);
-  const rangeSq = attacker.stats.attackRange * attacker.stats.attackRange;
+  const attackRange = effectiveAttackRange(attacker);
+  const rangeSq = attackRange * attackRange;
   const enemyLeader = findLeader(state, enemyTeam);
   const targets: AttackTarget[] = [
     ...state.units
@@ -333,6 +341,7 @@ function defeatUnit(state: BattleState, unit: UnitState): void {
   resetUnitHealingTimers(unit);
   unit.buildTimerSeconds = 0;
   unit.pendingElementalId = null;
+  resetUnitAbilityState(unit);
 }
 
 function elapsedIntervals(elapsed: number, interval: number): { count: number; remainder: number } {

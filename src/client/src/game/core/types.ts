@@ -86,6 +86,7 @@ export type BattleConfig = {
   contactSlowMultiplier: number;
   leaderVisualSize: number;
   leaderHealingRadius: number;
+  unitCardWorldHeight: number;
   statsByType: Record<UnitType, UnitStats>;
 };
 
@@ -96,6 +97,7 @@ export type BattleCommand =
   | { commandType: "BeginElementalBuild"; team: "Cpu"; unitId: CpuUnitId }
   | { commandType: "PlaceInitialUnit"; team: "Player"; unitId: PlayerUnitId; targetPosition: Vec2 }
   | { commandType: "StartBattle"; team: "Player" }
+  | { commandType: "UseAbility"; team: "Player"; unitId: PlayerUnitId; facingRotation: number }
   | { commandType: "Summon"; team: TeamId }
   | { commandType: "ReviveUnit"; team: TeamId; unitId: UnitId; targetPosition: Vec2 };
 
@@ -126,6 +128,10 @@ export type UnitState = {
   leaderHealingElapsedSeconds: number;
   restHealingElapsedSeconds: number;
   pendingElementalId: ElementalId | null;
+  abilityAp: number;
+  abilityRecoverySeconds: number;
+  masterRangeBoostRemainingSeconds: number;
+  seekerAttackBoostRemainingSeconds: number;
 };
 
 export type ElementalState = {
@@ -135,6 +141,7 @@ export type ElementalState = {
   maxHp: number;
   currentHp: number;
   isComplete: boolean;
+  hasKeeperSpeedAura?: boolean;
 };
 
 export type SummonedUnitState = {

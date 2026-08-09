@@ -87,10 +87,21 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
   assert.equal(config.leaderHealingPercent, 0.1);
   assert.equal(config.keeperRestHealingIntervalSeconds, 1.5);
   assert.equal(config.keeperRestHealingAmount, 60);
+  assert.equal(config.unitCardWorldHeight, 2.25);
   assert.equal(findUnit(state, "PlayerMelee").leaderHealingElapsedSeconds, 0);
   assert.equal(findUnit(state, "PlayerMelee").restHealingElapsedSeconds, 0);
   assert.equal(findUnit(state, "PlayerMelee").attackTimerSeconds, 0);
   assert.equal(findUnit(state, "PlayerMelee").leaderAttackTimerSeconds, 0);
+  const master = findUnit(state, "PlayerRanged");
+  assert.deepEqual(
+    {
+      ap: master.abilityAp,
+      progress: master.abilityRecoverySeconds,
+      range: master.masterRangeBoostRemainingSeconds,
+      damage: master.seekerAttackBoostRemainingSeconds
+    },
+    { ap: 0, progress: 0, range: 0, damage: 0 }
+  );
 });
 
 test("既定設定と既定状態は可変のステータス参照を共有しない", () => {

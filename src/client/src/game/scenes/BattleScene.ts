@@ -32,6 +32,11 @@ import {
   unitCardPresentation
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
+import {
+  abilityTargetOverlayPresentation,
+  abilityTargetingPresentation,
+  abilityTargetMarkerScreenPresentation
+} from "../render/abilityPresentation";
 import { unitSelectionCirclePresentation } from "../render/unitSelectionPresentation";
 import {
   battlefieldHpBarLayout,
@@ -45,6 +50,7 @@ import {
   rangedAttackProjectileTextureKey
 } from "../render/rangedAttackPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
+import { canUseAbility } from "../rules/abilitySystem";
 import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import {
@@ -64,6 +70,7 @@ import {
   withCanvasTextResolution
 } from "../browserSizeCanvas";
 import {
+  abilityButtonTextureKey,
   elementButtonTextureKey,
   summonButtonTextureKey
 } from "../ui/battleHudModel";
@@ -81,12 +88,14 @@ const elementalTextureKey = "elemental-crystal";
 const summonerSpriteDisplaySize = 64;
 const elementalSpriteDisplaySize = 15;
 const elementButtonPath = "/assets/buttons/element_button.png";
+const abilityButtonPath = "/assets/buttons/ability_button.png";
 const summonButtonPath = "/assets/buttons/summon_button.png";
 
 export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private battlefieldOverlay!: Phaser.GameObjects.Graphics;
+  private abilityOverlay!: Phaser.GameObjects.Graphics;
   private circleOverlay!: Phaser.GameObjects.Graphics;
   private circleMaskShape!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
@@ -121,6 +130,7 @@ export class BattleScene extends Phaser.Scene {
     this.load.image(summonerTextureKey, "/assets/summoners/summoner.png");
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
     this.load.image(elementButtonTextureKey, elementButtonPath);
+    this.load.image(abilityButtonTextureKey, abilityButtonPath);
     this.load.image(summonButtonTextureKey, summonButtonPath);
     this.load.image(
       rangedAttackProjectileTextureKey,
@@ -158,6 +168,11 @@ export class BattleScene extends Phaser.Scene {
     this.battlefield = this.add.graphics();
     this.battlefieldOverlay = this.add.graphics();
     this.battlefieldOverlay.setDepth(battleStatusOverlayDepth);
+    this.abilityOverlay = this.add.graphics();
+    const abilityOverlayPresentation = abilityTargetOverlayPresentation(
+      battleStatusOverlayDepth
+    );
+    this.abilityOverlay.setDepth(abilityOverlayPresentation.depth);
     this.circleOverlay = this.add.graphics();
     this.circleOverlay.setDepth(battleStatusOverlayDepth - 0.5);
     this.circleMaskShape = this.make.graphics({}, false);
@@ -169,11 +184,16 @@ export class BattleScene extends Phaser.Scene {
         layout.field.width,
         layout.field.height
       );
-    this.circleOverlay.setMask(this.circleMaskShape.createGeometryMask());
+    const battlefieldMask = this.circleMaskShape.createGeometryMask();
+    this.circleOverlay.setMask(battlefieldMask);
+    if (abilityOverlayPresentation.clipToBattlefield) {
+      this.abilityOverlay.setMask(battlefieldMask);
+    }
     this.createLeaderSprites();
     this.createUnitImages();
     this.hud = new BattleHud(this, layout, {
       onBuild: () => this.handleBuild(),
+      onAbility: () => this.handleAbility(),
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
@@ -400,6 +420,38 @@ export class BattleScene extends Phaser.Scene {
     this.session.applyCommand({ commandType: "Summon", team: "Player" });
   }
 
+  private handleAbility(): void {
+    const facingRotation = this.selectedUnitFacingRotation();
+    if (
+      this.session.state.result !== "InProgress"
+      || this.session.state.phase !== "InProgress"
+      || !this.selectedUnitId
+      || !canUseAbility(
+        this.session.state,
+        this.session.config,
+        this.selectedUnitId,
+        facingRotation
+      )
+    ) {
+      return;
+    }
+
+    this.session.applyCommand({
+      commandType: "UseAbility",
+      team: "Player",
+      unitId: this.selectedUnitId,
+      facingRotation
+    });
+  }
+
+  private selectedUnitFacingRotation(): number {
+    if (this.selectedUnitId === null) {
+      return initialCardRotation("Player");
+    }
+    return this.unitCardRotations.get(this.selectedUnitId)
+      ?? initialCardRotation("Player");
+  }
+
   private findPlayerUnitNear(x: number, y: number): (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null {
     let nearest: (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null = null;
     let nearestDistanceSq = selectionRadiusPx * selectionRadiusPx;
@@ -421,6 +473,7 @@ export class BattleScene extends Phaser.Scene {
     const state = this.session.state;
     this.battlefield.clear();
     this.battlefieldOverlay.clear();
+    this.abilityOverlay.clear();
     this.circleOverlay.clear();
     this.drawField();
     this.drawArea("Player");
@@ -447,12 +500,22 @@ export class BattleScene extends Phaser.Scene {
       defeatedUnitIds
     );
     this.drawUnits(state.units);
+    this.drawAbilityTargeting();
     this.drawAttackEvents(state);
+    const facingRotation = this.selectedUnitFacingRotation();
+    const canUseSelectedAbility = this.selectedUnitId !== null
+      && canUseAbility(
+        state,
+        this.session.config,
+        this.selectedUnitId,
+        facingRotation
+      );
 
     this.hud.update(
       state,
       this.selectedUnitId,
-      this.session.canSummon("Player")
+      this.session.canSummon("Player"),
+      canUseSelectedAbility
     );
   }
 
@@ -564,6 +627,58 @@ export class BattleScene extends Phaser.Scene {
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 10);
       this.battlefieldOverlay.lineBetween(screen.x - 6, screen.y, screen.x + 6, screen.y);
       this.battlefieldOverlay.lineBetween(screen.x, screen.y - 6, screen.x, screen.y + 6);
+    }
+  }
+
+  private drawAbilityTargeting(): void {
+    const facingRotation = this.selectedUnitFacingRotation();
+    const presentation = abilityTargetingPresentation(
+      this.session.state,
+      this.session.config,
+      this.selectedUnitId,
+      facingRotation
+    );
+    if (!presentation) {
+      return;
+    }
+
+    if (presentation.area) {
+      const center = this.worldToScreen(presentation.area.center);
+      const radius = this.worldRadiusToScreen(presentation.area.radius);
+      this.abilityOverlay.fillStyle(
+        presentation.color,
+        presentation.area.fillAlpha
+      );
+      this.abilityOverlay.fillCircle(center.x, center.y, radius);
+      this.abilityOverlay.lineStyle(
+        2,
+        presentation.color,
+        presentation.area.strokeAlpha
+      );
+      this.abilityOverlay.strokeCircle(center.x, center.y, radius);
+    }
+
+    this.abilityOverlay.lineStyle(2, presentation.color, 0.95);
+    for (const marker of presentation.markers) {
+      const geometry = abilityTargetMarkerScreenPresentation(
+        marker.kind,
+        this.worldToScreen(marker.position)
+      );
+      for (const circle of geometry.circles) {
+        this.abilityOverlay.strokeCircle(
+          circle.center.x,
+          circle.center.y,
+          circle.radius
+        );
+      }
+      for (const line of geometry.lines) {
+        this.abilityOverlay.lineBetween(
+          line.from.x,
+          line.from.y,
+          line.to.x,
+          line.to.y
+        );
+      }
     }
   }
 

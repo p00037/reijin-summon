@@ -6,6 +6,7 @@ import type { BattleLayout, UiRect } from "./battleLayout";
 import { isPointInHud } from "./battleLayout";
 import type { BattleHudModel } from "./battleHudModel";
 import {
+  abilityButtonTextureKey,
   createBattleHudModel,
   elementButtonTextureKey,
   summonButtonTextureKey
@@ -13,6 +14,7 @@ import {
 
 export type BattleHudCallbacks = {
   onBuild: () => void;
+  onAbility: () => void;
   onSummon: () => void;
   onRetry: () => void;
 };
@@ -51,6 +53,8 @@ export class BattleHud {
   private readonly summonGauge: HudGauge;
   private readonly resultText: Phaser.GameObjects.Text;
   private readonly buildButton: ImageHudButton;
+  private readonly abilityButton: ImageHudButton;
+  private readonly abilityGauge: HudGauge;
   private readonly summonButton: ImageHudButton;
   private readonly retryButton: RetryHudButton;
 
@@ -126,6 +130,24 @@ export class BattleHud {
       elementButtonTextureKey,
       callbacks.onBuild
     );
+    this.abilityButton = this.createImageButton(
+      layout.abilityButton,
+      abilityButtonTextureKey,
+      callbacks.onAbility
+    );
+    this.abilityGauge = createGauge(
+      scene,
+      layout.abilityButton.x,
+      layout.abilityButton.y + layout.abilityButton.height - 5,
+      layout.abilityButton.width,
+      5,
+      0xa855f7,
+      "Horizontal"
+    );
+    this.abilityGauge.text.setPosition(
+      layout.abilityButton.x + layout.abilityButton.width / 2,
+      layout.abilityButton.y + layout.abilityButton.height / 2
+    );
     this.summonButton = this.createImageButton(
       layout.summonButton,
       summonButtonTextureKey,
@@ -141,9 +163,15 @@ export class BattleHud {
   update(
     state: BattleState,
     selectedUnitId: PlayerUnitId | null,
-    canSummonPlayer: boolean
+    canSummonPlayer: boolean,
+    canUseSelectedAbility: boolean
   ): void {
-    const model = createBattleHudModel(state, selectedUnitId, canSummonPlayer);
+    const model = createBattleHudModel(
+      state,
+      selectedUnitId,
+      canSummonPlayer,
+      canUseSelectedAbility
+    );
     this.applyModel(model);
   }
 
@@ -158,6 +186,9 @@ export class BattleHud {
     this.resultText.destroy();
     this.buildButton.background.destroy();
     this.buildButton.image.destroy();
+    this.abilityButton.background.destroy();
+    this.abilityButton.image.destroy();
+    destroyGauge(this.abilityGauge);
     this.summonButton.background.destroy();
     this.summonButton.image.destroy();
     this.retryButton.background.destroy();
@@ -172,6 +203,8 @@ export class BattleHud {
     applyGaugeModel(this.summonGauge, model.summonGauge);
     this.resultText.setText(model.resultText);
     this.setImageButtonEnabled(this.buildButton, model.canBuild);
+    applyGaugeModel(this.abilityGauge, model.abilityGauge);
+    this.setImageButtonEnabled(this.abilityButton, model.canUseAbility);
     this.setImageButtonEnabled(this.summonButton, model.canSummon);
   }
 

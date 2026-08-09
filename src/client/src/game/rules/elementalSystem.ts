@@ -74,7 +74,8 @@ export function tickElementalBuilds(state: BattleState, config: BattleConfig, de
       position: { ...unit.position },
       maxHp: config.elementalMaxHp,
       currentHp: config.elementalMaxHp,
-      isComplete: true
+      isComplete: true,
+      hasKeeperSpeedAura: false
     });
     unit.mode = "Active";
     unit.pendingElementalId = null;

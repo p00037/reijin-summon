@@ -15,6 +15,7 @@ export type BattleLayout = {
   summonGauge: UiRect;
   remainingTime: UiRect;
   buildButton: UiRect;
+  abilityButton: UiRect;
   summonButton: UiRect;
   retryButton: UiRect;
 };
@@ -39,8 +40,9 @@ export function calculateBattleLayout(width: number, height: number): BattleLayo
     },
     remainingTime: { x: buttonX, y: 8, width: buttonSize, height: 53 },
     buildButton: { x: buttonX, y: 69, width: buttonSize, height: buttonSize },
-    summonButton: { x: buttonX, y: 129, width: buttonSize, height: buttonSize },
-    retryButton: { x: buttonX, y: 189, width: buttonSize, height: buttonSize }
+    abilityButton: { x: buttonX, y: 129, width: buttonSize, height: buttonSize },
+    summonButton: { x: buttonX, y: 189, width: buttonSize, height: buttonSize },
+    retryButton: { x: buttonX, y: 249, width: buttonSize, height: buttonSize }
   };
 }
 
@@ -50,6 +52,7 @@ export function isPointInHud(layout: BattleLayout, x: number, y: number): boolea
     layout.waitingArea,
     layout.remainingTime,
     layout.buildButton,
+    layout.abilityButton,
     layout.summonButton,
     layout.retryButton
   ].some((rect) => containsPoint(rect, x, y));

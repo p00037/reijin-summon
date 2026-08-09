@@ -12,6 +12,58 @@ function createStartedSession(config = createDefaultBattleConfig()): GameSession
   return session;
 }
 
+test("UseAbilityはSetupとCountdownでは無視される", () => {
+  const session = new GameSession();
+  const master = findUnit(session.state, "PlayerRanged");
+  master.abilityAp = 2;
+
+  session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged", facingRotation: 0 });
+  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
+
+  session.applyCommand({ commandType: "StartBattle", team: "Player" });
+  session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged", facingRotation: 0 });
+  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
+  assert.equal(master.abilityAp, 2);
+});
+
+test("UseAbilityはInProgressのPlayerユニットで発動する", () => {
+  const session = createStartedSession();
+  const master = findUnit(session.state, "PlayerRanged");
+  master.abilityAp = 2;
+
+  session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged", facingRotation: 0 });
+
+  assert.equal(master.masterRangeBoostRemainingSeconds, 20);
+  assert.equal(master.abilityAp, 0);
+});
+
+test("UseAbilityはCPU指定の壊れたコマンドを無視する", () => {
+  const session = createStartedSession();
+  const master = findUnit(session.state, "PlayerRanged");
+  master.abilityAp = 2;
+  const malformedCommand = {
+    commandType: "UseAbility",
+    team: "Cpu",
+    unitId: "PlayerRanged",
+    facingRotation: 0
+  } as unknown as BattleCommand;
+
+  session.applyCommand(malformedCommand);
+
+  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
+  assert.equal(master.abilityAp, 2);
+});
+
+test("UseAbilityのため戦闘中のtick 20秒でアビリティAPが1増える", () => {
+  const session = createStartedSession();
+  const master = findUnit(session.state, "PlayerRanged");
+
+  session.tick(20);
+
+  assert.equal(master.abilityAp, 1);
+  assert.equal(master.abilityRecoverySeconds, 0);
+});
+
 test("戦闘中にMP自然回復が進む", () => {
   const session = new GameSession();
   session.tick(25);
@@ -338,4 +390,48 @@ test("BeginElementalBuildはコマンドのteamと実ユニットteamが違う�
 
   assert.equal(cpuUnit.mode, "Active");
   assert.equal(cpuUnit.pendingElementalId, null);
+});
+
+test("UseAbilityは指定した向きのキーパー範囲を使用する", () => {
+  const session = createStartedSession();
+  const keeper = findUnit(session.state, "PlayerMelee");
+  keeper.position = { x: 0, y: 0 };
+  keeper.destination = { ...keeper.position };
+  keeper.abilityAp = 2;
+  session.state.elementals = [
+    {
+      elementalId: "Elemental1",
+      team: "Player",
+      position: { x: session.config.unitCardWorldHeight, y: 0 },
+      maxHp: 1000,
+      currentHp: 1000,
+      isComplete: true
+    }
+  ];
+
+  session.applyCommand({
+    commandType: "UseAbility",
+    team: "Player",
+    unitId: "PlayerMelee",
+    facingRotation: Math.PI / 2
+  });
+
+  assert.equal(keeper.abilityAp, 0);
+  assert.equal(session.state.elementals[0].hasKeeperSpeedAura, true);
+});
+
+test("UseAbilityは非有限の向きが指定された不正コマンドを無視する", () => {
+  const session = createStartedSession();
+  const master = findUnit(session.state, "PlayerRanged");
+  master.abilityAp = 2;
+  const before = structuredClone(session.state);
+
+  session.applyCommand({
+    commandType: "UseAbility",
+    team: "Player",
+    unitId: "PlayerRanged",
+    facingRotation: Number.NaN
+  });
+
+  assert.deepEqual(session.state, before);
 });
