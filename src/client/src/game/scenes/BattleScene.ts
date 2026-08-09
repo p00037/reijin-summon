@@ -33,6 +33,7 @@ import {
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
 import {
+  abilityTargetOverlayPresentation,
   abilityTargetingPresentation,
   abilityTargetMarkerScreenPresentation
 } from "../render/abilityPresentation";
@@ -94,6 +95,7 @@ export class BattleScene extends Phaser.Scene {
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private battlefieldOverlay!: Phaser.GameObjects.Graphics;
+  private abilityOverlay!: Phaser.GameObjects.Graphics;
   private circleOverlay!: Phaser.GameObjects.Graphics;
   private circleMaskShape!: Phaser.GameObjects.Graphics;
   private hud!: BattleHud;
@@ -166,6 +168,11 @@ export class BattleScene extends Phaser.Scene {
     this.battlefield = this.add.graphics();
     this.battlefieldOverlay = this.add.graphics();
     this.battlefieldOverlay.setDepth(battleStatusOverlayDepth);
+    this.abilityOverlay = this.add.graphics();
+    const abilityOverlayPresentation = abilityTargetOverlayPresentation(
+      battleStatusOverlayDepth
+    );
+    this.abilityOverlay.setDepth(abilityOverlayPresentation.depth);
     this.circleOverlay = this.add.graphics();
     this.circleOverlay.setDepth(battleStatusOverlayDepth - 0.5);
     this.circleMaskShape = this.make.graphics({}, false);
@@ -177,7 +184,11 @@ export class BattleScene extends Phaser.Scene {
         layout.field.width,
         layout.field.height
       );
-    this.circleOverlay.setMask(this.circleMaskShape.createGeometryMask());
+    const battlefieldMask = this.circleMaskShape.createGeometryMask();
+    this.circleOverlay.setMask(battlefieldMask);
+    if (abilityOverlayPresentation.clipToBattlefield) {
+      this.abilityOverlay.setMask(battlefieldMask);
+    }
     this.createLeaderSprites();
     this.createUnitImages();
     this.hud = new BattleHud(this, layout, {
@@ -447,6 +458,7 @@ export class BattleScene extends Phaser.Scene {
     const state = this.session.state;
     this.battlefield.clear();
     this.battlefieldOverlay.clear();
+    this.abilityOverlay.clear();
     this.circleOverlay.clear();
     this.drawField();
     this.drawArea("Player");
@@ -610,34 +622,34 @@ export class BattleScene extends Phaser.Scene {
     if (presentation.area) {
       const center = this.worldToScreen(presentation.area.center);
       const radius = this.worldRadiusToScreen(presentation.area.radius);
-      this.battlefieldOverlay.fillStyle(
+      this.abilityOverlay.fillStyle(
         presentation.color,
         presentation.area.fillAlpha
       );
-      this.battlefieldOverlay.fillCircle(center.x, center.y, radius);
-      this.battlefieldOverlay.lineStyle(
+      this.abilityOverlay.fillCircle(center.x, center.y, radius);
+      this.abilityOverlay.lineStyle(
         2,
         presentation.color,
         presentation.area.strokeAlpha
       );
-      this.battlefieldOverlay.strokeCircle(center.x, center.y, radius);
+      this.abilityOverlay.strokeCircle(center.x, center.y, radius);
     }
 
-    this.battlefieldOverlay.lineStyle(2, presentation.color, 0.95);
+    this.abilityOverlay.lineStyle(2, presentation.color, 0.95);
     for (const marker of presentation.markers) {
       const geometry = abilityTargetMarkerScreenPresentation(
         marker.kind,
         this.worldToScreen(marker.position)
       );
       for (const circle of geometry.circles) {
-        this.battlefieldOverlay.strokeCircle(
+        this.abilityOverlay.strokeCircle(
           circle.center.x,
           circle.center.y,
           circle.radius
         );
       }
       for (const line of geometry.lines) {
-        this.battlefieldOverlay.lineBetween(
+        this.abilityOverlay.lineBetween(
           line.from.x,
           line.from.y,
           line.to.x,

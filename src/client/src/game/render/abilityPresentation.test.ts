@@ -47,6 +47,38 @@ test("アビリティ対象表示は戦闘進行中でなければ表示しな�
   );
 });
 
+test("アビリティ対象表示はDefeatedの選択ユニットを表示しない", async () => {
+  const module = await loadAbilityPresentation();
+  assert.equal(typeof module.abilityTargetingPresentation, "function");
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  const master = findUnit(state, "PlayerRanged");
+  master.abilityAp = 2;
+  master.mode = "Defeated";
+
+  assert.equal(
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    null
+  );
+});
+
+test("アビリティ対象表示はHP0の選択ユニットを表示しない", async () => {
+  const module = await loadAbilityPresentation();
+  assert.equal(typeof module.abilityTargetingPresentation, "function");
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  const master = findUnit(state, "PlayerRanged");
+  master.abilityAp = 2;
+  master.currentHp = 0;
+
+  assert.equal(
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    null
+  );
+});
+
 test("アビリティ対象表示は満タンのマスター自身にCircleマークを表示する", async () => {
   const module = await loadAbilityPresentation();
   assert.equal(typeof module.abilityTargetingPresentation, "function");
@@ -198,4 +230,14 @@ test("アビリティ対象表示のLockOnは四隅の短いL字線にする", a
       ]
     }
   );
+});
+
+test("アビリティ対象表示オーバーレイはHPより前面で戦場クリップを要求する", async () => {
+  const module = await loadAbilityPresentation();
+  assert.equal(typeof module.abilityTargetOverlayPresentation, "function");
+
+  assert.deepEqual(module.abilityTargetOverlayPresentation!(2), {
+    depth: 2.5,
+    clipToBattlefield: true
+  });
 });

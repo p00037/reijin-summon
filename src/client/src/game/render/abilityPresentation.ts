@@ -1,4 +1,4 @@
-import { findUnit } from "../core/battleState";
+import { findUnit, isUnitAlive } from "../core/battleState";
 import type {
   BattleConfig,
   BattleState,
@@ -30,6 +30,11 @@ export type AbilityTargetMarkerScreenPresentation = {
   lines: Array<{ from: Vec2; to: Vec2 }>;
 };
 
+export type AbilityTargetOverlayPresentation = {
+  depth: number;
+  clipToBattlefield: true;
+};
+
 const abilityMarkerColor = 0xfacc15;
 
 export function abilityTargetingPresentation(
@@ -46,7 +51,10 @@ export function abilityTargetingPresentation(
   }
 
   const selectedUnit = findUnit(state, selectedUnitId);
-  if (selectedUnit.abilityAp < abilityApCost(selectedUnit.unitType)) {
+  if (
+    !isUnitAlive(selectedUnit)
+    || selectedUnit.abilityAp < abilityApCost(selectedUnit.unitType)
+  ) {
     return null;
   }
 
@@ -123,5 +131,14 @@ export function abilityTargetMarkerScreenPresentation(
       { from: { x: right, y: innerBottom }, to: { x: right, y: bottom } },
       { from: { x: right, y: bottom }, to: { x: innerRight, y: bottom } }
     ]
+  };
+}
+
+export function abilityTargetOverlayPresentation(
+  battleStatusOverlayDepth: number
+): AbilityTargetOverlayPresentation {
+  return {
+    depth: battleStatusOverlayDepth + 0.5,
+    clipToBattlefield: true
   };
 }
