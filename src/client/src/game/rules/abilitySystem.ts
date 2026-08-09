@@ -119,6 +119,9 @@ export function effectiveAttackDamage(unit: UnitState): number {
 }
 
 export function effectiveMoveSpeedMultiplier(state: BattleState, config: BattleConfig, unit: UnitState): number {
+  if (!isUnitAlive(unit)) {
+    return 1;
+  }
   const radiusSq = (config.unitCardWorldHeight * 1.5) ** 2;
   return state.elementals.some(
     (elemental) =>

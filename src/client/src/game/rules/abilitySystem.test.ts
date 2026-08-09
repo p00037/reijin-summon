@@ -222,3 +222,27 @@ test("キーパーのアビリティは範囲内の完成済み味方エレメ�
   assert.equal(tryUseAbility(state, config, "PlayerMelee"), false);
   assert.equal(keeper.abilityAp, 2);
 });
+
+test("キーパー速度オーラは撃破済みまたはHPが0の通常ユニットへ適用しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const seeker = findUnit(state, "PlayerSpeed");
+  state.elementals = [
+    {
+      elementalId: "Elemental1",
+      team: "Player",
+      position: { ...seeker.position },
+      maxHp: 1000,
+      currentHp: 1000,
+      isComplete: true,
+      hasKeeperSpeedAura: true
+    }
+  ];
+
+  seeker.mode = "Defeated";
+  assert.equal(effectiveMoveSpeedMultiplier(state, config, seeker), 1);
+
+  seeker.mode = "Active";
+  seeker.currentHp = 0;
+  assert.equal(effectiveMoveSpeedMultiplier(state, config, seeker), 1);
+});
