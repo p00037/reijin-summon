@@ -19,6 +19,8 @@ test("attack power is shown as a number at the top center of the card", async ()
   assert.equal(presentation.text, "61");
   assert.deepEqual(presentation.position, { x: 100, y: 161 });
   assert.equal(presentation.rotation, 0);
+  assert.equal(presentation.depth, module.unitCardAttackPowerDepth);
+  assert.ok(presentation.depth > cardImageDepth);
 });
 
 test("attack power position and text rotation follow the card", async () => {
@@ -54,5 +56,4 @@ test("attack power position and text rotation follow the card", async () => {
   );
   assert.equal(diagonal.rotation, Math.PI / 2);
   assert.equal(diagonal.text, "36");
-  assert.ok(module.unitCardAttackPowerDepth! > cardImageDepth);
 });

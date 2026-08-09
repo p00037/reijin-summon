@@ -691,8 +691,8 @@ export class BattleScene extends Phaser.Scene {
     }
 
     for (const unit of units) {
-      if (!isUnitAlive(unit)) {
-        if (unit.mode === "Defeated" && isPlayerUnit(unit)) {
+      if (unit.mode === "Defeated") {
+        if (isPlayerUnit(unit)) {
           const layout = this.defeatedUnitLayouts.find(
             (candidate) => candidate.unitId === unit.unitId
           );
@@ -969,7 +969,7 @@ export class BattleScene extends Phaser.Scene {
         .setRotation(attackPower.rotation)
         .setDepth(attackPower.depth)
         .setAlpha(alpha)
-        .setVisible(true);
+        .setVisible(isUnitAlive(unit));
     }
   }
 
