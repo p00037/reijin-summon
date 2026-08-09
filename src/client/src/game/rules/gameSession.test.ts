@@ -12,6 +12,57 @@ function createStartedSession(config = createDefaultBattleConfig()): GameSession
   return session;
 }
 
+test("UseAbilityはSetupとCountdownでは無視される", () => {
+  const session = new GameSession();
+  const master = findUnit(session.state, "PlayerRanged");
+  master.abilityAp = 2;
+
+  session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged" });
+  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
+
+  session.applyCommand({ commandType: "StartBattle", team: "Player" });
+  session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged" });
+  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
+  assert.equal(master.abilityAp, 2);
+});
+
+test("UseAbilityはInProgressのPlayerユニットで発動する", () => {
+  const session = createStartedSession();
+  const master = findUnit(session.state, "PlayerRanged");
+  master.abilityAp = 2;
+
+  session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged" });
+
+  assert.equal(master.masterRangeBoostRemainingSeconds, 20);
+  assert.equal(master.abilityAp, 0);
+});
+
+test("UseAbilityはCPU指定の壊れたコマンドを無視する", () => {
+  const session = createStartedSession();
+  const master = findUnit(session.state, "PlayerRanged");
+  master.abilityAp = 2;
+  const malformedCommand = {
+    commandType: "UseAbility",
+    team: "Cpu",
+    unitId: "PlayerRanged"
+  } as unknown as BattleCommand;
+
+  session.applyCommand(malformedCommand);
+
+  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
+  assert.equal(master.abilityAp, 2);
+});
+
+test("UseAbilityのため戦闘中のtick 20秒でアビリティAPが1増える", () => {
+  const session = createStartedSession();
+  const master = findUnit(session.state, "PlayerRanged");
+
+  session.tick(20);
+
+  assert.equal(master.abilityAp, 1);
+  assert.equal(master.abilityRecoverySeconds, 0);
+});
+
 test("戦闘中にMP自然回復が進む", () => {
   const session = new GameSession();
   session.tick(25);

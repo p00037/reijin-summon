@@ -1,6 +1,7 @@
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findLeader, findUnit, isUnitAlive } from "../core/battleState";
 import type { BattleCommand, BattleConfig, BattleState, MatchResult, TeamId, UnitId } from "../core/types";
+import { tickAbilities, tryUseAbility } from "./abilitySystem";
 import { countCompletedElementals, removeDestroyedElementals, tickElementalBuilds, tryBeginElementalBuild } from "./elementalSystem";
 import { recordLeaderDamageForMp, tickMpRecovery, tryReviveUnit } from "./resurrectionSystem";
 import { canSummon, tickSummonGauges, tickSummonedUnits, tryExecuteSummon } from "./summonSystem";
@@ -50,6 +51,11 @@ export class GameSession {
           this.updateResult();
         }
         break;
+      case "UseAbility":
+        if (command.team === "Player" && this.state.phase === "InProgress") {
+          tryUseAbility(this.state, this.config, command.unitId);
+        }
+        break;
       case "ReviveUnit":
         if (this.state.phase === "InProgress") {
           tryReviveUnit(
@@ -84,6 +90,7 @@ export class GameSession {
     }
 
     const elapsedSeconds = Math.max(0, deltaSeconds);
+    tickAbilities(this.state, this.config, elapsedSeconds);
     tickMpRecovery(this.state, this.config, elapsedSeconds);
     const playerLeaderHpBeforeCombat = findLeader(this.state, "Player").currentHp;
     const cpuLeaderHpBeforeCombat = findLeader(this.state, "Cpu").currentHp;

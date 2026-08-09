@@ -149,7 +149,7 @@ test("leader damage crossing multiple thresholds restores the matching amount of
   assert.equal(state.playerLeaderDamageProgress, 0);
 });
 
-test("MP3を消費して回復エリア内へ全HP復活する", () => {
+test("MP3を消費して回復エリア内へ全HP復活しアビリティ状態をリセットする", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
@@ -162,6 +162,10 @@ test("MP3を消費して回復エリア内へ全HP復活する", () => {
   unit.restHealingElapsedSeconds = 1;
   unit.buildTimerSeconds = 3;
   unit.pendingElementalId = "Elemental1";
+  unit.abilityAp = 2;
+  unit.abilityRecoverySeconds = 12;
+  unit.masterRangeBoostRemainingSeconds = 8;
+  unit.seekerAttackBoostRemainingSeconds = 7;
   state.phase = "InProgress";
   state.playerMp = 3;
   const target = { ...findLeader(state, "Player").position };
@@ -180,6 +184,10 @@ test("MP3を消費して回復エリア内へ全HP復活する", () => {
   assert.equal(unit.restHealingElapsedSeconds, 0);
   assert.equal(unit.buildTimerSeconds, 0);
   assert.equal(unit.pendingElementalId, null);
+  assert.equal(unit.abilityAp, 0);
+  assert.equal(unit.abilityRecoverySeconds, 0);
+  assert.equal(unit.masterRangeBoostRemainingSeconds, 0);
+  assert.equal(unit.seekerAttackBoostRemainingSeconds, 0);
 });
 
 test("MP不足ではMPを消費しない", () => {

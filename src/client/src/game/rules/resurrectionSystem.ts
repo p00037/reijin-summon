@@ -1,6 +1,7 @@
 import { findLeader, findUnit, getMpState, setMpState } from "../core/battleState";
 import type { BattleConfig, BattleState, TeamId, UnitId, Vec2 } from "../core/types";
 import { distanceSq } from "../core/vector";
+import { resetUnitAbilityState } from "./abilitySystem";
 
 const mpRecoverySeconds = [25, 24, 21, 19, 16, 13, 9, 5, 4, 3, 3] as const;
 
@@ -71,6 +72,7 @@ export function tryReviveUnit(
   unit.buildTimerSeconds = 0;
   unit.pendingElementalId = null;
   unit.defeatedOrder = null;
+  resetUnitAbilityState(unit);
   return true;
 }
 
