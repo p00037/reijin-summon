@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findUnit } from "../core/battleState";
+import { cardRotationForMovement } from "./cardFacing";
 
 async function loadAbilityPresentation(): Promise<
   Partial<typeof import("./abilityPresentation")>
@@ -144,7 +145,7 @@ test("アビリティ対象表示はカード向きに回転したキーパー�
     {
       elementalId: "Elemental1",
       team: "Player",
-      position: { x: 3 - config.unitCardWorldHeight, y: 4 },
+      position: { x: 3 + config.unitCardWorldHeight, y: 4 },
       maxHp: 1000,
       currentHp: 1000,
       isComplete: true
@@ -165,7 +166,7 @@ test("アビリティ対象表示はカード向きに回転したキーパー�
     "PlayerMelee",
     Math.PI / 2
   )!;
-  assert.ok(Math.abs(presentation.area!.center.x - (keeper.position.x - config.unitCardWorldHeight)) < 1e-12);
+  assert.ok(Math.abs(presentation.area!.center.x - (keeper.position.x + config.unitCardWorldHeight)) < 1e-12);
   assert.ok(Math.abs(presentation.area!.center.y - keeper.position.y) < 1e-12);
   assert.equal(presentation.area!.radius, config.unitCardWorldHeight / 2);
   assert.deepEqual(presentation.markers, [
@@ -246,4 +247,36 @@ test("アビリティ対象表示オーバーレイはHPより前面で戦場ク
     depth: 2.5,
     clipToBattlefield: true
   });
+});
+
+test("画面右移動から得たカード回転角はキーパー範囲をworld +X側に表示する", async () => {
+  const module = await loadAbilityPresentation();
+  assert.equal(typeof module.abilityTargetingPresentation, "function");
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.position = { x: 3, y: 4 };
+  keeper.abilityAp = 2;
+
+  const facingRotation = cardRotationForMovement(
+    { x: 100, y: 100 },
+    { x: 110, y: 100 },
+    0
+  );
+  const presentation = module.abilityTargetingPresentation!(
+    state,
+    config,
+    "PlayerMelee",
+    facingRotation
+  )!;
+
+  assert.equal(facingRotation, Math.PI / 2);
+  assert.ok(
+    Math.abs(
+      presentation.area!.center.x
+      - (keeper.position.x + config.unitCardWorldHeight)
+    ) < 1e-12
+  );
+  assert.ok(Math.abs(presentation.area!.center.y - keeper.position.y) < 1e-12);
 });

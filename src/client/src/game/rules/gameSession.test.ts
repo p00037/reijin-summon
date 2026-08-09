@@ -402,7 +402,7 @@ test("UseAbilityは指定した向きのキーパー範囲を使用する", () =
     {
       elementalId: "Elemental1",
       team: "Player",
-      position: { x: -session.config.unitCardWorldHeight, y: 0 },
+      position: { x: session.config.unitCardWorldHeight, y: 0 },
       maxHp: 1000,
       currentHp: 1000,
       isComplete: true

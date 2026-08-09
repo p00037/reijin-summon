@@ -34,7 +34,7 @@ export function abilityArea(
   state: BattleState,
   config: BattleConfig,
   unitId: UnitId,
-  facingRotation = 0
+  facingRotation: number
 ): AbilityArea | null {
   const unit = findUnit(state, unitId);
   if (unit.unitType === "Ranged") {
@@ -52,7 +52,7 @@ export function abilityArea(
   }
   return {
     center: {
-      x: unit.position.x - Math.sin(facingRotation) * height,
+      x: unit.position.x + Math.sin(facingRotation) * height,
       y: unit.position.y + Math.cos(facingRotation) * height
     },
     radius: height / 2
@@ -63,7 +63,7 @@ export function abilityTargets(
   state: BattleState,
   config: BattleConfig,
   unitId: UnitId,
-  facingRotation = 0
+  facingRotation: number
 ): AbilityTargets {
   const unit = findUnit(state, unitId);
   const area = abilityArea(state, config, unitId, facingRotation);
@@ -93,11 +93,11 @@ export function abilityTargets(
   };
 }
 
-export function canUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation = 0): boolean {
+export function canUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation: number): boolean {
   return resolveAbilityUse(state, config, unitId, facingRotation) !== null;
 }
 
-export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation = 0): boolean {
+export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation: number): boolean {
   const context = resolveAbilityUse(state, config, unitId, facingRotation);
   if (!context) {
     return false;

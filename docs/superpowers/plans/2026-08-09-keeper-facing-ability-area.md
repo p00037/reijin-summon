@@ -40,9 +40,9 @@
 ```ts
 const cases = [
   { rotation: 0, offset: { x: 0, y: config.unitCardWorldHeight } },
-  { rotation: Math.PI / 2, offset: { x: -config.unitCardWorldHeight, y: 0 } },
+  { rotation: Math.PI / 2, offset: { x: config.unitCardWorldHeight, y: 0 } },
   { rotation: Math.PI, offset: { x: 0, y: -config.unitCardWorldHeight } },
-  { rotation: -Math.PI / 2, offset: { x: config.unitCardWorldHeight, y: 0 } }
+  { rotation: -Math.PI / 2, offset: { x: -config.unitCardWorldHeight, y: 0 } }
 ];
 
 for (const { rotation, offset } of cases) {
@@ -69,7 +69,7 @@ Expected: `abilityArea` が回転角引数を反映せず、左右または上�
 const height = config.unitCardWorldHeight;
 return {
   center: {
-    x: unit.position.x - Math.sin(facingRotation) * height,
+    x: unit.position.x + Math.sin(facingRotation) * height,
     y: unit.position.y + Math.cos(facingRotation) * height
   },
   radius: height / 2
@@ -135,7 +135,7 @@ git commit -m "fix: キーパーのアビリティ範囲を向きに追従"
 
 - [ ] **Step 1: 回転した範囲表示の失敗テストを書く**
 
-`abilityPresentation.test.ts` のキーパーケースに `Math.PI / 2` を渡し、範囲円中心がキーパーの左へ `H` 移動し、その円内のエレメントだけに `LockOn` が付くことを検証する。
+`abilityPresentation.test.ts` のキーパーケースに `Math.PI / 2` を渡し、範囲円中心がキーパーのworld `+X` 側へ `H` 移動し、その円内のエレメントだけに `LockOn` が付くことを検証する。
 
 ```ts
 const presentation = abilityTargetingPresentation(
@@ -144,9 +144,11 @@ const presentation = abilityTargetingPresentation(
   "PlayerMelee",
   Math.PI / 2
 )!;
-assert.ok(Math.abs(presentation.area!.center.x - (keeper.position.x - config.unitCardWorldHeight)) < 1e-12);
+assert.ok(Math.abs(presentation.area!.center.x - (keeper.position.x + config.unitCardWorldHeight)) < 1e-12);
 assert.ok(Math.abs(presentation.area!.center.y - keeper.position.y) < 1e-12);
 ```
+
+さらに literal 角度だけでなく、画面右移動から `cardRotationForMovement` で `π / 2` を生成し、その角度を `abilityTargetingPresentation` へ渡してworld `+X` 側の中心を得る合成境界テストを追加する。
 
 - [ ] **Step 2: 表示テストを実行して期待どおり失敗することを確認する**
 

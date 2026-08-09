@@ -325,9 +325,9 @@ test("キーパーのアビリティ範囲は向きに追従する", () => {
   keeper.position = { x: 2, y: -3 };
   const cases = [
     { rotation: 0, offset: { x: 0, y: config.unitCardWorldHeight } },
-    { rotation: Math.PI / 2, offset: { x: -config.unitCardWorldHeight, y: 0 } },
+    { rotation: Math.PI / 2, offset: { x: config.unitCardWorldHeight, y: 0 } },
     { rotation: Math.PI, offset: { x: 0, y: -config.unitCardWorldHeight } },
-    { rotation: -Math.PI / 2, offset: { x: config.unitCardWorldHeight, y: 0 } }
+    { rotation: -Math.PI / 2, offset: { x: -config.unitCardWorldHeight, y: 0 } }
   ];
 
   for (const { rotation, offset } of cases) {
@@ -341,7 +341,7 @@ test("キーパーのアビリティ範囲は向きに追従する", () => {
     {
       elementalId: "Elemental1",
       team: "Player",
-      position: { x: keeper.position.x - config.unitCardWorldHeight, y: keeper.position.y },
+      position: { x: keeper.position.x + config.unitCardWorldHeight, y: keeper.position.y },
       maxHp: 1000,
       currentHp: 1000,
       isComplete: true
@@ -371,17 +371,26 @@ test("CPUキーパーのアビリティ範囲は回転角にかかわらず固�
   });
 });
 
-test("非有限の向きではアビリティを使用できず状態を変更しない", () => {
+test("プレイヤーキーパーは非有限の向きでアビリティを使用できず状態を変更しない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   state.phase = "InProgress";
-  const master = findUnit(state, "PlayerRanged");
-  master.abilityAp = 2;
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.position = { x: 0, y: 0 };
+  keeper.abilityAp = 2;
+  state.elementals = [{
+    elementalId: "Elemental1",
+    team: "Player",
+    position: { x: 0, y: config.unitCardWorldHeight },
+    maxHp: 1000,
+    currentHp: 1000,
+    isComplete: true
+  }];
 
   for (const facingRotation of [Number.NaN, Number.POSITIVE_INFINITY]) {
     const before = structuredClone(state);
-    assert.equal(canUseAbility(state, config, master.unitId, facingRotation), false);
-    assert.equal(tryUseAbility(state, config, master.unitId, facingRotation), false);
+    assert.equal(canUseAbility(state, config, keeper.unitId, facingRotation), false);
+    assert.equal(tryUseAbility(state, config, keeper.unitId, facingRotation), false);
     assert.deepEqual(state, before);
   }
 });
