@@ -48,7 +48,10 @@ import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import {
-  cardRotationAfterRevival,
+  applyPlayerRevivalCardState,
+  updateUnitCardRenderState
+} from "../render/unitCardRenderState";
+import {
   cardRotationForMovement,
   initialCardRotation
 } from "../render/cardFacing";
@@ -338,10 +341,12 @@ export class BattleScene extends Phaser.Scene {
       )
     ) {
       this.session.applyCommand(transition.command);
-      this.unitCardPositions.delete(transition.command.unitId);
-      this.unitCardRotations.set(
-        transition.command.unitId,
-        cardRotationAfterRevival("Player")
+      applyPlayerRevivalCardState(
+        {
+          positions: this.unitCardPositions,
+          rotations: this.unitCardRotations
+        },
+        transition.command.unitId
       );
     }
   }
@@ -774,10 +779,14 @@ export class BattleScene extends Phaser.Scene {
     const presentation = unitCardPresentation[unit.unitType];
     const borderGeometry = calculateCardBorderGeometry(presentation);
     const border = this.unitCardBorders.get(unit.unitId);
-    const rotation = cardRotationForMovement(
-      this.unitCardPositions.get(unit.unitId) ?? screen,
+    const rotation = updateUnitCardRenderState(
+      {
+        positions: this.unitCardPositions,
+        rotations: this.unitCardRotations
+      },
+      unit.unitId,
       screen,
-      this.unitCardRotations.get(unit.unitId) ?? initialCardRotation(unit.team)
+      unit.team
     );
     if (border) {
       border.setVisible(true);
@@ -803,8 +812,6 @@ export class BattleScene extends Phaser.Scene {
     image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);
-    this.unitCardPositions.set(unit.unitId, { ...screen });
-    this.unitCardRotations.set(unit.unitId, rotation);
   }
 
   private updateDefeatedUnitImage(

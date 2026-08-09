@@ -26,5 +26,5 @@ test("待機場所と左HUDと時間表示はHUD入力範囲で戦場は操作�
   assert.equal(isPointInHud(layout, 10, 10), true);
   assert.equal(isPointInHud(layout, 70, 390), true);
   assert.equal(isPointInHud(layout, 600, 20), true);
-  assert.equal(isPointInHud(layout, 130, 20), false);
+  assert.equal(isPointInHud(layout, 70, 20), false);
 });
