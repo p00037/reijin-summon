@@ -1,7 +1,9 @@
 import { findLeader } from "../core/battleState";
 import type { BattleState, PlayerUnitId } from "../core/types";
+import { abilityApCost } from "../rules/abilitySystem";
 
 export const elementButtonTextureKey = "hud-element-button";
+export const abilityButtonTextureKey = "hud-ability-button";
 export const summonButtonTextureKey = "hud-summon-button";
 
 export type HudGaugeModel = {
@@ -15,15 +17,18 @@ export type BattleHudModel = {
   mp: HudGaugeModel;
   remainingTimeText: string;
   summonGauge: HudGaugeModel;
+  abilityGauge: HudGaugeModel;
   resultText: string;
   canBuild: boolean;
+  canUseAbility: boolean;
   canSummon: boolean;
 };
 
 export function createBattleHudModel(
   state: BattleState,
   selectedUnitId: PlayerUnitId | null,
-  canSummonPlayer: boolean
+  canSummonPlayer: boolean,
+  canUseSelectedAbility: boolean
 ): BattleHudModel {
   const playerLeader = findLeader(state, "Player");
   const cpuLeader = findLeader(state, "Cpu");
@@ -31,11 +36,23 @@ export function createBattleHudModel(
     ? state.units.find((unit) => unit.unitId === selectedUnitId)
     : undefined;
   const battleInProgress = state.result === "InProgress" && state.phase === "InProgress";
-  const selectedUnitIsUsable =
+  const selectedUnitCanBuild =
     selectedUnit
     && selectedUnit.team === "Player"
     && selectedUnit.mode === "Active"
     && selectedUnit.currentHp > 0;
+  const selectedUnitCanUseAbility =
+    selectedUnit
+    && selectedUnit.team === "Player"
+    && selectedUnit.mode !== "Defeated"
+    && selectedUnit.currentHp > 0;
+  const abilityGauge = selectedUnit
+    ? createAbilityGauge(
+      selectedUnit.abilityAp,
+      selectedUnit.abilityRecoverySeconds,
+      abilityApCost(selectedUnit.unitType)
+    )
+    : { text: "AP - / -", ratio: 0 };
   const summonGauge = clamp(state.playerSummonGauge, 0, 1);
   const maxMp = 10;
   const playerMp = clamp(state.playerMp, 0, maxMp);
@@ -58,14 +75,27 @@ export function createBattleHudModel(
       text: `召喚ゲージ ${Math.floor(summonGauge * 100)}%`,
       ratio: summonGauge
     },
+    abilityGauge,
     resultText,
-    canBuild: Boolean(battleInProgress && selectedUnitIsUsable),
+    canBuild: Boolean(battleInProgress && selectedUnitCanBuild),
+    canUseAbility: Boolean(selectedUnitCanUseAbility && canUseSelectedAbility),
     canSummon:
       state.result === "InProgress"
       && (
         state.phase === "Setup"
         || (state.phase === "InProgress" && canSummonPlayer)
       )
+  };
+}
+
+function createAbilityGauge(
+  currentAp: number,
+  recoverySeconds: number,
+  requiredAp: number
+): HudGaugeModel {
+  return {
+    text: `AP ${currentAp} / ${requiredAp}`,
+    ratio: clamp((currentAp + recoverySeconds / 20) / requiredAp, 0, 1)
   };
 }
 

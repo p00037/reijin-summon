@@ -45,6 +45,7 @@ import {
   rangedAttackProjectileTextureKey
 } from "../render/rangedAttackPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
+import { canUseAbility } from "../rules/abilitySystem";
 import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import {
@@ -64,6 +65,7 @@ import {
   withCanvasTextResolution
 } from "../browserSizeCanvas";
 import {
+  abilityButtonTextureKey,
   elementButtonTextureKey,
   summonButtonTextureKey
 } from "../ui/battleHudModel";
@@ -81,6 +83,7 @@ const elementalTextureKey = "elemental-crystal";
 const summonerSpriteDisplaySize = 64;
 const elementalSpriteDisplaySize = 15;
 const elementButtonPath = "/assets/buttons/element_button.png";
+const abilityButtonPath = "/assets/buttons/ability_button.png";
 const summonButtonPath = "/assets/buttons/summon_button.png";
 
 export class BattleScene extends Phaser.Scene {
@@ -121,6 +124,7 @@ export class BattleScene extends Phaser.Scene {
     this.load.image(summonerTextureKey, "/assets/summoners/summoner.png");
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
     this.load.image(elementButtonTextureKey, elementButtonPath);
+    this.load.image(abilityButtonTextureKey, abilityButtonPath);
     this.load.image(summonButtonTextureKey, summonButtonPath);
     this.load.image(
       rangedAttackProjectileTextureKey,
@@ -174,6 +178,7 @@ export class BattleScene extends Phaser.Scene {
     this.createUnitImages();
     this.hud = new BattleHud(this, layout, {
       onBuild: () => this.handleBuild(),
+      onAbility: () => this.handleAbility(),
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
@@ -400,6 +405,21 @@ export class BattleScene extends Phaser.Scene {
     this.session.applyCommand({ commandType: "Summon", team: "Player" });
   }
 
+  private handleAbility(): void {
+    if (
+      !this.selectedUnitId
+      || !canUseAbility(this.session.state, this.session.config, this.selectedUnitId)
+    ) {
+      return;
+    }
+
+    this.session.applyCommand({
+      commandType: "UseAbility",
+      team: "Player",
+      unitId: this.selectedUnitId
+    });
+  }
+
   private findPlayerUnitNear(x: number, y: number): (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null {
     let nearest: (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null = null;
     let nearestDistanceSq = selectionRadiusPx * selectionRadiusPx;
@@ -448,11 +468,14 @@ export class BattleScene extends Phaser.Scene {
     );
     this.drawUnits(state.units);
     this.drawAttackEvents(state);
+    const canUseSelectedAbility = this.selectedUnitId !== null
+      && canUseAbility(state, this.session.config, this.selectedUnitId);
 
     this.hud.update(
       state,
       this.selectedUnitId,
-      this.session.canSummon("Player")
+      this.session.canSummon("Player"),
+      canUseSelectedAbility
     );
   }
 
