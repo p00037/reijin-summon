@@ -53,7 +53,7 @@ export class GameSession {
         break;
       case "UseAbility":
         if (command.team === "Player" && this.state.phase === "InProgress") {
-          tryUseAbility(this.state, this.config, command.unitId);
+          tryUseAbility(this.state, this.config, command.unitId, command.facingRotation);
         }
         break;
       case "ReviveUnit":

@@ -97,7 +97,7 @@ export type BattleCommand =
   | { commandType: "BeginElementalBuild"; team: "Cpu"; unitId: CpuUnitId }
   | { commandType: "PlaceInitialUnit"; team: "Player"; unitId: PlayerUnitId; targetPosition: Vec2 }
   | { commandType: "StartBattle"; team: "Player" }
-  | { commandType: "UseAbility"; team: "Player"; unitId: PlayerUnitId }
+  | { commandType: "UseAbility"; team: "Player"; unitId: PlayerUnitId; facingRotation: number }
   | { commandType: "Summon"; team: TeamId }
   | { commandType: "ReviveUnit"; team: TeamId; unitId: UnitId; targetPosition: Vec2 };
 

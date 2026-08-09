@@ -30,7 +30,12 @@ export function resetUnitAbilityState(unit: UnitState): void {
   unit.seekerAttackBoostRemainingSeconds = 0;
 }
 
-export function abilityArea(state: BattleState, config: BattleConfig, unitId: UnitId): AbilityArea | null {
+export function abilityArea(
+  state: BattleState,
+  config: BattleConfig,
+  unitId: UnitId,
+  facingRotation = 0
+): AbilityArea | null {
   const unit = findUnit(state, unitId);
   if (unit.unitType === "Ranged") {
     return null;
@@ -38,15 +43,24 @@ export function abilityArea(state: BattleState, config: BattleConfig, unitId: Un
   if (unit.unitType === "Speed") {
     return { center: { ...unit.position }, radius: config.unitCardWorldHeight * 1.5 };
   }
+  const height = config.unitCardWorldHeight;
   return {
-    center: { x: unit.position.x, y: unit.position.y + config.unitCardWorldHeight },
-    radius: config.unitCardWorldHeight / 2
+    center: {
+      x: unit.position.x - Math.sin(facingRotation) * height,
+      y: unit.position.y + Math.cos(facingRotation) * height
+    },
+    radius: height / 2
   };
 }
 
-export function abilityTargets(state: BattleState, config: BattleConfig, unitId: UnitId): AbilityTargets {
+export function abilityTargets(
+  state: BattleState,
+  config: BattleConfig,
+  unitId: UnitId,
+  facingRotation = 0
+): AbilityTargets {
   const unit = findUnit(state, unitId);
-  const area = abilityArea(state, config, unitId);
+  const area = abilityArea(state, config, unitId, facingRotation);
   if (!area) {
     return { unitIds: [], elementalIds: [] };
   }
@@ -73,12 +87,12 @@ export function abilityTargets(state: BattleState, config: BattleConfig, unitId:
   };
 }
 
-export function canUseAbility(state: BattleState, config: BattleConfig, unitId: string): boolean {
-  return resolveAbilityUse(state, config, unitId) !== null;
+export function canUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation = 0): boolean {
+  return resolveAbilityUse(state, config, unitId, facingRotation) !== null;
 }
 
-export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: string): boolean {
-  const context = resolveAbilityUse(state, config, unitId);
+export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation = 0): boolean {
+  const context = resolveAbilityUse(state, config, unitId, facingRotation);
   if (!context) {
     return false;
   }
@@ -102,7 +116,15 @@ export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: 
   return true;
 }
 
-function resolveAbilityUse(state: BattleState, config: BattleConfig, unitId: string): AbilityUseContext | null {
+function resolveAbilityUse(
+  state: BattleState,
+  config: BattleConfig,
+  unitId: string,
+  facingRotation: number
+): AbilityUseContext | null {
+  if (!Number.isFinite(facingRotation)) {
+    return null;
+  }
   if (state.result !== "InProgress" || state.phase !== "InProgress") {
     return null;
   }
@@ -110,7 +132,7 @@ function resolveAbilityUse(state: BattleState, config: BattleConfig, unitId: str
   if (!unit || unit.team !== "Player" || !isUnitAlive(unit) || unit.abilityAp < abilityApCost(unit.unitType)) {
     return null;
   }
-  const targets = abilityTargets(state, config, unit.unitId);
+  const targets = abilityTargets(state, config, unit.unitId, facingRotation);
   if (unit.unitType !== "Ranged" && targets.unitIds.length === 0 && targets.elementalIds.length === 0) {
     return null;
   }

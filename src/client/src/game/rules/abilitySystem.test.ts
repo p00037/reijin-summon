@@ -94,16 +94,16 @@ test("マスターのアビリティは必要APでのみ20秒間射程を1.5倍�
   const master = findUnit(state, "PlayerRanged");
   master.abilityAp = 1;
 
-  assert.equal(abilityArea(state, config, master.unitId), null);
-  assert.deepEqual(abilityTargets(state, config, master.unitId), { unitIds: [], elementalIds: [] });
-  assert.equal(canUseAbility(state, config, "PlayerRanged"), false);
-  assert.equal(tryUseAbility(state, config, "PlayerRanged"), false);
+  assert.equal(abilityArea(state, config, master.unitId, 0), null);
+  assert.deepEqual(abilityTargets(state, config, master.unitId, 0), { unitIds: [], elementalIds: [] });
+  assert.equal(canUseAbility(state, config, "PlayerRanged", 0), false);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged", 0), false);
   assert.equal(master.abilityAp, 1);
   assert.equal(effectiveAttackRange(master), master.stats.attackRange);
 
   master.abilityAp = 2;
-  assert.equal(canUseAbility(state, config, "PlayerRanged"), true);
-  assert.equal(tryUseAbility(state, config, "PlayerRanged"), true);
+  assert.equal(canUseAbility(state, config, "PlayerRanged", 0), true);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged", 0), true);
   assert.equal(master.abilityAp, 0);
   assert.equal(master.abilityRecoverySeconds, 0);
   assert.equal(effectiveAttackRange(master), master.stats.attackRange * 1.5);
@@ -127,22 +127,22 @@ test("シーカーのアビリティは境界内の生存味方へ15秒間だけ
   master.position = { x: 99, y: 99 };
   seeker.abilityAp = 3;
 
-  assert.deepEqual(abilityArea(state, config, seeker.unitId), {
+  assert.deepEqual(abilityArea(state, config, seeker.unitId, 0), {
     center: { x: 0, y: 0 },
     radius: config.unitCardWorldHeight * 1.5
   });
-  assert.deepEqual(abilityTargets(state, config, seeker.unitId), {
+  assert.deepEqual(abilityTargets(state, config, seeker.unitId, 0), {
     unitIds: ["PlayerMelee", "PlayerSpeed"],
     elementalIds: []
   });
-  assert.equal(tryUseAbility(state, config, "PlayerSpeed"), true);
+  assert.equal(tryUseAbility(state, config, "PlayerSpeed", 0), true);
   assert.equal(effectiveAttackDamage(seeker), seeker.stats.attackDamage + 10);
   assert.equal(effectiveAttackDamage(keeper), keeper.stats.attackDamage + 10);
   assert.equal(effectiveAttackDamage(cpuKeeper), cpuKeeper.stats.attackDamage);
 
   keeper.position = { x: 99, y: 99 };
   seeker.abilityAp = 3;
-  assert.equal(tryUseAbility(state, config, "PlayerSpeed"), true);
+  assert.equal(tryUseAbility(state, config, "PlayerSpeed", 0), true);
   assert.equal(effectiveAttackDamage(keeper), keeper.stats.attackDamage + 10);
   tickAbilities(state, config, 15);
   assert.equal(effectiveAttackDamage(seeker), seeker.stats.attackDamage);
@@ -193,15 +193,15 @@ test("キーパーのアビリティは範囲内の完成済み味方エレメ�
   ];
   keeper.abilityAp = 2;
 
-  assert.deepEqual(abilityArea(state, config, keeper.unitId), {
+  assert.deepEqual(abilityArea(state, config, keeper.unitId, 0), {
     center: { x: 0, y: config.unitCardWorldHeight },
     radius: config.unitCardWorldHeight / 2
   });
-  assert.deepEqual(abilityTargets(state, config, keeper.unitId), {
+  assert.deepEqual(abilityTargets(state, config, keeper.unitId, 0), {
     unitIds: [],
     elementalIds: ["Elemental1"]
   });
-  assert.equal(tryUseAbility(state, config, "PlayerMelee"), true);
+  assert.equal(tryUseAbility(state, config, "PlayerMelee", 0), true);
   assert.equal(keeper.abilityAp, 0);
   assert.equal(state.elementals[0].hasKeeperSpeedAura, true);
   assert.equal(state.elementals[1].hasKeeperSpeedAura, undefined);
@@ -222,7 +222,7 @@ test("キーパーのアビリティは範囲内の完成済み味方エレメ�
 
   state.elementals = [];
   keeper.abilityAp = 2;
-  assert.equal(tryUseAbility(state, config, "PlayerMelee"), false);
+  assert.equal(tryUseAbility(state, config, "PlayerMelee", 0), false);
   assert.equal(keeper.abilityAp, 2);
 });
 
@@ -232,9 +232,9 @@ test("Setup中はアビリティを使用できず状態を変更しない", () 
   findUnit(state, "PlayerRanged").abilityAp = 2;
   const before = structuredClone(state);
 
-  assert.equal(canUseAbility(state, config, "PlayerRanged"), false);
+  assert.equal(canUseAbility(state, config, "PlayerRanged", 0), false);
   assert.deepEqual(state, before);
-  assert.equal(tryUseAbility(state, config, "PlayerRanged"), false);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged", 0), false);
   assert.deepEqual(state, before);
 });
 
@@ -245,9 +245,9 @@ test("Countdown中はアビリティを使用できず状態を変更しない",
   findUnit(state, "PlayerRanged").abilityAp = 2;
   const before = structuredClone(state);
 
-  assert.equal(canUseAbility(state, config, "PlayerRanged"), false);
+  assert.equal(canUseAbility(state, config, "PlayerRanged", 0), false);
   assert.deepEqual(state, before);
-  assert.equal(tryUseAbility(state, config, "PlayerRanged"), false);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged", 0), false);
   assert.deepEqual(state, before);
 });
 
@@ -259,9 +259,9 @@ test("試合終了後はアビリティを使用できず状態を変更しな�
   findUnit(state, "PlayerRanged").abilityAp = 2;
   const before = structuredClone(state);
 
-  assert.equal(canUseAbility(state, config, "PlayerRanged"), false);
+  assert.equal(canUseAbility(state, config, "PlayerRanged", 0), false);
   assert.deepEqual(state, before);
-  assert.equal(tryUseAbility(state, config, "PlayerRanged"), false);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged", 0), false);
   assert.deepEqual(state, before);
 });
 
@@ -272,9 +272,9 @@ test("CPUユニットIDではアビリティを使用できず状態を変更し
   findUnit(state, "CpuRanged").abilityAp = 2;
   const before = structuredClone(state);
 
-  assert.equal(canUseAbility(state, config, "CpuRanged"), false);
+  assert.equal(canUseAbility(state, config, "CpuRanged", 0), false);
   assert.deepEqual(state, before);
-  assert.equal(tryUseAbility(state, config, "CpuRanged"), false);
+  assert.equal(tryUseAbility(state, config, "CpuRanged", 0), false);
   assert.deepEqual(state, before);
 });
 
@@ -285,11 +285,11 @@ test("未知のユニットIDでは例外を投げずアビリティを使用で
   const before = structuredClone(state);
 
   assert.doesNotThrow(() => {
-    assert.equal(canUseAbility(state, config, "UnknownUnit"), false);
+    assert.equal(canUseAbility(state, config, "UnknownUnit", 0), false);
   });
   assert.deepEqual(state, before);
   assert.doesNotThrow(() => {
-    assert.equal(tryUseAbility(state, config, "UnknownUnit"), false);
+    assert.equal(tryUseAbility(state, config, "UnknownUnit", 0), false);
   });
   assert.deepEqual(state, before);
 });
@@ -316,4 +316,54 @@ test("キーパー速度オーラは撃破済みまたはHPが0の通常ユニ�
   seeker.mode = "Active";
   seeker.currentHp = 0;
   assert.equal(effectiveMoveSpeedMultiplier(state, config, seeker), 1);
+});
+
+test("キーパーのアビリティ範囲は向きに追従する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "PlayerMelee");
+  keeper.position = { x: 2, y: -3 };
+  const cases = [
+    { rotation: 0, offset: { x: 0, y: config.unitCardWorldHeight } },
+    { rotation: Math.PI / 2, offset: { x: -config.unitCardWorldHeight, y: 0 } },
+    { rotation: Math.PI, offset: { x: 0, y: -config.unitCardWorldHeight } },
+    { rotation: -Math.PI / 2, offset: { x: config.unitCardWorldHeight, y: 0 } }
+  ];
+
+  for (const { rotation, offset } of cases) {
+    const area = abilityArea(state, config, keeper.unitId, rotation)!;
+    assert.ok(Math.abs(area.center.x - (keeper.position.x + offset.x)) < 1e-12);
+    assert.ok(Math.abs(area.center.y - (keeper.position.y + offset.y)) < 1e-12);
+    assert.equal(area.radius, config.unitCardWorldHeight / 2);
+  }
+
+  state.elementals = [
+    {
+      elementalId: "Elemental1",
+      team: "Player",
+      position: { x: keeper.position.x - config.unitCardWorldHeight, y: keeper.position.y },
+      maxHp: 1000,
+      currentHp: 1000,
+      isComplete: true
+    }
+  ];
+  assert.deepEqual(abilityTargets(state, config, keeper.unitId, Math.PI / 2), {
+    unitIds: [],
+    elementalIds: ["Elemental1"]
+  });
+});
+
+test("非有限の向きではアビリティを使用できず状態を変更しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  const master = findUnit(state, "PlayerRanged");
+  master.abilityAp = 2;
+
+  for (const facingRotation of [Number.NaN, Number.POSITIVE_INFINITY]) {
+    const before = structuredClone(state);
+    assert.equal(canUseAbility(state, config, master.unitId, facingRotation), false);
+    assert.equal(tryUseAbility(state, config, master.unitId, facingRotation), false);
+    assert.deepEqual(state, before);
+  }
 });
