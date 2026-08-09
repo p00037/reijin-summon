@@ -16,7 +16,6 @@ const cardWidth = 54;
 const cardHeight = 76;
 const innerPadding = 8;
 const cardGap = 8;
-const labelHeight = 16;
 
 export function createDefeatedUnitCardPresentation(
   result: MatchResult,
@@ -42,10 +41,7 @@ export function calculateDefeatedUnitLayout(
     return [];
   }
 
-  const availableHeight = Math.max(
-    0,
-    area.height - innerPadding * 2 - labelHeight
-  );
+  const availableHeight = Math.max(0, area.height - innerPadding * 2);
   const availableWidthForCards = Math.max(
     0,
     area.width - innerPadding * 2 - cardGap * (unitIds.length - 1)
@@ -60,7 +56,7 @@ export function calculateDefeatedUnitLayout(
     unitId,
     rect: {
       x: area.x + innerPadding + index * (cardWidth * scale + cardGap),
-      y: area.y + innerPadding + labelHeight,
+      y: area.y + innerPadding,
       width: cardWidth * scale,
       height: cardHeight * scale
     },
