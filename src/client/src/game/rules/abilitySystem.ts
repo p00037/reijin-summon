@@ -1,4 +1,5 @@
 import type { BattleConfig, BattleState, UnitState, UnitType } from "../core/types";
+import { isUnitAlive } from "../core/battleState";
 
 const apCostByType: Record<UnitType, number> = { Melee: 2, Speed: 3, Ranged: 2 };
 const secondsPerAp = 20;
@@ -22,7 +23,7 @@ export function tickAbilities(state: BattleState, _config: BattleConfig, deltaSe
 
   const elapsedSeconds = Math.max(0, deltaSeconds);
   for (const unit of state.units) {
-    if (unit.team !== "Player" || unit.abilityAp >= maxAbilityAp) {
+    if (unit.team !== "Player" || !isUnitAlive(unit) || unit.abilityAp >= maxAbilityAp) {
       continue;
     }
     const total = unit.abilityRecoverySeconds + elapsedSeconds;

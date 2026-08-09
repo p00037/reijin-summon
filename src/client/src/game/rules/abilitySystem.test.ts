@@ -32,6 +32,27 @@ test("APは戦闘フェーズ外と負の経過時間では蓄積されない", 
   assert.equal(findUnit(state, "PlayerMelee").abilityRecoverySeconds, 0);
 });
 
+test("戦闘中でも撃破済みまたはHPが0のプレイヤーユニットにはAPを蓄積しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  const defeatedUnit = findUnit(state, "PlayerMelee");
+  const zeroHpUnit = findUnit(state, "PlayerSpeed");
+  defeatedUnit.mode = "Defeated";
+  zeroHpUnit.currentHp = 0;
+
+  tickAbilities(state, config, 20);
+
+  assert.deepEqual(
+    { ap: defeatedUnit.abilityAp, progress: defeatedUnit.abilityRecoverySeconds },
+    { ap: 0, progress: 0 }
+  );
+  assert.deepEqual(
+    { ap: zeroHpUnit.abilityAp, progress: zeroHpUnit.abilityRecoverySeconds },
+    { ap: 0, progress: 0 }
+  );
+});
+
 test("ユニット種別ごとのAPコストとリセット状態を返す", () => {
   const unit = findUnit(createDefaultBattleState(createDefaultBattleConfig()), "PlayerRanged");
   unit.abilityAp = 2;
