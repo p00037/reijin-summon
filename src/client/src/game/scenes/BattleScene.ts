@@ -32,6 +32,10 @@ import {
   unitCardPresentation
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
+import {
+  abilityTargetingPresentation,
+  abilityTargetMarkerScreenPresentation
+} from "../render/abilityPresentation";
 import { unitSelectionCirclePresentation } from "../render/unitSelectionPresentation";
 import {
   battlefieldHpBarLayout,
@@ -469,6 +473,7 @@ export class BattleScene extends Phaser.Scene {
       defeatedUnitIds
     );
     this.drawUnits(state.units);
+    this.drawAbilityTargeting();
     this.drawAttackEvents(state);
     const canUseSelectedAbility = this.selectedUnitId !== null
       && canUseAbility(state, this.session.config, this.selectedUnitId);
@@ -589,6 +594,56 @@ export class BattleScene extends Phaser.Scene {
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 10);
       this.battlefieldOverlay.lineBetween(screen.x - 6, screen.y, screen.x + 6, screen.y);
       this.battlefieldOverlay.lineBetween(screen.x, screen.y - 6, screen.x, screen.y + 6);
+    }
+  }
+
+  private drawAbilityTargeting(): void {
+    const presentation = abilityTargetingPresentation(
+      this.session.state,
+      this.session.config,
+      this.selectedUnitId
+    );
+    if (!presentation) {
+      return;
+    }
+
+    if (presentation.area) {
+      const center = this.worldToScreen(presentation.area.center);
+      const radius = this.worldRadiusToScreen(presentation.area.radius);
+      this.battlefieldOverlay.fillStyle(
+        presentation.color,
+        presentation.area.fillAlpha
+      );
+      this.battlefieldOverlay.fillCircle(center.x, center.y, radius);
+      this.battlefieldOverlay.lineStyle(
+        2,
+        presentation.color,
+        presentation.area.strokeAlpha
+      );
+      this.battlefieldOverlay.strokeCircle(center.x, center.y, radius);
+    }
+
+    this.battlefieldOverlay.lineStyle(2, presentation.color, 0.95);
+    for (const marker of presentation.markers) {
+      const geometry = abilityTargetMarkerScreenPresentation(
+        marker.kind,
+        this.worldToScreen(marker.position)
+      );
+      for (const circle of geometry.circles) {
+        this.battlefieldOverlay.strokeCircle(
+          circle.center.x,
+          circle.center.y,
+          circle.radius
+        );
+      }
+      for (const line of geometry.lines) {
+        this.battlefieldOverlay.lineBetween(
+          line.from.x,
+          line.from.y,
+          line.to.x,
+          line.to.y
+        );
+      }
     }
   }
 
