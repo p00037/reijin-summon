@@ -73,6 +73,7 @@ export function createDefaultBattleConfig(): BattleConfig {
     contactSlowMultiplier: 1 / 3,
     leaderVisualSize: 0.8,
     leaderHealingRadius: 0.8 * 2.5,
+    unitCardWorldHeight: 2.25,
     statsByType: {
       Melee: { ...statsByType.Melee },
       Speed: { ...statsByType.Speed },

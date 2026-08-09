@@ -86,6 +86,7 @@ export type BattleConfig = {
   contactSlowMultiplier: number;
   leaderVisualSize: number;
   leaderHealingRadius: number;
+  unitCardWorldHeight: number;
   statsByType: Record<UnitType, UnitStats>;
 };
 
@@ -126,6 +127,10 @@ export type UnitState = {
   leaderHealingElapsedSeconds: number;
   restHealingElapsedSeconds: number;
   pendingElementalId: ElementalId | null;
+  abilityAp: number;
+  abilityRecoverySeconds: number;
+  masterRangeBoostRemainingSeconds: number;
+  seekerAttackBoostRemainingSeconds: number;
 };
 
 export type ElementalState = {
@@ -135,6 +140,7 @@ export type ElementalState = {
   maxHp: number;
   currentHp: number;
   isComplete: boolean;
+  hasKeeperSpeedAura?: boolean;
 };
 
 export type SummonedUnitState = {
