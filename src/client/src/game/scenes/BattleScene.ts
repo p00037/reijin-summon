@@ -407,7 +407,9 @@ export class BattleScene extends Phaser.Scene {
 
   private handleAbility(): void {
     if (
-      !this.selectedUnitId
+      this.session.state.result !== "InProgress"
+      || this.session.state.phase !== "InProgress"
+      || !this.selectedUnitId
       || !canUseAbility(this.session.state, this.session.config, this.selectedUnitId)
     ) {
       return;

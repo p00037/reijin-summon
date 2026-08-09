@@ -78,7 +78,9 @@ export function createBattleHudModel(
     abilityGauge,
     resultText,
     canBuild: Boolean(battleInProgress && selectedUnitCanBuild),
-    canUseAbility: Boolean(selectedUnitCanUseAbility && canUseSelectedAbility),
+    canUseAbility: Boolean(
+      battleInProgress && selectedUnitCanUseAbility && canUseSelectedAbility
+    ),
     canSummon:
       state.result === "InProgress"
       && (

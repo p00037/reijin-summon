@@ -178,6 +178,7 @@ test("AP表示は20秒単位の回復途中を加味する", () => {
 
 test("満タン時のAP表示を上限1にしてSceneの発動可否を反映する", () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = "InProgress";
   const selected = state.units.find((unit) => unit.unitId === "PlayerMelee")!;
   selected.abilityAp = 2;
   selected.abilityRecoverySeconds = 10;
@@ -225,6 +226,7 @@ test("建築中もアビリティボタンを有効にするがエレメント�
 
 test("キーパー対象の有無をScene判定からアビリティボタンへ反映する", () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = "InProgress";
   const selected = state.units.find((unit) => unit.unitId === "PlayerMelee")!;
   selected.abilityAp = 2;
 
@@ -236,4 +238,25 @@ test("キーパー対象の有無をScene判定からアビリティボタンへ
     createBattleHudModel(state, "PlayerMelee", true, true).canUseAbility,
     true
   );
+});
+
+test("Countdown中は発動条件を満たしてもアビリティボタンを無効にする", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = "Countdown";
+  state.units.find((unit) => unit.unitId === "PlayerRanged")!.abilityAp = 2;
+
+  const countdown = createBattleHudModel(state, "PlayerRanged", true, true);
+
+  assert.equal(countdown.canUseAbility, false);
+});
+
+test("戦闘終了後は発動条件を満たしてもアビリティボタンを無効にする", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = "InProgress";
+  state.result = "PlayerWin";
+  state.units.find((unit) => unit.unitId === "PlayerRanged")!.abilityAp = 2;
+
+  const finished = createBattleHudModel(state, "PlayerRanged", true, true);
+
+  assert.equal(finished.canUseAbility, false);
 });
