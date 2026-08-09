@@ -353,6 +353,24 @@ test("キーパーのアビリティ範囲は向きに追従する", () => {
   });
 });
 
+test("CPUキーパーのアビリティ範囲は回転角にかかわらず固定の+Y方向を維持する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const keeper = findUnit(state, "CpuMelee");
+  keeper.position = { x: 2, y: -3 };
+
+  const area = abilityArea(state, config, keeper.unitId, Math.PI / 2)!;
+
+  assert.deepEqual(area, {
+    center: { x: keeper.position.x, y: keeper.position.y + config.unitCardWorldHeight },
+    radius: config.unitCardWorldHeight / 2
+  });
+  assert.deepEqual(abilityTargets(state, config, keeper.unitId, Math.PI / 2), {
+    unitIds: [],
+    elementalIds: []
+  });
+});
+
 test("非有限の向きではアビリティを使用できず状態を変更しない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);

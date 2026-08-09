@@ -44,6 +44,12 @@ export function abilityArea(
     return { center: { ...unit.position }, radius: config.unitCardWorldHeight * 1.5 };
   }
   const height = config.unitCardWorldHeight;
+  if (unit.team !== "Player") {
+    return {
+      center: { x: unit.position.x, y: unit.position.y + height },
+      radius: height / 2
+    };
+  }
   return {
     center: {
       x: unit.position.x - Math.sin(facingRotation) * height,
