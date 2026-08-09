@@ -421,11 +421,17 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleAbility(): void {
+    const facingRotation = this.selectedUnitFacingRotation();
     if (
       this.session.state.result !== "InProgress"
       || this.session.state.phase !== "InProgress"
       || !this.selectedUnitId
-      || !canUseAbility(this.session.state, this.session.config, this.selectedUnitId)
+      || !canUseAbility(
+        this.session.state,
+        this.session.config,
+        this.selectedUnitId,
+        facingRotation
+      )
     ) {
       return;
     }
@@ -433,8 +439,17 @@ export class BattleScene extends Phaser.Scene {
     this.session.applyCommand({
       commandType: "UseAbility",
       team: "Player",
-      unitId: this.selectedUnitId
+      unitId: this.selectedUnitId,
+      facingRotation
     });
+  }
+
+  private selectedUnitFacingRotation(): number {
+    if (this.selectedUnitId === null) {
+      return initialCardRotation("Player");
+    }
+    return this.unitCardRotations.get(this.selectedUnitId)
+      ?? initialCardRotation("Player");
   }
 
   private findPlayerUnitNear(x: number, y: number): (UnitState & { unitId: PlayerUnitId; team: "Player" }) | null {
@@ -487,8 +502,14 @@ export class BattleScene extends Phaser.Scene {
     this.drawUnits(state.units);
     this.drawAbilityTargeting();
     this.drawAttackEvents(state);
+    const facingRotation = this.selectedUnitFacingRotation();
     const canUseSelectedAbility = this.selectedUnitId !== null
-      && canUseAbility(state, this.session.config, this.selectedUnitId);
+      && canUseAbility(
+        state,
+        this.session.config,
+        this.selectedUnitId,
+        facingRotation
+      );
 
     this.hud.update(
       state,
@@ -610,10 +631,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private drawAbilityTargeting(): void {
+    const facingRotation = this.selectedUnitFacingRotation();
     const presentation = abilityTargetingPresentation(
       this.session.state,
       this.session.config,
-      this.selectedUnitId
+      this.selectedUnitId,
+      facingRotation
     );
     if (!presentation) {
       return;

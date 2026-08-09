@@ -40,7 +40,8 @@ const abilityMarkerColor = 0xfacc15;
 export function abilityTargetingPresentation(
   state: BattleState,
   config: BattleConfig,
-  selectedUnitId: PlayerUnitId | null
+  selectedUnitId: PlayerUnitId | null,
+  facingRotation: number
 ): AbilityTargetingPresentation | null {
   if (
     selectedUnitId === null
@@ -58,7 +59,7 @@ export function abilityTargetingPresentation(
     return null;
   }
 
-  const area = abilityArea(state, config, selectedUnitId);
+  const area = abilityArea(state, config, selectedUnitId, facingRotation);
   if (area === null) {
     return {
       area: null,
@@ -67,7 +68,7 @@ export function abilityTargetingPresentation(
     };
   }
 
-  const targets = abilityTargets(state, config, selectedUnitId);
+  const targets = abilityTargets(state, config, selectedUnitId, facingRotation);
   const unitMarkers = targets.unitIds.map((unitId) => ({
     kind: "LockOn" as const,
     position: { ...findUnit(state, unitId).position }

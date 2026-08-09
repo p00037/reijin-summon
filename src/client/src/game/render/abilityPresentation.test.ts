@@ -17,11 +17,11 @@ test("アビリティ対象表示は未選択またはAP不足なら表示しな
   state.phase = "InProgress";
 
   assert.equal(
-    module.abilityTargetingPresentation!(state, config, null),
+    module.abilityTargetingPresentation!(state, config, null, 0),
     null
   );
   assert.equal(
-    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged", 0),
     null
   );
 });
@@ -35,14 +35,14 @@ test("アビリティ対象表示は戦闘進行中でなければ表示しな�
 
   state.phase = "Countdown";
   assert.equal(
-    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged", 0),
     null
   );
 
   state.phase = "InProgress";
   state.result = "PlayerWin";
   assert.equal(
-    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged", 0),
     null
   );
 });
@@ -58,7 +58,7 @@ test("アビリティ対象表示はDefeatedの選択ユニットを表示しな
   master.mode = "Defeated";
 
   assert.equal(
-    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged", 0),
     null
   );
 });
@@ -74,7 +74,7 @@ test("アビリティ対象表示はHP0の選択ユニットを表示しない",
   master.currentHp = 0;
 
   assert.equal(
-    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged", 0),
     null
   );
 });
@@ -90,7 +90,7 @@ test("アビリティ対象表示は満タンのマスター自身にCircleマ�
   master.abilityAp = 2;
 
   assert.deepEqual(
-    module.abilityTargetingPresentation!(state, config, "PlayerRanged"),
+    module.abilityTargetingPresentation!(state, config, "PlayerRanged", 0),
     {
       area: null,
       markers: [{ kind: "Circle", position: { x: 2.5, y: 4.5 } }],
@@ -114,7 +114,7 @@ test("アビリティ対象表示はシーカーの範囲円と範囲内UnitのL
   seeker.abilityAp = 3;
 
   assert.deepEqual(
-    module.abilityTargetingPresentation!(state, config, "PlayerSpeed"),
+    module.abilityTargetingPresentation!(state, config, "PlayerSpeed", 0),
     {
       area: {
         center: { x: 1, y: 2 },
@@ -131,7 +131,7 @@ test("アビリティ対象表示はシーカーの範囲円と範囲内UnitのL
   );
 });
 
-test("アビリティ対象表示はキーパーの前方円と対象ElementalのLockOnを表示する", async () => {
+test("アビリティ対象表示はカード向きに回転したキーパー範囲と対象ElementalのLockOnを表示する", async () => {
   const module = await loadAbilityPresentation();
   assert.equal(typeof module.abilityTargetingPresentation, "function");
   const config = createDefaultBattleConfig();
@@ -144,6 +144,14 @@ test("アビリティ対象表示はキーパーの前方円と対象Elemental�
     {
       elementalId: "Elemental1",
       team: "Player",
+      position: { x: 3 - config.unitCardWorldHeight, y: 4 },
+      maxHp: 1000,
+      currentHp: 1000,
+      isComplete: true
+    },
+    {
+      elementalId: "Elemental2",
+      team: "Player",
       position: { x: 3, y: 4 + config.unitCardWorldHeight },
       maxHp: 1000,
       currentHp: 1000,
@@ -151,21 +159,19 @@ test("アビリティ対象表示はキーパーの前方円と対象Elemental�
     }
   ];
 
-  assert.deepEqual(
-    module.abilityTargetingPresentation!(state, config, "PlayerMelee"),
-    {
-      area: {
-        center: { x: 3, y: 4 + config.unitCardWorldHeight },
-        radius: config.unitCardWorldHeight / 2,
-        fillAlpha: 0.16,
-        strokeAlpha: 0.9
-      },
-      markers: [
-        { kind: "LockOn", position: { ...state.elementals[0].position } }
-      ],
-      color: 0xfacc15
-    }
-  );
+  const presentation = module.abilityTargetingPresentation!(
+    state,
+    config,
+    "PlayerMelee",
+    Math.PI / 2
+  )!;
+  assert.ok(Math.abs(presentation.area!.center.x - (keeper.position.x - config.unitCardWorldHeight)) < 1e-12);
+  assert.ok(Math.abs(presentation.area!.center.y - keeper.position.y) < 1e-12);
+  assert.equal(presentation.area!.radius, config.unitCardWorldHeight / 2);
+  assert.deepEqual(presentation.markers, [
+    { kind: "LockOn", position: { ...state.elementals[0].position } }
+  ]);
+  assert.equal(presentation.color, 0xfacc15);
 });
 
 test("アビリティ対象表示はキーパーの対象が0でも前方範囲円を表示する", async () => {
@@ -180,7 +186,7 @@ test("アビリティ対象表示はキーパーの対象が0でも前方範囲�
   state.elementals = [];
 
   assert.deepEqual(
-    module.abilityTargetingPresentation!(state, config, "PlayerMelee"),
+    module.abilityTargetingPresentation!(state, config, "PlayerMelee", 0),
     {
       area: {
         center: { x: 5, y: 6 + config.unitCardWorldHeight },
