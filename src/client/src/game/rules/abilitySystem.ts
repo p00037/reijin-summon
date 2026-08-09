@@ -2,7 +2,6 @@ import type {
   BattleConfig,
   BattleState,
   ElementalId,
-  PlayerUnitId,
   UnitId,
   UnitState,
   UnitType,
@@ -18,6 +17,7 @@ const seekerAttackBoostSeconds = 15;
 
 export type AbilityArea = { center: Vec2; radius: number };
 export type AbilityTargets = { unitIds: UnitId[]; elementalIds: ElementalId[] };
+type AbilityUseContext = { unit: UnitState; targets: AbilityTargets };
 
 export function abilityApCost(unitType: UnitType): number {
   return apCostByType[unitType];
@@ -73,24 +73,16 @@ export function abilityTargets(state: BattleState, config: BattleConfig, unitId:
   };
 }
 
-export function canUseAbility(state: BattleState, config: BattleConfig, unitId: PlayerUnitId): boolean {
-  const unit = findUnit(state, unitId);
-  if (!isUnitAlive(unit) || unit.abilityAp < abilityApCost(unit.unitType)) {
-    return false;
-  }
-  if (unit.unitType === "Ranged") {
-    return true;
-  }
-  const targets = abilityTargets(state, config, unitId);
-  return targets.unitIds.length > 0 || targets.elementalIds.length > 0;
+export function canUseAbility(state: BattleState, config: BattleConfig, unitId: string): boolean {
+  return resolveAbilityUse(state, config, unitId) !== null;
 }
 
-export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: PlayerUnitId): boolean {
-  if (!canUseAbility(state, config, unitId)) {
+export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: string): boolean {
+  const context = resolveAbilityUse(state, config, unitId);
+  if (!context) {
     return false;
   }
-  const unit = findUnit(state, unitId);
-  const targets = abilityTargets(state, config, unitId);
+  const { unit, targets } = context;
   if (unit.unitType === "Ranged") {
     unit.masterRangeBoostRemainingSeconds = masterRangeBoostSeconds;
   } else if (unit.unitType === "Speed") {
@@ -108,6 +100,21 @@ export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: 
   unit.abilityAp = 0;
   unit.abilityRecoverySeconds = 0;
   return true;
+}
+
+function resolveAbilityUse(state: BattleState, config: BattleConfig, unitId: string): AbilityUseContext | null {
+  if (state.result !== "InProgress" || state.phase !== "InProgress") {
+    return null;
+  }
+  const unit = state.units.find((candidate) => candidate.unitId === unitId);
+  if (!unit || unit.team !== "Player" || !isUnitAlive(unit) || unit.abilityAp < abilityApCost(unit.unitType)) {
+    return null;
+  }
+  const targets = abilityTargets(state, config, unit.unitId);
+  if (unit.unitType !== "Ranged" && targets.unitIds.length === 0 && targets.elementalIds.length === 0) {
+    return null;
+  }
+  return { unit, targets };
 }
 
 export function effectiveAttackRange(unit: UnitState): number {

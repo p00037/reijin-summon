@@ -90,6 +90,7 @@ test("ユニット種別ごとのAPコストとリセット状態を返す", () 
 test("マスターのアビリティは必要APでのみ20秒間射程を1.5倍にする", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
   const master = findUnit(state, "PlayerRanged");
   master.abilityAp = 1;
 
@@ -115,6 +116,7 @@ test("マスターのアビリティは必要APでのみ20秒間射程を1.5倍�
 test("シーカーのアビリティは境界内の生存味方へ15秒間だけ攻撃力を加算する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
   const seeker = findUnit(state, "PlayerSpeed");
   const keeper = findUnit(state, "PlayerMelee");
   const cpuKeeper = findUnit(state, "CpuMelee");
@@ -150,6 +152,7 @@ test("シーカーのアビリティは境界内の生存味方へ15秒間だけ
 test("キーパーのアビリティは範囲内の完成済み味方エレメントにだけ速度オーラを付与する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
   const keeper = findUnit(state, "PlayerMelee");
   const seeker = findUnit(state, "PlayerSpeed");
   keeper.position = { x: 0, y: 0 };
@@ -221,6 +224,74 @@ test("キーパーのアビリティは範囲内の完成済み味方エレメ�
   keeper.abilityAp = 2;
   assert.equal(tryUseAbility(state, config, "PlayerMelee"), false);
   assert.equal(keeper.abilityAp, 2);
+});
+
+test("Setup中はアビリティを使用できず状態を変更しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  findUnit(state, "PlayerRanged").abilityAp = 2;
+  const before = structuredClone(state);
+
+  assert.equal(canUseAbility(state, config, "PlayerRanged"), false);
+  assert.deepEqual(state, before);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged"), false);
+  assert.deepEqual(state, before);
+});
+
+test("Countdown中はアビリティを使用できず状態を変更しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "Countdown";
+  findUnit(state, "PlayerRanged").abilityAp = 2;
+  const before = structuredClone(state);
+
+  assert.equal(canUseAbility(state, config, "PlayerRanged"), false);
+  assert.deepEqual(state, before);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged"), false);
+  assert.deepEqual(state, before);
+});
+
+test("試合終了後はアビリティを使用できず状態を変更しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  state.result = "PlayerWin";
+  findUnit(state, "PlayerRanged").abilityAp = 2;
+  const before = structuredClone(state);
+
+  assert.equal(canUseAbility(state, config, "PlayerRanged"), false);
+  assert.deepEqual(state, before);
+  assert.equal(tryUseAbility(state, config, "PlayerRanged"), false);
+  assert.deepEqual(state, before);
+});
+
+test("CPUユニットIDではアビリティを使用できず状態を変更しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  findUnit(state, "CpuRanged").abilityAp = 2;
+  const before = structuredClone(state);
+
+  assert.equal(canUseAbility(state, config, "CpuRanged"), false);
+  assert.deepEqual(state, before);
+  assert.equal(tryUseAbility(state, config, "CpuRanged"), false);
+  assert.deepEqual(state, before);
+});
+
+test("未知のユニットIDでは例外を投げずアビリティを使用できず状態を変更しない", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  state.phase = "InProgress";
+  const before = structuredClone(state);
+
+  assert.doesNotThrow(() => {
+    assert.equal(canUseAbility(state, config, "UnknownUnit"), false);
+  });
+  assert.deepEqual(state, before);
+  assert.doesNotThrow(() => {
+    assert.equal(tryUseAbility(state, config, "UnknownUnit"), false);
+  });
+  assert.deepEqual(state, before);
 });
 
 test("キーパー速度オーラは撃破済みまたはHPが0の通常ユニットへ適用しない", () => {
