@@ -61,6 +61,7 @@ import {
   cardRotationForMovement,
   initialCardRotation
 } from "../render/cardFacing";
+import { unitCardAttackPowerPresentation } from "../render/unitCardAttackPowerPresentation";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 import { gameViewport } from "../gameViewport";
@@ -103,6 +104,7 @@ export class BattleScene extends Phaser.Scene {
   private elementalSprites = new Map<ElementalId, Phaser.GameObjects.Image>();
   private unitImages = new Map<string, Phaser.GameObjects.Image>();
   private unitCardBorders = new Map<string, Phaser.GameObjects.Rectangle>();
+  private unitAttackPowerLabels = new Map<string, Phaser.GameObjects.Text>();
   private summonedUnitImages = new Map<number, Phaser.GameObjects.Image>();
   private summonedUnitCardBorders = new Map<number, Phaser.GameObjects.Rectangle>();
   private unitCardPositions = new Map<string, Vec2>();
@@ -144,6 +146,7 @@ export class BattleScene extends Phaser.Scene {
     this.elementalSprites = new Map();
     this.unitImages = new Map();
     this.unitCardBorders = new Map();
+    this.unitAttackPowerLabels = new Map();
     this.summonedUnitImages = new Map();
     this.summonedUnitCardBorders = new Map();
     this.unitCardPositions = new Map();
@@ -688,8 +691,8 @@ export class BattleScene extends Phaser.Scene {
     }
 
     for (const unit of units) {
-      if (unit.mode === "Defeated") {
-        if (isPlayerUnit(unit)) {
+      if (!isUnitAlive(unit)) {
+        if (unit.mode === "Defeated" && isPlayerUnit(unit)) {
           const layout = this.defeatedUnitLayouts.find(
             (candidate) => candidate.unitId === unit.unitId
           );
@@ -777,6 +780,7 @@ export class BattleScene extends Phaser.Scene {
       unit.stats.revivalCost
     );
     this.updateDefeatedUnitImage(unit, layout, center, presentation.alpha);
+    this.unitAttackPowerLabels.get(unit.unitId)?.setVisible(false);
 
     let label = this.defeatedUnitLabels.get(unit.unitId);
     if (!label) {
@@ -830,10 +834,34 @@ export class BattleScene extends Phaser.Scene {
       border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(unit.team));
       border.setDepth(cardBorderDepth);
       const rotation = initialCardRotation(unit.team);
+      const attackPowerLabel = this.add
+        .text(
+          0,
+          0,
+          String(unit.stats.attackDamage),
+          withCanvasTextResolution({
+            color: "#f8fafc",
+            fontFamily: "Arial, sans-serif",
+            fontSize: "8px"
+          })
+        )
+        .setOrigin(0.5)
+        .setStroke("#020617", 2)
+        .setVisible(false);
+      const attackPower = unitCardAttackPowerPresentation(
+        { x: 0, y: 0 },
+        rotation,
+        presentation.displayHeight,
+        unit.stats.attackDamage
+      );
+      attackPowerLabel
+        .setDepth(attackPower.depth)
+        .setRotation(attackPower.rotation);
       image.setRotation(rotation);
       border.setRotation(rotation);
       this.unitImages.set(unit.unitId, image);
       this.unitCardBorders.set(unit.unitId, border);
+      this.unitAttackPowerLabels.set(unit.unitId, attackPowerLabel);
       this.unitCardRotations.set(unit.unitId, rotation);
     }
   }
@@ -927,6 +955,22 @@ export class BattleScene extends Phaser.Scene {
     image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);
+    const attackPowerLabel = this.unitAttackPowerLabels.get(unit.unitId);
+    if (attackPowerLabel) {
+      const attackPower = unitCardAttackPowerPresentation(
+        screen,
+        rotation,
+        presentation.displayHeight,
+        unit.stats.attackDamage
+      );
+      attackPowerLabel
+        .setText(attackPower.text)
+        .setPosition(attackPower.position.x, attackPower.position.y)
+        .setRotation(attackPower.rotation)
+        .setDepth(attackPower.depth)
+        .setAlpha(alpha)
+        .setVisible(true);
+    }
   }
 
   private updateDefeatedUnitImage(
@@ -977,6 +1021,7 @@ export class BattleScene extends Phaser.Scene {
   private hideUnitImage(unitId: string): void {
     this.unitImages.get(unitId)?.setVisible(false);
     this.unitCardBorders.get(unitId)?.setVisible(false);
+    this.unitAttackPowerLabels.get(unitId)?.setVisible(false);
   }
 
   private updateSummonedUnitImage(summoned: SummonedUnitState, screen: Vec2): void {
