@@ -45,6 +45,30 @@ test("HP・時間・召喚ゲージを表示範囲へ制限する", () => {
   assert.deepEqual(model.summonGauge, { text: "召喚ゲージ 100%", ratio: 1 });
 });
 
+test("味方MPを0から10の縦ゲージモデルへ整形する", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.playerMp = 6;
+
+  const model = createBattleHudModel(state, null, false);
+
+  assert.deepEqual(model.mp, { text: "MP 6 / 10", ratio: 0.6 });
+});
+
+test("味方MPを0から10の表示範囲へ制限する", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.playerMp = -2;
+  assert.deepEqual(createBattleHudModel(state, null, false).mp, {
+    text: "MP 0 / 10",
+    ratio: 0
+  });
+
+  state.playerMp = 14;
+  assert.deepEqual(createBattleHudModel(state, null, false).mp, {
+    text: "MP 10 / 10",
+    ratio: 1
+  });
+});
+
 test("勝敗を日本語へ変換して戦闘中は空文字にする", () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
 

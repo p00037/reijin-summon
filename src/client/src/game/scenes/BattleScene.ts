@@ -5,6 +5,7 @@ import {
   shouldKeepMoveMarker,
   transitionDragRelease
 } from "../input/dragMovement";
+import { transitionRevivalDragRelease } from "../input/revivalDrag";
 import type {
   BattleState,
   ElementalId,
@@ -44,20 +45,34 @@ import {
   rangedAttackProjectileTextureKey
 } from "../render/rangedAttackPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
+import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
-import { cardRotationForMovement, initialCardRotation } from "../render/cardFacing";
+import {
+  applyPlayerRevivalCardState,
+  updateUnitCardRenderState
+} from "../render/unitCardRenderState";
+import {
+  cardRotationForMovement,
+  initialCardRotation
+} from "../render/cardFacing";
 import { GameSession } from "../rules/gameSession";
 import { BattleHud } from "../ui/battleHud";
 import { gameViewport } from "../gameViewport";
 import {
   browserSizeCanvas,
-  toLogicalCanvasPoint
+  toLogicalCanvasPoint,
+  withCanvasTextResolution
 } from "../browserSizeCanvas";
 import {
   elementButtonTextureKey,
   summonButtonTextureKey
 } from "../ui/battleHudModel";
-import { calculateBattleLayout } from "../ui/battleLayout";
+import { calculateBattleLayout, type UiRect } from "../ui/battleLayout";
+import {
+  calculateDefeatedUnitLayout,
+  createDefeatedUnitCardPresentation,
+  type DefeatedUnitCardLayout
+} from "../ui/defeatedUnitLayout";
 
 const maxFrameDeltaSeconds = 1 / 20;
 const selectionRadiusPx = 28;
@@ -87,6 +102,10 @@ export class BattleScene extends Phaser.Scene {
   private summonedCardRotations = new Map<number, number>();
   private selectedUnitId: PlayerUnitId | null = null;
   private draggedUnitId: PlayerUnitId | null = null;
+  private revivalDraggedUnitId: PlayerUnitId | null = null;
+  private revivalPointerPosition: Vec2 | null = null;
+  private defeatedUnitLayouts: DefeatedUnitCardLayout[] = [];
+  private defeatedUnitLabels = new Map<PlayerUnitId, Phaser.GameObjects.Text>();
   private moveMarkers = new Map<PlayerUnitId, Vec2>();
   private cpuPlanTimerSeconds = 0;
 
@@ -123,6 +142,10 @@ export class BattleScene extends Phaser.Scene {
     this.summonedCardRotations = new Map();
     this.selectedUnitId = null;
     this.draggedUnitId = null;
+    this.revivalDraggedUnitId = null;
+    this.revivalPointerPosition = null;
+    this.defeatedUnitLayouts = [];
+    this.defeatedUnitLabels = new Map();
     this.moveMarkers = new Map();
     this.cpuPlanTimerSeconds = 0;
     this.cameras.main
@@ -154,11 +177,12 @@ export class BattleScene extends Phaser.Scene {
       onSummon: () => this.handleSummon(),
       onRetry: () => this.scene.restart()
     });
-
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.handlePointerMove(pointer));
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer));
     this.input.on("pointerupoutside", () => {
       this.draggedUnitId = null;
+      this.clearRevivalDrag();
     });
     this.draw();
   }
@@ -179,18 +203,47 @@ export class BattleScene extends Phaser.Scene {
       }
     }
     this.session.tick(deltaSeconds);
+    if (this.session.state.result !== "InProgress") {
+      this.clearRevivalDrag();
+    }
 
     this.draw();
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     this.draggedUnitId = null;
+    this.clearRevivalDrag();
     const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
     if (
-      this.hud.contains(point.x, point.y)
-      || this.session.state.result !== "InProgress"
+      this.session.state.result !== "InProgress"
       || this.session.state.phase === "Countdown"
     ) {
+      return;
+    }
+
+    const defeatedCard = this.defeatedUnitLayouts.find(
+      ({ rect }) => containsPoint(rect, point.x, point.y)
+    );
+    if (defeatedCard) {
+      const unit = this.session.state.units.find(
+        (candidate) => candidate.unitId === defeatedCard.unitId
+      );
+      const presentation = unit
+        ? createDefeatedUnitCardPresentation(
+            this.session.state.result,
+            this.session.state.phase,
+            this.session.state.playerMp,
+            unit.stats.revivalCost
+          )
+        : null;
+      if (unit?.mode === "Defeated" && presentation?.available) {
+        this.revivalDraggedUnitId = defeatedCard.unitId;
+        this.revivalPointerPosition = point;
+      }
+      return;
+    }
+
+    if (this.hud.contains(point.x, point.y)) {
       return;
     }
 
@@ -203,8 +256,24 @@ export class BattleScene extends Phaser.Scene {
     this.draggedUnitId = unit.unitId;
   }
 
+  private handlePointerMove(pointer: Phaser.Input.Pointer): void {
+    if (!this.revivalDraggedUnitId) {
+      return;
+    }
+
+    this.revivalPointerPosition = toLogicalCanvasPoint(
+      pointer,
+      browserSizeCanvas.renderScale
+    );
+  }
+
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
     const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
+    if (this.revivalDraggedUnitId) {
+      this.handleRevivalPointerUp(point);
+      return;
+    }
+
     const draggedUnitId = this.draggedUnitId;
     const unit = this.session.state.units.find(
       (candidate) => candidate.unitId === draggedUnitId
@@ -229,6 +298,62 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.session.applyCommand(transition.command);
+  }
+
+  private handleRevivalPointerUp(point: Vec2): void {
+    const draggedUnitId = this.revivalDraggedUnitId;
+    const unit = this.session.state.units.find(
+      (candidate) => candidate.unitId === draggedUnitId
+    );
+    const targetPosition = this.screenToWorld(point.x, point.y);
+    const playerLeader = findLeader(this.session.state, "Player");
+    const insideBattlefield = this.fieldBounds().contains(point.x, point.y);
+    const insideHealingArea =
+      Phaser.Math.Distance.Squared(
+        targetPosition.x,
+        targetPosition.y,
+        playerLeader.position.x,
+        playerLeader.position.y
+      ) <= this.session.config.leaderHealingRadius ** 2;
+    const transition = transitionRevivalDragRelease(
+      { draggedUnitId },
+      {
+        phase: this.session.state.phase,
+        targetDefeated: unit?.mode === "Defeated",
+        enoughMp:
+          unit !== undefined
+          && this.session.state.playerMp >= unit.stats.revivalCost,
+        insideBattlefield,
+        insideHealingArea
+      },
+      targetPosition
+    );
+    this.revivalDraggedUnitId = transition.draggedUnitId;
+    this.revivalPointerPosition = null;
+    if (
+      transition.command
+      && canReviveUnit(
+        this.session.state,
+        this.session.config,
+        "Player",
+        transition.command.unitId,
+        transition.command.targetPosition
+      )
+    ) {
+      this.session.applyCommand(transition.command);
+      applyPlayerRevivalCardState(
+        {
+          positions: this.unitCardPositions,
+          rotations: this.unitCardRotations
+        },
+        transition.command.unitId
+      );
+    }
+  }
+
+  private clearRevivalDrag(): void {
+    this.revivalDraggedUnitId = null;
+    this.revivalPointerPosition = null;
   }
 
   private handleBuild(): void {
@@ -306,6 +431,21 @@ export class BattleScene extends Phaser.Scene {
     this.drawSummonedUnits(state.summonedUnits);
     this.pruneMoveMarkers(state.units);
     this.drawMoveMarkers();
+    const defeatedUnitIds = state.units
+      .filter(
+        (unit): unit is UnitState & { unitId: PlayerUnitId; team: "Player" } =>
+          isPlayerUnit(unit) && unit.mode === "Defeated"
+      )
+      .sort(
+        (left, right) =>
+          (left.defeatedOrder ?? Number.MAX_SAFE_INTEGER)
+          - (right.defeatedOrder ?? Number.MAX_SAFE_INTEGER)
+      )
+      .map((unit) => unit.unitId);
+    this.defeatedUnitLayouts = calculateDefeatedUnitLayout(
+      calculateBattleLayout(gameViewport.width, gameViewport.height).waitingArea,
+      defeatedUnitIds
+    );
     this.drawUnits(state.units);
     this.drawAttackEvents(state);
 
@@ -428,11 +568,31 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private drawUnits(units: UnitState[]): void {
+    for (const label of this.defeatedUnitLabels.values()) {
+      label.setVisible(false);
+    }
+
     for (const unit of units) {
+      if (unit.mode === "Defeated") {
+        if (isPlayerUnit(unit)) {
+          const layout = this.defeatedUnitLayouts.find(
+            (candidate) => candidate.unitId === unit.unitId
+          );
+          if (layout) {
+            this.drawDefeatedUnit(unit, layout);
+          } else {
+            this.hideUnitImage(unit.unitId);
+          }
+        } else {
+          this.hideUnitImage(unit.unitId);
+        }
+        continue;
+      }
+
       const screen = this.worldToScreen(unit.position);
       const isSelected = unit.unitId === this.selectedUnitId;
       const color = unit.team === "Player" ? 0x60a5fa : 0xf87171;
-      const alpha = unit.mode === "Defeated" ? 0.28 : 1;
+      const alpha = 1;
 
       this.updateUnitImage(unit, screen, alpha);
 
@@ -480,6 +640,56 @@ export class BattleScene extends Phaser.Scene {
         color
       );
     }
+  }
+
+  private drawDefeatedUnit(
+    unit: UnitState & { unitId: PlayerUnitId; team: "Player" },
+    layout: DefeatedUnitCardLayout
+  ): void {
+    const slotCenter = {
+      x: layout.rect.x + layout.rect.width / 2,
+      y: layout.rect.y + layout.rect.height / 2
+    };
+    const center =
+      this.revivalDraggedUnitId === unit.unitId
+      && this.revivalPointerPosition
+        ? this.revivalPointerPosition
+        : slotCenter;
+    const presentation = createDefeatedUnitCardPresentation(
+      this.session.state.result,
+      this.session.state.phase,
+      this.session.state.playerMp,
+      unit.stats.revivalCost
+    );
+    this.updateDefeatedUnitImage(unit, layout, center, presentation.alpha);
+
+    let label = this.defeatedUnitLabels.get(unit.unitId);
+    if (!label) {
+      label = this.add
+        .text(
+          0,
+          0,
+          "",
+          withCanvasTextResolution({
+            color: "#f8fafc",
+            fontFamily: "Arial, sans-serif",
+            fontSize: "8px"
+          })
+        )
+        .setOrigin(0.5)
+        .setDepth(6)
+        .setStroke("#020617", 2);
+      this.defeatedUnitLabels.set(unit.unitId, label);
+    }
+    label
+      .setText(`LV${unit.stats.level} / COST${unit.stats.revivalCost}`)
+      .setPosition(
+        center.x,
+        center.y + layout.rect.height / 2 - 6 * layout.scale
+      )
+      .setScale(layout.scale)
+      .setAlpha(presentation.alpha)
+      .setVisible(true);
   }
 
   private createUnitImages(): void {
@@ -563,25 +773,36 @@ export class BattleScene extends Phaser.Scene {
     if (!image) {
       return;
     }
+    image.setVisible(true);
+    image.setDepth(cardImageDepth);
 
+    const presentation = unitCardPresentation[unit.unitType];
+    const borderGeometry = calculateCardBorderGeometry(presentation);
     const border = this.unitCardBorders.get(unit.unitId);
-    const rotation = cardRotationForMovement(
-      this.unitCardPositions.get(unit.unitId) ?? screen,
+    const rotation = updateUnitCardRenderState(
+      {
+        positions: this.unitCardPositions,
+        rotations: this.unitCardRotations
+      },
+      unit.unitId,
       screen,
-      this.unitCardRotations.get(unit.unitId) ?? initialCardRotation(unit.team)
+      unit.team
     );
     if (border) {
+      border.setVisible(true);
+      border.setDepth(cardBorderDepth);
       border.setPosition(screen.x, screen.y);
+      border.setSize(borderGeometry.width, borderGeometry.height);
       border.setAlpha(alpha);
       border.setStrokeStyle(cardBorderWidth, cardBorderColorForTeam(unit.team));
       border.setRotation(rotation);
     }
-    const presentation = unitCardPresentation[unit.unitType];
     const imageLayout = calculateCardImageLayout(
       presentation,
       image.width,
       image.height
     );
+    image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
     const imageCenter = cardImageCenterAt(
       screen,
       rotation,
@@ -591,8 +812,56 @@ export class BattleScene extends Phaser.Scene {
     image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(alpha);
     image.setRotation(rotation);
-    this.unitCardPositions.set(unit.unitId, { ...screen });
-    this.unitCardRotations.set(unit.unitId, rotation);
+  }
+
+  private updateDefeatedUnitImage(
+    unit: UnitState & { unitId: PlayerUnitId; team: "Player" },
+    layout: DefeatedUnitCardLayout,
+    center: Vec2,
+    alpha: number
+  ): void {
+    const image = this.unitImages.get(unit.unitId);
+    if (!image) {
+      return;
+    }
+
+    const border = this.unitCardBorders.get(unit.unitId);
+    if (border) {
+      border
+        .setVisible(true)
+        .setDepth(4)
+        .setPosition(center.x, center.y)
+        .setSize(
+          Math.max(0, layout.rect.width - cardBorderWidth),
+          Math.max(0, layout.rect.height - cardBorderWidth)
+        )
+        .setAlpha(alpha)
+        .setStrokeStyle(
+          cardBorderWidth * layout.scale,
+          cardBorderColorForTeam(unit.team)
+        )
+        .setRotation(0);
+    }
+
+    const inset = cardBorderWidth * 2 * layout.scale;
+    const innerWidth = Math.max(0, layout.rect.width - inset);
+    const innerHeight = Math.max(0, layout.rect.height - inset);
+    const imageScale = Math.min(
+      innerWidth / image.width,
+      innerHeight / image.height
+    );
+    image
+      .setVisible(true)
+      .setDepth(5)
+      .setPosition(center.x, center.y)
+      .setDisplaySize(image.width * imageScale, image.height * imageScale)
+      .setAlpha(alpha)
+      .setRotation(0);
+  }
+
+  private hideUnitImage(unitId: string): void {
+    this.unitImages.get(unitId)?.setVisible(false);
+    this.unitCardBorders.get(unitId)?.setVisible(false);
   }
 
   private updateSummonedUnitImage(summoned: SummonedUnitState, screen: Vec2): void {
@@ -774,4 +1043,13 @@ export class BattleScene extends Phaser.Scene {
 
 function isPlayerUnit(unit: UnitState): unit is UnitState & { unitId: PlayerUnitId; team: "Player" } {
   return unit.team === "Player" && unit.unitId.startsWith("Player");
+}
+
+function containsPoint(rect: UiRect, x: number, y: number): boolean {
+  return (
+    x >= rect.x
+    && x <= rect.x + rect.width
+    && y >= rect.y
+    && y <= rect.y + rect.height
+  );
 }

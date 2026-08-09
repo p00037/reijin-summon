@@ -32,7 +32,15 @@ export type Vec2 = {
   y: number;
 };
 
+export type MpState = {
+  current: number;
+  recoveryProgress: number;
+  leaderDamageProgress: number;
+};
+
 export type UnitStats = {
+  level: number;
+  revivalCost: number;
   maxHp: number;
   moveSpeed: number;
   attackDamage: number;
@@ -64,7 +72,8 @@ export type BattleConfig = {
   summonedUnitLeaderAttackIntervalSeconds: number;
   summonedUnitHealthDecayPerSecond: number;
   summonedUnitMoveSpeed: number;
-  unitRespawnSeconds: number;
+  maxMp: number;
+  leaderDamageMpThresholdRatio: number;
   unitLeaderAttackIntervalSeconds: number;
   elementalMaxHp: number;
   directLeaderDamageMultiplier: number;
@@ -87,7 +96,8 @@ export type BattleCommand =
   | { commandType: "BeginElementalBuild"; team: "Cpu"; unitId: CpuUnitId }
   | { commandType: "PlaceInitialUnit"; team: "Player"; unitId: PlayerUnitId; targetPosition: Vec2 }
   | { commandType: "StartBattle"; team: "Player" }
-  | { commandType: "Summon"; team: TeamId };
+  | { commandType: "Summon"; team: TeamId }
+  | { commandType: "ReviveUnit"; team: TeamId; unitId: UnitId; targetPosition: Vec2 };
 
 export type CommandType = BattleCommand["commandType"];
 
@@ -110,7 +120,7 @@ export type UnitState = {
   currentHp: number;
   mode: UnitMode;
   buildTimerSeconds: number;
-  respawnTimerSeconds: number;
+  defeatedOrder: number | null;
   attackTimerSeconds: number;
   leaderAttackTimerSeconds: number;
   leaderHealingElapsedSeconds: number;
@@ -163,4 +173,11 @@ export type BattleState = {
   summonedUnits: SummonedUnitState[];
   recentAttackEvents: AttackEvent[];
   nextSummonedUnitId: number;
+  playerMp: number;
+  cpuMp: number;
+  playerMpRecoveryProgress: number;
+  cpuMpRecoveryProgress: number;
+  playerLeaderDamageProgress: number;
+  cpuLeaderDamageProgress: number;
+  nextDefeatedOrder: number;
 };

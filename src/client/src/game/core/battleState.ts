@@ -1,4 +1,4 @@
-import type { BattleConfig, BattleState, LeaderState, TeamId, UnitId, UnitState, UnitType } from "./types";
+import type { BattleConfig, BattleState, LeaderState, MpState, TeamId, UnitId, UnitState, UnitType } from "./types";
 
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
@@ -23,7 +23,14 @@ export function createDefaultBattleState(config: BattleConfig): BattleState {
     elementals: [],
     summonedUnits: [],
     recentAttackEvents: [],
-    nextSummonedUnitId: 1
+    nextSummonedUnitId: 1,
+    playerMp: 0,
+    cpuMp: 0,
+    playerMpRecoveryProgress: 0,
+    cpuMpRecoveryProgress: 0,
+    playerLeaderDamageProgress: 0,
+    cpuLeaderDamageProgress: 0,
+    nextDefeatedOrder: 1
   };
 }
 
@@ -67,6 +74,38 @@ export function setSummonGauge(state: BattleState, team: TeamId, gauge: number):
   }
 }
 
+export function getMpState(state: BattleState, team: TeamId): MpState {
+  return team === "Player"
+    ? {
+        current: state.playerMp,
+        recoveryProgress: state.playerMpRecoveryProgress,
+        leaderDamageProgress: state.playerLeaderDamageProgress
+      }
+    : {
+        current: state.cpuMp,
+        recoveryProgress: state.cpuMpRecoveryProgress,
+        leaderDamageProgress: state.cpuLeaderDamageProgress
+      };
+}
+
+export function setMpState(
+  state: BattleState,
+  team: TeamId,
+  current: number,
+  recoveryProgress: number,
+  leaderDamageProgress: number
+): void {
+  if (team === "Player") {
+    state.playerMp = current;
+    state.playerMpRecoveryProgress = recoveryProgress;
+    state.playerLeaderDamageProgress = leaderDamageProgress;
+  } else {
+    state.cpuMp = current;
+    state.cpuMpRecoveryProgress = recoveryProgress;
+    state.cpuLeaderDamageProgress = leaderDamageProgress;
+  }
+}
+
 function createLeader(team: TeamId, position: { x: number; y: number }, maxHp: number): LeaderState {
   return {
     leaderId: team,
@@ -96,7 +135,7 @@ function createUnit(
     currentHp: stats.maxHp,
     mode: "Active",
     buildTimerSeconds: 0,
-    respawnTimerSeconds: 0,
+    defeatedOrder: null,
     attackTimerSeconds: 0,
     leaderAttackTimerSeconds: 0,
     leaderHealingElapsedSeconds: 0,

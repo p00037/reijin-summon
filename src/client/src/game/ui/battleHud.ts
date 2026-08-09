@@ -22,6 +22,8 @@ type HudGauge = {
   fill: Phaser.GameObjects.Rectangle;
   text: Phaser.GameObjects.Text;
   width: number;
+  height: number;
+  orientation: "Horizontal" | "Vertical";
 };
 
 type ImageHudButton = {
@@ -40,10 +42,11 @@ const hudDepth = 3;
 export class BattleHud {
   private readonly scene: Phaser.Scene;
   private readonly layout: BattleLayout;
-  private readonly topBackground: Phaser.GameObjects.Rectangle;
-  private readonly bottomBackground: Phaser.GameObjects.Rectangle;
+  private readonly leftBackground: Phaser.GameObjects.Rectangle;
+  private readonly waitingBackground: Phaser.GameObjects.Rectangle;
   private readonly playerHp: HudGauge;
   private readonly cpuHp: HudGauge;
+  private readonly mp: HudGauge;
   private readonly timeText: Phaser.GameObjects.Text;
   private readonly summonGauge: HudGauge;
   private readonly resultText: Phaser.GameObjects.Text;
@@ -59,15 +62,16 @@ export class BattleHud {
     this.scene = scene;
     this.layout = layout;
 
-    this.topBackground = createPanel(scene, layout.topBar);
-    this.bottomBackground = createPanel(scene, layout.bottomBar);
+    this.leftBackground = createPanel(scene, layout.leftPanel);
+    this.waitingBackground = createPanel(scene, layout.waitingArea);
     this.playerHp = createGauge(
       scene,
       layout.playerHp.x,
       layout.playerHp.y,
       layout.playerHp.width,
       layout.playerHp.height,
-      0x22c55e
+      0x22c55e,
+      "Vertical"
     );
     this.cpuHp = createGauge(
       scene,
@@ -75,12 +79,22 @@ export class BattleHud {
       layout.cpuHp.y,
       layout.cpuHp.width,
       layout.cpuHp.height,
-      0xef4444
+      0xef4444,
+      "Vertical"
+    );
+    this.mp = createGauge(
+      scene,
+      layout.mp.x,
+      layout.mp.y,
+      layout.mp.width,
+      layout.mp.height,
+      0x3b82f6,
+      "Vertical"
     );
     this.timeText = scene.add
       .text(
-        layout.topBar.x + layout.topBar.width / 2,
-        layout.topBar.y + layout.topBar.height / 2,
+        layout.remainingTime.x + layout.remainingTime.width / 2,
+        layout.remainingTime.y + layout.remainingTime.height / 2,
         "",
         titleStyle(18, "#f8fafc")
       )
@@ -93,7 +107,8 @@ export class BattleHud {
       layout.summonGauge.y,
       layout.summonGauge.width,
       layout.summonGauge.height,
-      0xfacc15
+      0xfacc15,
+      "Vertical"
     );
     this.resultText = scene.add
       .text(
@@ -133,10 +148,11 @@ export class BattleHud {
   }
 
   destroy(): void {
-    this.topBackground.destroy();
-    this.bottomBackground.destroy();
+    this.leftBackground.destroy();
+    this.waitingBackground.destroy();
     destroyGauge(this.playerHp);
     destroyGauge(this.cpuHp);
+    destroyGauge(this.mp);
     this.timeText.destroy();
     destroyGauge(this.summonGauge);
     this.resultText.destroy();
@@ -149,13 +165,11 @@ export class BattleHud {
   }
 
   private applyModel(model: BattleHudModel): void {
-    this.playerHp.text.setText(model.playerHp.text);
-    this.playerHp.fill.width = this.playerHp.width * model.playerHp.ratio;
-    this.cpuHp.text.setText(model.cpuHp.text);
-    this.cpuHp.fill.width = this.cpuHp.width * model.cpuHp.ratio;
+    applyGaugeModel(this.playerHp, model.playerHp);
+    applyGaugeModel(this.cpuHp, model.cpuHp);
+    applyGaugeModel(this.mp, model.mp);
     this.timeText.setText(model.remainingTimeText);
-    this.summonGauge.text.setText(model.summonGauge.text);
-    this.summonGauge.fill.width = this.summonGauge.width * model.summonGauge.ratio;
+    applyGaugeModel(this.summonGauge, model.summonGauge);
     this.resultText.setText(model.resultText);
     this.setImageButtonEnabled(this.buildButton, model.canBuild);
     this.setImageButtonEnabled(this.summonButton, model.canSummon);
@@ -241,23 +255,54 @@ function createGauge(
   y: number,
   width: number,
   height: number,
-  color: number
+  color: number,
+  orientation: "Horizontal" | "Vertical"
 ): HudGauge {
   const innerWidth = width - 4;
+  const innerHeight = height - 4;
   const background = scene.add
     .rectangle(x, y, width, height, 0x020617, 1)
     .setOrigin(0, 0)
     .setStrokeStyle(1, 0x475569, 1)
     .setDepth(hudDepth);
   const fill = scene.add
-    .rectangle(x + 2, y + 2, 0, height - 4, color, 1)
+    .rectangle(
+      x + 2,
+      orientation === "Vertical" ? y + height - 2 : y + 2,
+      orientation === "Vertical" ? innerWidth : 0,
+      orientation === "Vertical" ? 0 : innerHeight,
+      color,
+      1
+    )
     .setOrigin(0, 0)
     .setDepth(hudDepth);
   const text = scene.add
-    .text(x + width / 2, y + height / 2, "", titleStyle(15, "#f8fafc"))
+    .text(x + width / 2, y + height / 2, "", titleStyle(12, "#f8fafc"))
     .setOrigin(0.5)
-    .setDepth(hudDepth);
-  return { background, fill, text, width: innerWidth };
+    .setDepth(hudDepth)
+    .setStroke("#020617", 3);
+  if (orientation === "Vertical") {
+    text.setAngle(-90);
+  }
+  return {
+    background,
+    fill,
+    text,
+    width: innerWidth,
+    height: innerHeight,
+    orientation
+  };
+}
+
+function applyGaugeModel(gauge: HudGauge, model: BattleHudModel["playerHp"]): void {
+  gauge.text.setText(model.text);
+  if (gauge.orientation === "Vertical") {
+    const fillHeight = gauge.height * model.ratio;
+    gauge.fill.height = fillHeight;
+    gauge.fill.y = gauge.background.y + gauge.background.height - 2 - fillHeight;
+    return;
+  }
+  gauge.fill.width = gauge.width * model.ratio;
 }
 
 function destroyGauge(gauge: HudGauge): void {

@@ -83,12 +83,7 @@ export function tickMovement(
 
 export function tickCombat(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
   state.recentAttackEvents = [];
-
-  for (const unit of state.units) {
-    if (unit.mode !== "Defeated" && unit.currentHp <= 0) {
-      defeatUnit(unit, config);
-    }
-  }
+  markDefeatedUnits(state);
 
   for (const unit of state.units) {
     if (unit.mode !== "Active" || !isUnitAlive(unit)) {
@@ -127,9 +122,13 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
     }
   }
 
+  markDefeatedUnits(state);
+}
+
+export function markDefeatedUnits(state: BattleState): void {
   for (const unit of state.units) {
     if (unit.mode !== "Defeated" && unit.currentHp <= 0) {
-      defeatUnit(unit, config);
+      defeatUnit(state, unit);
     }
   }
 }
@@ -224,27 +223,6 @@ export function calculateUnitHealingElapsed(
     });
   }
   return elapsedByUnit;
-}
-
-export function tickRespawns(state: BattleState, deltaSeconds: number): void {
-  for (const unit of state.units) {
-    if (unit.mode !== "Defeated") {
-      continue;
-    }
-    unit.respawnTimerSeconds = Math.max(0, unit.respawnTimerSeconds - deltaSeconds);
-    if (unit.respawnTimerSeconds > 0) {
-      continue;
-    }
-    unit.mode = "Active";
-    unit.currentHp = unit.stats.maxHp;
-    unit.position = { ...unit.spawnPosition };
-    unit.destination = { ...unit.spawnPosition };
-    unit.attackTimerSeconds = 0;
-    unit.leaderAttackTimerSeconds = 0;
-    resetUnitHealingTimers(unit);
-    unit.buildTimerSeconds = 0;
-    unit.pendingElementalId = null;
-  }
 }
 
 function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
@@ -346,10 +324,12 @@ function applyDamage(target: AttackTarget, damage: number, config: BattleConfig)
   target.target.currentHp = Math.max(0, target.target.currentHp - damage);
 }
 
-function defeatUnit(unit: UnitState, config: BattleConfig): void {
+function defeatUnit(state: BattleState, unit: UnitState): void {
   unit.mode = "Defeated";
   unit.currentHp = 0;
-  unit.respawnTimerSeconds = config.unitRespawnSeconds;
+  unit.defeatedOrder = state.nextDefeatedOrder++;
+  unit.attackTimerSeconds = 0;
+  unit.leaderAttackTimerSeconds = 0;
   resetUnitHealingTimers(unit);
   unit.buildTimerSeconds = 0;
   unit.pendingElementalId = null;

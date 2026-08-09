@@ -12,3 +12,4 @@ dev-server.*.log
 /images
 /tmp
 /.worktrees/
+/.superpowers/brainstorm

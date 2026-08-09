@@ -1,9 +1,25 @@
 import { findLeader, isUnitAlive } from "../core/battleState";
 import type { BattleCommand, BattleConfig, BattleState, CpuUnitId, UnitState } from "../core/types";
 import { canPlaceElementalAtUnit, countCompletedElementals } from "../rules/elementalSystem";
+import { canReviveUnit } from "../rules/resurrectionSystem";
 import { canSummon } from "../rules/summonSystem";
 
 export function planCpuCommands(state: BattleState, config: BattleConfig): BattleCommand[] {
+  const cpuLeader = findLeader(state, "Cpu");
+  const reviveTargetPosition = { ...cpuLeader.position };
+  const reviveCandidate = state.units
+    .filter((unit) => unit.team === "Cpu" && unit.mode === "Defeated" && unit.defeatedOrder !== null)
+    .sort((left, right) => left.defeatedOrder! - right.defeatedOrder!)
+    .find((unit) => canReviveUnit(state, config, "Cpu", unit.unitId, reviveTargetPosition));
+  if (reviveCandidate) {
+    return [{
+      commandType: "ReviveUnit",
+      team: "Cpu",
+      unitId: reviveCandidate.unitId,
+      targetPosition: reviveTargetPosition
+    }];
+  }
+
   if (canSummon(state, config, "Cpu")) {
     return [{ commandType: "Summon", team: "Cpu" }];
   }

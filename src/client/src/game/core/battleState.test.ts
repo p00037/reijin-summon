@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "./battleConfig";
-import { createDefaultBattleState, findLeader, findUnit } from "./battleState";
+import { createDefaultBattleState, findLeader, findUnit, getMpState, setMpState } from "./battleState";
 import type { BattleCommand } from "./types";
 
 test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常ユニットを持つ", () => {
@@ -48,6 +48,8 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
     },
     {
       Melee: {
+        level: 3,
+        revivalCost: 3,
         maxHp: 1100,
         moveSpeed: 8.2 / 40,
         attackDamage: 61,
@@ -57,6 +59,8 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
         elementalAttackMultiplier: 2
       },
       Speed: {
+        level: 3,
+        revivalCost: 3,
         maxHp: 1060,
         moveSpeed: 8.2 / 22,
         attackDamage: 53,
@@ -66,6 +70,8 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
         elementalAttackMultiplier: 1
       },
       Ranged: {
+        level: 3,
+        revivalCost: 3,
         maxHp: 1025,
         moveSpeed: 8.2 / 32,
         attackDamage: 36,
@@ -163,3 +169,34 @@ const invalidCpuBuildCommand: BattleCommand = {
 
 assert.equal(invalidPlayerMoveCommand.commandType, "MoveUnit");
 assert.equal(invalidCpuBuildCommand.commandType, "BeginElementalBuild");
+
+test("初期状態のMPはすべてゼロで、全ユニットのLVとCOSTは3である", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+
+  assert.equal(state.playerMp, 0);
+  assert.equal(state.cpuMp, 0);
+  assert.equal(state.playerMpRecoveryProgress, 0);
+  assert.equal(state.cpuMpRecoveryProgress, 0);
+  assert.equal(state.playerLeaderDamageProgress, 0);
+  assert.equal(state.cpuLeaderDamageProgress, 0);
+  assert.equal(state.nextDefeatedOrder, 1);
+  assert(state.units.every((unit) => unit.stats.level === 3));
+  assert(state.units.every((unit) => unit.stats.revivalCost === 3));
+  assert(state.units.every((unit) => unit.defeatedOrder === null));
+});
+
+test("チーム別MPアクセサーは対象チームの状態だけを更新する", () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  setMpState(state, "Player", 4, 0.25, 120);
+
+  assert.deepEqual(getMpState(state, "Player"), {
+    current: 4,
+    recoveryProgress: 0.25,
+    leaderDamageProgress: 120
+  });
+  assert.deepEqual(getMpState(state, "Cpu"), {
+    current: 0,
+    recoveryProgress: 0,
+    leaderDamageProgress: 0
+  });
+});

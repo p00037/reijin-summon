@@ -1,8 +1,47 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createDefaultBattleConfig } from "../core/battleConfig";
-import { createDefaultBattleState } from "../core/battleState";
+import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
 import { planCpuCommands } from "./cpuPlanner";
+
+test("CPU revives the oldest defeated unit at its leader when it has enough MP", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const older = findUnit(state, "CpuSpeed");
+  const newer = findUnit(state, "CpuMelee");
+  older.mode = "Defeated";
+  older.currentHp = 0;
+  older.defeatedOrder = 1;
+  newer.mode = "Defeated";
+  newer.currentHp = 0;
+  newer.defeatedOrder = 2;
+  state.phase = "InProgress";
+  state.cpuMp = 3;
+
+  assert.deepEqual(planCpuCommands(state, config), [{
+    commandType: "ReviveUnit",
+    team: "Cpu",
+    unitId: "CpuSpeed",
+    targetPosition: { ...findLeader(state, "Cpu").position }
+  }]);
+});
+
+test("CPU keeps existing planning when MP is insufficient for revival", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const unit = findUnit(state, "CpuMelee");
+  unit.mode = "Defeated";
+  unit.currentHp = 0;
+  unit.defeatedOrder = 1;
+  state.phase = "InProgress";
+  state.cpuMp = 2;
+
+  assert.deepEqual(planCpuCommands(state, config), [{
+    commandType: "BeginElementalBuild",
+    team: "Cpu",
+    unitId: "CpuSpeed"
+  }]);
+});
 
 test("CPUは召喚可能なら召喚を最優先する", () => {
   const config = createDefaultBattleConfig();

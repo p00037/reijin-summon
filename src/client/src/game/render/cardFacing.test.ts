@@ -1,10 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cardRotationForMovement, initialCardRotation } from "./cardFacing";
+import {
+  cardRotationAfterRevival,
+  cardRotationForMovement,
+  initialCardRotation
+} from "./cardFacing";
 
 test("CPU cards start upside down", () => {
   assert.equal(initialCardRotation("Player"), 0);
   assert.equal(initialCardRotation("Cpu"), Math.PI);
+});
+
+test("player revival faces upward without changing CPU orientation", () => {
+  assert.equal(cardRotationAfterRevival("Player"), 0);
+  assert.equal(cardRotationAfterRevival("Cpu"), Math.PI);
 });
 
 test("movement faces direction and stops retain the last rotation", () => {
