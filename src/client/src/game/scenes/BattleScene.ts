@@ -3,6 +3,7 @@ import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive } from "../core/battleState";
 import {
   clearPointerDrag,
+  clearUnitDrag,
   shouldKeepMoveMarker,
   transitionPointerDragRelease,
   transitionPointerDragStart
@@ -276,6 +277,10 @@ export class BattleScene extends Phaser.Scene {
         : null;
       if (unit?.mode === "Defeated" && presentation?.available) {
         if (!this.revivalDraggedUnitId) {
+          this.draggedUnitIdsByPointer = clearUnitDrag(
+            this.draggedUnitIdsByPointer,
+            defeatedCard.unitId
+          );
           this.revivalDraggedUnitId = defeatedCard.unitId;
           this.revivalDragPointerId = pointer.id;
           this.revivalPointerPosition = point;
@@ -380,8 +385,7 @@ export class BattleScene extends Phaser.Scene {
       },
       targetPosition
     );
-    this.revivalDraggedUnitId = transition.draggedUnitId;
-    this.revivalPointerPosition = null;
+    this.clearRevivalDrag();
     if (
       transition.command
       && canReviveUnit(

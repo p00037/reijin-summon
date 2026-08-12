@@ -68,6 +68,19 @@ export function clearPointerDrag(
   return draggedUnitIdsByPointer;
 }
 
+export function clearUnitDrag(
+  state: PointerDragState,
+  unitId: PlayerUnitId
+): Map<number, PlayerUnitId> {
+  const draggedUnitIdsByPointer = new Map(state);
+  for (const [pointerId, draggedUnitId] of draggedUnitIdsByPointer) {
+    if (draggedUnitId === unitId) {
+      draggedUnitIdsByPointer.delete(pointerId);
+    }
+  }
+  return draggedUnitIdsByPointer;
+}
+
 export type PointerDragMovementState = {
   draggedUnitIdsByPointer: PointerDragState;
   moveMarkers: ReadonlyMap<PlayerUnitId, Vec2>;

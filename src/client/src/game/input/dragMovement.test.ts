@@ -4,6 +4,7 @@ import type { PlayerUnitId, UnitState, Vec2 } from "../core/types";
 import {
   canCommitDragMovement,
   clearPointerDrag,
+  clearUnitDrag,
   shouldKeepMoveMarker,
   transitionDragRelease,
   transitionPointerDragRelease,
@@ -183,6 +184,33 @@ test("clears only the specified pointer drag", () => {
 
   assert.deepEqual([...next], [[2, "PlayerSpeed"]]);
   assert.equal(prior.size, 2);
+});
+
+test("revival clears every stale pointer for its unit before later releases", () => {
+  const prior = new Map<number, PlayerUnitId>([
+    [1, "PlayerMelee"],
+    [2, "PlayerSpeed"],
+    [3, "PlayerMelee"]
+  ]);
+
+  const afterRevivalStart = clearUnitDrag(prior, "PlayerMelee");
+  const staleRelease = transitionPointerDragRelease(
+    {
+      draggedUnitIdsByPointer: afterRevivalStart,
+      moveMarkers: new Map()
+    },
+    1,
+    validRelease,
+    { x: 4, y: -2 }
+  );
+
+  assert.deepEqual([...afterRevivalStart], [[2, "PlayerSpeed"]]);
+  assert.equal(staleRelease.command, null);
+  assert.deepEqual([...prior], [
+    [1, "PlayerMelee"],
+    [2, "PlayerSpeed"],
+    [3, "PlayerMelee"]
+  ]);
 });
 
 test("releases pointers in any order for their assigned units", () => {
