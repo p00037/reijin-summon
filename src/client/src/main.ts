@@ -10,6 +10,9 @@ new Phaser.Game({
   width: browserSizeCanvas.width,
   height: browserSizeCanvas.height,
   backgroundColor: "#101827",
+  input: {
+    activePointers: 10
+  },
   scene: [TitleScene, BattleScene],
   scale: {
     mode: Phaser.Scale.FIT,

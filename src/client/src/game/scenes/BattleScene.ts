@@ -2,8 +2,10 @@ import Phaser from "phaser";
 import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive } from "../core/battleState";
 import {
+  clearPointerDrag,
   shouldKeepMoveMarker,
-  transitionDragRelease
+  transitionPointerDragRelease,
+  transitionPointerDragStart
 } from "../input/dragMovement";
 import { transitionRevivalDragRelease } from "../input/revivalDrag";
 import type {
@@ -112,8 +114,9 @@ export class BattleScene extends Phaser.Scene {
   private summonedCardPositions = new Map<number, Vec2>();
   private summonedCardRotations = new Map<number, number>();
   private selectedUnitId: PlayerUnitId | null = null;
-  private draggedUnitId: PlayerUnitId | null = null;
+  private draggedUnitIdsByPointer = new Map<number, PlayerUnitId>();
   private revivalDraggedUnitId: PlayerUnitId | null = null;
+  private revivalDragPointerId: number | null = null;
   private revivalPointerPosition: Vec2 | null = null;
   private defeatedUnitLayouts: DefeatedUnitCardLayout[] = [];
   private defeatedUnitLabels = new Map<PlayerUnitId, Phaser.GameObjects.Text>();
@@ -154,8 +157,9 @@ export class BattleScene extends Phaser.Scene {
     this.summonedCardPositions = new Map();
     this.summonedCardRotations = new Map();
     this.selectedUnitId = null;
-    this.draggedUnitId = null;
+    this.draggedUnitIdsByPointer = new Map();
     this.revivalDraggedUnitId = null;
+    this.revivalDragPointerId = null;
     this.revivalPointerPosition = null;
     this.defeatedUnitLayouts = [];
     this.defeatedUnitLabels = new Map();
@@ -203,9 +207,14 @@ export class BattleScene extends Phaser.Scene {
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.handlePointerMove(pointer));
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer));
-    this.input.on("pointerupoutside", () => {
-      this.draggedUnitId = null;
-      this.clearRevivalDrag();
+    this.input.on("pointerupoutside", (pointer: Phaser.Input.Pointer) => {
+      this.draggedUnitIdsByPointer = clearPointerDrag(
+        this.draggedUnitIdsByPointer,
+        pointer.id
+      );
+      if (this.revivalDragPointerId === pointer.id) {
+        this.clearRevivalDrag();
+      }
     });
     this.draw();
   }
@@ -227,6 +236,7 @@ export class BattleScene extends Phaser.Scene {
     }
     this.session.tick(deltaSeconds);
     if (this.session.state.result !== "InProgress") {
+      this.draggedUnitIdsByPointer.clear();
       this.clearRevivalDrag();
     }
 
@@ -234,8 +244,13 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
-    this.draggedUnitId = null;
-    this.clearRevivalDrag();
+    this.draggedUnitIdsByPointer = clearPointerDrag(
+      this.draggedUnitIdsByPointer,
+      pointer.id
+    );
+    if (this.revivalDragPointerId === pointer.id) {
+      this.clearRevivalDrag();
+    }
     const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
     if (
       this.session.state.result !== "InProgress"
@@ -260,8 +275,11 @@ export class BattleScene extends Phaser.Scene {
           )
         : null;
       if (unit?.mode === "Defeated" && presentation?.available) {
-        this.revivalDraggedUnitId = defeatedCard.unitId;
-        this.revivalPointerPosition = point;
+        if (!this.revivalDraggedUnitId) {
+          this.revivalDraggedUnitId = defeatedCard.unitId;
+          this.revivalDragPointerId = pointer.id;
+          this.revivalPointerPosition = point;
+        }
       }
       return;
     }
@@ -275,12 +293,22 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
-    this.selectedUnitId = unit.unitId;
-    this.draggedUnitId = unit.unitId;
+    const transition = transitionPointerDragStart(
+      this.draggedUnitIdsByPointer,
+      pointer.id,
+      unit.unitId
+    );
+    this.draggedUnitIdsByPointer = transition.draggedUnitIdsByPointer;
+    if (transition.started) {
+      this.selectedUnitId = unit.unitId;
+    }
   }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {
-    if (!this.revivalDraggedUnitId) {
+    if (
+      !this.revivalDraggedUnitId
+      || this.revivalDragPointerId !== pointer.id
+    ) {
       return;
     }
 
@@ -292,35 +320,36 @@ export class BattleScene extends Phaser.Scene {
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
     const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
-    if (this.revivalDraggedUnitId) {
+    const draggedUnitId = this.draggedUnitIdsByPointer.get(pointer.id) ?? null;
+    if (draggedUnitId) {
+      const unit = this.session.state.units.find(
+        (candidate) => candidate.unitId === draggedUnitId
+      );
+      const transition = transitionPointerDragRelease(
+        {
+          draggedUnitIdsByPointer: this.draggedUnitIdsByPointer,
+          moveMarkers: this.moveMarkers
+        },
+        pointer.id,
+        {
+          phase: this.session.state.phase,
+          overHud: this.hud.contains(point.x, point.y),
+          insideBattlefield: this.fieldBounds().contains(point.x, point.y),
+          targetUnitAlive: unit !== undefined && isUnitAlive(unit)
+        },
+        this.screenToWorld(point.x, point.y)
+      );
+      this.draggedUnitIdsByPointer = transition.draggedUnitIdsByPointer;
+      this.moveMarkers = transition.moveMarkers;
+      if (transition.command && unit) {
+        this.session.applyCommand(transition.command);
+      }
+      return;
+    }
+
+    if (this.revivalDragPointerId === pointer.id) {
       this.handleRevivalPointerUp(point);
-      return;
     }
-
-    const draggedUnitId = this.draggedUnitId;
-    const unit = this.session.state.units.find(
-      (candidate) => candidate.unitId === draggedUnitId
-    );
-    const transition = transitionDragRelease(
-      {
-        draggedUnitId,
-        moveMarkers: this.moveMarkers
-      },
-      {
-        phase: this.session.state.phase,
-        overHud: this.hud.contains(point.x, point.y),
-        insideBattlefield: this.fieldBounds().contains(point.x, point.y),
-        targetUnitAlive: unit !== undefined && isUnitAlive(unit)
-      },
-      this.screenToWorld(point.x, point.y)
-    );
-    this.draggedUnitId = transition.draggedUnitId;
-    this.moveMarkers = transition.moveMarkers;
-    if (!transition.command || !unit) {
-      return;
-    }
-
-    this.session.applyCommand(transition.command);
   }
 
   private handleRevivalPointerUp(point: Vec2): void {
@@ -376,6 +405,7 @@ export class BattleScene extends Phaser.Scene {
 
   private clearRevivalDrag(): void {
     this.revivalDraggedUnitId = null;
+    this.revivalDragPointerId = null;
     this.revivalPointerPosition = null;
   }
 
