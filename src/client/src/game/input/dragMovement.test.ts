@@ -1,10 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { UnitState } from "../core/types";
+import type { PlayerUnitId, UnitState, Vec2 } from "../core/types";
 import {
   canCommitDragMovement,
+  clearPointerDrag,
+  clearUnitDrag,
   shouldKeepMoveMarker,
-  transitionDragRelease
+  transitionDragRelease,
+  transitionPointerDragRelease,
+  transitionPointerDragStart
 } from "./dragMovement";
 
 test("commits drag movement only for a valid release during the battle", () => {
@@ -140,6 +144,121 @@ test("invalid drag release clears dragging without issuing a command or changing
   assert.deepEqual([...priorMarkers], [
     ["PlayerMelee", { x: -3, y: 1 }]
   ]);
+});
+
+test("assigns different living units to independent pointers", () => {
+  const first = transitionPointerDragStart(new Map(), 17, "PlayerMelee");
+  const second = transitionPointerDragStart(
+    first.draggedUnitIdsByPointer,
+    99,
+    "PlayerSpeed"
+  );
+
+  assert.equal(first.started, true);
+  assert.equal(second.started, true);
+  assert.deepEqual([...second.draggedUnitIdsByPointer], [
+    [17, "PlayerMelee"],
+    [99, "PlayerSpeed"]
+  ]);
+});
+
+test("does not assign one unit to multiple pointers", () => {
+  const first = transitionPointerDragStart(new Map(), 1, "PlayerMelee");
+  const duplicate = transitionPointerDragStart(
+    first.draggedUnitIdsByPointer,
+    2,
+    "PlayerMelee"
+  );
+
+  assert.equal(duplicate.started, false);
+  assert.deepEqual([...duplicate.draggedUnitIdsByPointer], [[1, "PlayerMelee"]]);
+});
+
+test("clears only the specified pointer drag", () => {
+  const prior = new Map<number, PlayerUnitId>([
+    [1, "PlayerMelee"],
+    [2, "PlayerSpeed"]
+  ]);
+
+  const next = clearPointerDrag(prior, 1);
+
+  assert.deepEqual([...next], [[2, "PlayerSpeed"]]);
+  assert.equal(prior.size, 2);
+});
+
+test("revival clears every stale pointer for its unit before later releases", () => {
+  const prior = new Map<number, PlayerUnitId>([
+    [1, "PlayerMelee"],
+    [2, "PlayerSpeed"],
+    [3, "PlayerMelee"]
+  ]);
+
+  const afterRevivalStart = clearUnitDrag(prior, "PlayerMelee");
+  const staleRelease = transitionPointerDragRelease(
+    {
+      draggedUnitIdsByPointer: afterRevivalStart,
+      moveMarkers: new Map()
+    },
+    1,
+    validRelease,
+    { x: 4, y: -2 }
+  );
+
+  assert.deepEqual([...afterRevivalStart], [[2, "PlayerSpeed"]]);
+  assert.equal(staleRelease.command, null);
+  assert.deepEqual([...prior], [
+    [1, "PlayerMelee"],
+    [2, "PlayerSpeed"],
+    [3, "PlayerMelee"]
+  ]);
+});
+
+test("releases pointers in any order for their assigned units", () => {
+  const state = {
+    draggedUnitIdsByPointer: new Map<number, PlayerUnitId>([
+      [1, "PlayerMelee"],
+      [2, "PlayerSpeed"]
+    ]),
+    moveMarkers: new Map<PlayerUnitId, Vec2>()
+  };
+  const speed = transitionPointerDragRelease(
+    state,
+    2,
+    validRelease,
+    { x: 3, y: -1 }
+  );
+  const melee = transitionPointerDragRelease(
+    {
+      draggedUnitIdsByPointer: speed.draggedUnitIdsByPointer,
+      moveMarkers: speed.moveMarkers
+    },
+    1,
+    validRelease,
+    { x: 4, y: -2 }
+  );
+
+  assert.equal(speed.command?.unitId, "PlayerSpeed");
+  assert.deepEqual([...speed.draggedUnitIdsByPointer], [[1, "PlayerMelee"]]);
+  assert.equal(melee.command?.unitId, "PlayerMelee");
+  assert.equal(melee.draggedUnitIdsByPointer.size, 0);
+});
+
+test("invalid release clears only its pointer", () => {
+  const transition = transitionPointerDragRelease(
+    {
+      draggedUnitIdsByPointer: new Map<number, PlayerUnitId>([
+        [1, "PlayerMelee"],
+        [2, "PlayerSpeed"]
+      ]),
+      moveMarkers: new Map()
+    },
+    1,
+    { ...validRelease, insideBattlefield: false },
+    { x: 4, y: -2 }
+  );
+
+  assert.equal(transition.command, null);
+  assert.deepEqual([...transition.draggedUnitIdsByPointer], [[2, "PlayerSpeed"]]);
 });
 
 const validRelease = {

@@ -38,6 +38,82 @@ export type DragReleaseTransition = {
   > | null;
 };
 
+export type PointerDragState = ReadonlyMap<number, PlayerUnitId>;
+
+export type PointerDragStartTransition = {
+  draggedUnitIdsByPointer: Map<number, PlayerUnitId>;
+  started: boolean;
+};
+
+export function transitionPointerDragStart(
+  state: PointerDragState,
+  pointerId: number,
+  unitId: PlayerUnitId
+): PointerDragStartTransition {
+  const draggedUnitIdsByPointer = new Map(state);
+  draggedUnitIdsByPointer.delete(pointerId);
+  if ([...draggedUnitIdsByPointer.values()].includes(unitId)) {
+    return { draggedUnitIdsByPointer, started: false };
+  }
+  draggedUnitIdsByPointer.set(pointerId, unitId);
+  return { draggedUnitIdsByPointer, started: true };
+}
+
+export function clearPointerDrag(
+  state: PointerDragState,
+  pointerId: number
+): Map<number, PlayerUnitId> {
+  const draggedUnitIdsByPointer = new Map(state);
+  draggedUnitIdsByPointer.delete(pointerId);
+  return draggedUnitIdsByPointer;
+}
+
+export function clearUnitDrag(
+  state: PointerDragState,
+  unitId: PlayerUnitId
+): Map<number, PlayerUnitId> {
+  const draggedUnitIdsByPointer = new Map(state);
+  for (const [pointerId, draggedUnitId] of draggedUnitIdsByPointer) {
+    if (draggedUnitId === unitId) {
+      draggedUnitIdsByPointer.delete(pointerId);
+    }
+  }
+  return draggedUnitIdsByPointer;
+}
+
+export type PointerDragMovementState = {
+  draggedUnitIdsByPointer: PointerDragState;
+  moveMarkers: ReadonlyMap<PlayerUnitId, Vec2>;
+};
+
+export type PointerDragReleaseTransition = {
+  draggedUnitIdsByPointer: Map<number, PlayerUnitId>;
+  moveMarkers: Map<PlayerUnitId, Vec2>;
+  command: DragReleaseTransition["command"];
+};
+
+export function transitionPointerDragRelease(
+  state: PointerDragMovementState,
+  pointerId: number,
+  context: DragReleaseContext,
+  targetPosition: Vec2
+): PointerDragReleaseTransition {
+  const draggedUnitId = state.draggedUnitIdsByPointer.get(pointerId) ?? null;
+  const release = transitionDragRelease(
+    { draggedUnitId, moveMarkers: state.moveMarkers },
+    context,
+    targetPosition
+  );
+  return {
+    draggedUnitIdsByPointer: clearPointerDrag(
+      state.draggedUnitIdsByPointer,
+      pointerId
+    ),
+    moveMarkers: release.moveMarkers,
+    command: release.command
+  };
+}
+
 export function transitionDragRelease(
   state: DragMovementState,
   context: DragReleaseContext,
