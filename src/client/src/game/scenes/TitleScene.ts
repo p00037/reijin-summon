@@ -18,7 +18,7 @@ export class TitleScene extends Phaser.Scene {
       .setBackgroundColor("#101827");
 
     this.add
-      .text(width / 2, height / 2 - 80, "The Eternal Wheel MVP", withCanvasTextResolution({
+      .text(width / 2, height / 2 - 80, "The Eternal Wheel", withCanvasTextResolution({
         color: "#f8fafc",
         fontFamily: "Arial, sans-serif",
         fontSize: "40px"
@@ -26,7 +26,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 - 30, "Command units, build elementals, and summon a decisive force.", withCanvasTextResolution({
+      .text(width / 2, height / 2 - 30, "カードを編成し、魔法陣を築き、召喚獣と戦おう。", withCanvasTextResolution({
         color: "#cbd5e1",
         fontFamily: "Arial, sans-serif",
         fontSize: "16px"
@@ -40,7 +40,7 @@ export class TitleScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x93c5fd, 1)
       .setInteractive({ useHandCursor: true });
     const label = this.add
-      .text(width / 2, height / 2 + 48, "Start Battle", withCanvasTextResolution({
+      .text(width / 2, height / 2 + 48, "デッキ編成へ", withCanvasTextResolution({
         color: "#ffffff",
         fontFamily: "Arial, sans-serif",
         fontSize: "18px"
@@ -49,7 +49,7 @@ export class TitleScene extends Phaser.Scene {
 
     button.on("pointerover", () => button.setFillStyle(0x1d4ed8, 1));
     button.on("pointerout", () => button.setFillStyle(0x2563eb, 1));
-    button.on("pointerdown", () => this.scene.start("BattleScene"));
-    label.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.scene.start("BattleScene"));
+    button.on("pointerup", () => this.scene.start("DeckScene"));
+    label.setInteractive({ useHandCursor: true }).on("pointerup", () => this.scene.start("DeckScene"));
   }
 }

@@ -55,15 +55,15 @@ test("card image textures retain their static mappings", () => {
     {
       Speed: {
         textureKey: "unit-card-speed",
-        path: "/assets/units/blue/blue001.png"
+        path: "/assets/units/cards/SC009.png"
       },
       Melee: {
         textureKey: "unit-card-melee",
-        path: "/assets/units/blue/blue002.png"
+        path: "/assets/units/cards/SC012.png"
       },
       Ranged: {
         textureKey: "unit-card-ranged",
-        path: "/assets/units/blue/blue003.png"
+        path: "/assets/units/cards/SC017.png"
       },
       Summoned: {
         textureKey: "summoned-card",

@@ -1,4 +1,5 @@
-import type { TeamId, UnitType } from "../core/types";
+import type { TeamId, UnitType, UnitState } from "../core/types";
+import { findCard } from "../deck/cardCatalog";
 
 export interface CardPresentation {
   textureKey: string;
@@ -26,23 +27,32 @@ const summonedCardScale = 1.3;
 export const unitCardPresentation = {
   Speed: {
     textureKey: "unit-card-speed",
-    path: "/assets/units/blue/blue001.png",
+    path: "/assets/units/cards/SC009.png",
     displayWidth: unitCardDisplayWidth,
     displayHeight: unitCardDisplayHeight
   },
   Melee: {
     textureKey: "unit-card-melee",
-    path: "/assets/units/blue/blue002.png",
+    path: "/assets/units/cards/SC012.png",
     displayWidth: unitCardDisplayWidth,
     displayHeight: unitCardDisplayHeight
   },
   Ranged: {
     textureKey: "unit-card-ranged",
-    path: "/assets/units/blue/blue003.png",
+    path: "/assets/units/cards/SC017.png",
     displayWidth: unitCardDisplayWidth,
     displayHeight: unitCardDisplayHeight
   }
 } satisfies Record<UnitType, CardPresentation>;
+
+export function presentationForUnit(unit: Pick<UnitState, "cardId" | "unitType">): CardPresentation {
+  const card = unit.cardId ? findCard(unit.cardId) : undefined;
+  return card ? {
+    ...unitCardPresentation[unit.unitType],
+    textureKey: `card-${card.id}`,
+    path: card.imagePath
+  } : unitCardPresentation[unit.unitType];
+}
 
 export const summonedCardPresentation: CardPresentation = {
   textureKey: "summoned-card",
