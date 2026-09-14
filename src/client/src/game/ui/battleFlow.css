@@ -1,0 +1,11 @@
+.battle-flow { position: fixed; z-index: 30; left: 50%; bottom: 10px; transform: translateX(-50%); box-sizing: border-box; width: min(560px, calc(100% - 24px)); padding: 12px 16px; background: #071829f2; border: 1px solid #568d9b; border-radius: 12px; color: #edf8fa; font: 14px/1.5 system-ui, sans-serif; box-shadow: 0 8px 30px #0008; text-align: center; }
+.battle-flow[hidden], .battle-flow button[hidden] { display: none; }
+.battle-flow h2 { margin: 0; font-size: 18px; }
+.battle-flow p { margin: 4px 0 10px; }
+.battle-flow > div { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.battle-flow button { min-height: 44px; padding: 8px 18px; border: 1px solid #6399a8; border-radius: 8px; background: #16485b; color: #fff; font: inherit; cursor: pointer; touch-action: manipulation; }
+.battle-flow button:focus-visible { outline: 3px solid #f0d895; outline-offset: 2px; }
+.battle-flow button:first-child { background: #247885; }
+.battle-flow--result { bottom: 50%; transform: translate(-50%, 50%); padding: 28px 20px; }
+.battle-flow--result h2 { font-size: 32px; }
+@media (max-height: 600px) { .battle-flow:not(.battle-flow--result) { padding: 6px 10px; bottom: 4px; } .battle-flow:not(.battle-flow--result) h2, .battle-flow:not(.battle-flow--result) p { display: none; } }

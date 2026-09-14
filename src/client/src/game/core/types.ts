@@ -1,10 +1,12 @@
 export type TeamId = "Player" | "Cpu";
 export type UnitType = "Melee" | "Speed" | "Ranged";
 export type PlayerUnitId =
+  | `Player:${string}`
   | "PlayerMelee"
   | "PlayerSpeed"
   | "PlayerRanged";
 export type CpuUnitId =
+  | `Cpu:${string}`
   | "CpuMelee"
   | "CpuSpeed"
   | "CpuRanged";
@@ -113,6 +115,7 @@ export type LeaderState = {
 
 export type UnitState = {
   unitId: UnitId;
+  cardId?: string;
   team: TeamId;
   unitType: UnitType;
   position: Vec2;

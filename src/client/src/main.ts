@@ -3,6 +3,7 @@ import "./style.css";
 import { browserSizeCanvas } from "./game/browserSizeCanvas";
 import { TitleScene } from "./game/scenes/TitleScene";
 import { BattleScene } from "./game/scenes/BattleScene";
+import { DeckScene } from "./game/scenes/DeckScene";
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -13,7 +14,7 @@ new Phaser.Game({
   input: {
     activePointers: 10
   },
-  scene: [TitleScene, BattleScene],
+  scene: [TitleScene, DeckScene, BattleScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH

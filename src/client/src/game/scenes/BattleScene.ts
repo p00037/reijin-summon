@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive } from "../core/battleState";
+import { createDefaultBattleConfig } from "../core/battleConfig";
+import { createDeckBattleState } from "../core/deckBattleState";
+import { standardDeckCardIds, findCard } from "../deck/cardCatalog";
+import { validateDeck } from "../deck/deckModel";
+import { mountBattleFlow } from "../ui/battleFlow";
 import {
   clearPointerDrag,
   clearUnitDrag,
@@ -32,7 +37,8 @@ import {
   cardImageDepth,
   summonedCardPresentation,
   unitCardImageTopOffset,
-  unitCardPresentation
+  unitCardPresentation,
+  presentationForUnit
 } from "../render/cardPresentation";
 import { healingAreaPresentation } from "../render/healingAreaPresentation";
 import {
@@ -96,6 +102,9 @@ const abilityButtonPath = "/assets/buttons/ability_button.png";
 const summonButtonPath = "/assets/buttons/summon_button.png";
 
 export class BattleScene extends Phaser.Scene {
+  private playerCardIds: string[] = [...standardDeckCardIds];
+  private cpuCardIds: string[] = [...standardDeckCardIds];
+  private flow?: ReturnType<typeof mountBattleFlow>;
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
   private battlefieldOverlay!: Phaser.GameObjects.Graphics;
@@ -108,6 +117,7 @@ export class BattleScene extends Phaser.Scene {
   private unitImages = new Map<string, Phaser.GameObjects.Image>();
   private unitCardBorders = new Map<string, Phaser.GameObjects.Rectangle>();
   private unitAttackPowerLabels = new Map<string, Phaser.GameObjects.Text>();
+  private unitNumberLabels = new Map<string, Phaser.GameObjects.Text>();
   private summonedUnitImages = new Map<number, Phaser.GameObjects.Image>();
   private summonedUnitCardBorders = new Map<number, Phaser.GameObjects.Rectangle>();
   private unitCardPositions = new Map<string, Vec2>();
@@ -128,7 +138,19 @@ export class BattleScene extends Phaser.Scene {
     super("BattleScene");
   }
 
+  init(data: { playerCardIds?: string[]; cpuCardIds?: string[] } = {}): void {
+    const player = data.playerCardIds ?? this.playerCardIds;
+    const cpu = data.cpuCardIds ?? this.cpuCardIds;
+    this.playerCardIds = [...(validateDeck(player).valid ? player : standardDeckCardIds)];
+    this.cpuCardIds = [...(validateDeck(cpu).valid ? cpu : standardDeckCardIds)];
+  }
+
   preload(): void {
+    for (const id of new Set([...this.playerCardIds, ...this.cpuCardIds])) {
+      const card = findCard(id)!;
+      const key = `card-${id}`;
+      if (!this.textures.exists(key)) this.load.image(key, card.imagePath);
+    }
     for (const presentation of Object.values(unitCardPresentation)) {
       this.load.image(presentation.textureKey, presentation.path);
     }
@@ -145,12 +167,14 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.session = new GameSession();
+    const config = createDefaultBattleConfig();
+    this.session = new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds));
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
     this.unitImages = new Map();
     this.unitCardBorders = new Map();
     this.unitAttackPowerLabels = new Map();
+    this.unitNumberLabels = new Map();
     this.summonedUnitImages = new Map();
     this.summonedUnitCardBorders = new Map();
     this.unitCardPositions = new Map();
@@ -203,7 +227,19 @@ export class BattleScene extends Phaser.Scene {
       onBuild: () => this.handleBuild(),
       onAbility: () => this.handleAbility(),
       onSummon: () => this.handleSummon(),
-      onRetry: () => this.scene.restart()
+      onRetry: () => this.restartBattle()
+    });
+    this.flow = mountBattleFlow({
+      start: () => this.session.applyCommand({ commandType: "StartBattle", team: "Player" }),
+      retry: () => this.restartBattle(),
+      edit: () => this.scene.start("DeckScene")
+    });
+    this.flow.update(this.session.state);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.flow?.destroy();
+      this.flow = undefined;
+      this.input.removeAllListeners();
+      this.hud.destroy();
     });
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.handlePointerMove(pointer));
@@ -236,12 +272,17 @@ export class BattleScene extends Phaser.Scene {
       }
     }
     this.session.tick(deltaSeconds);
+    this.flow?.update(this.session.state);
     if (this.session.state.result !== "InProgress") {
       this.draggedUnitIdsByPointer.clear();
       this.clearRevivalDrag();
     }
 
     this.draw();
+  }
+
+  private restartBattle(): void {
+    this.scene.restart({ playerCardIds: [...this.playerCardIds], cpuCardIds: [...this.cpuCardIds] });
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
@@ -815,6 +856,7 @@ export class BattleScene extends Phaser.Scene {
     );
     this.updateDefeatedUnitImage(unit, layout, center, presentation.alpha);
     this.unitAttackPowerLabels.get(unit.unitId)?.setVisible(false);
+    this.unitNumberLabels.get(unit.unitId)?.setVisible(false);
 
     let label = this.defeatedUnitLabels.get(unit.unitId);
     if (!label) {
@@ -835,7 +877,7 @@ export class BattleScene extends Phaser.Scene {
       this.defeatedUnitLabels.set(unit.unitId, label);
     }
     label
-      .setText(`LV${unit.stats.level} / COST${unit.stats.revivalCost}`)
+      .setText(`${unit.cardId ?? ""}\nMP ${unit.stats.revivalCost}`)
       .setPosition(
         center.x,
         center.y + layout.rect.height / 2 - 6 * layout.scale
@@ -847,7 +889,7 @@ export class BattleScene extends Phaser.Scene {
 
   private createUnitImages(): void {
     for (const unit of this.session.state.units) {
-      const presentation = unitCardPresentation[unit.unitType];
+      const presentation = presentationForUnit(unit);
       const image = this.add.image(0, 0, presentation.textureKey);
       const imageLayout = calculateCardImageLayout(
         presentation,
@@ -896,6 +938,10 @@ export class BattleScene extends Phaser.Scene {
       this.unitImages.set(unit.unitId, image);
       this.unitCardBorders.set(unit.unitId, border);
       this.unitAttackPowerLabels.set(unit.unitId, attackPowerLabel);
+      const numberLabel = this.add.text(0, 0, unit.cardId ?? "", withCanvasTextResolution({
+        fontFamily: "Arial, sans-serif", fontSize: "8px", color: "#fff"
+      })).setOrigin(0.5).setStroke("#020617", 3).setDepth(3);
+      this.unitNumberLabels.set(unit.unitId, numberLabel);
       this.unitCardRotations.set(unit.unitId, rotation);
     }
   }
@@ -953,7 +999,7 @@ export class BattleScene extends Phaser.Scene {
     image.setVisible(true);
     image.setDepth(cardImageDepth);
 
-    const presentation = unitCardPresentation[unit.unitType];
+    const presentation = presentationForUnit(unit);
     const borderGeometry = calculateCardBorderGeometry(presentation);
     const border = this.unitCardBorders.get(unit.unitId);
     const rotation = updateUnitCardRenderState(
@@ -965,6 +1011,11 @@ export class BattleScene extends Phaser.Scene {
       screen,
       unit.team
     );
+    const rotatedHeight = Math.abs(Math.sin(rotation)) * borderGeometry.width
+      + Math.abs(Math.cos(rotation)) * borderGeometry.height;
+    this.unitNumberLabels.get(unit.unitId)
+      ?.setPosition(screen.x, screen.y - rotatedHeight / 2 - 6)
+      .setAlpha(alpha).setVisible(true);
     if (border) {
       border.setVisible(true);
       border.setDepth(cardBorderDepth);
@@ -1056,6 +1107,7 @@ export class BattleScene extends Phaser.Scene {
     this.unitImages.get(unitId)?.setVisible(false);
     this.unitCardBorders.get(unitId)?.setVisible(false);
     this.unitAttackPowerLabels.get(unitId)?.setVisible(false);
+    this.unitNumberLabels.get(unitId)?.setVisible(false);
   }
 
   private updateSummonedUnitImage(summoned: SummonedUnitState, screen: Vec2): void {
