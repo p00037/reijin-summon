@@ -79,11 +79,6 @@ import {
   toLogicalCanvasPoint,
   withCanvasTextResolution
 } from "../browserSizeCanvas";
-import {
-  abilityButtonTextureKey,
-  elementButtonTextureKey,
-  summonButtonTextureKey
-} from "../ui/battleHudModel";
 import { calculateBattleLayout, type UiRect } from "../ui/battleLayout";
 import {
   calculateDefeatedUnitLayout,
@@ -93,13 +88,10 @@ import {
 
 const maxFrameDeltaSeconds = 1 / 20;
 const selectionRadiusPx = 28;
-const summonerTextureKey = "summoner";
+const summonerTextureKey = "summoner-illustrated";
 const elementalTextureKey = "elemental-crystal";
-const summonerSpriteDisplaySize = 64;
+const summonerSpriteDisplaySize = 56;
 const elementalSpriteDisplaySize = 15;
-const elementButtonPath = "/assets/buttons/element_button.png";
-const abilityButtonPath = "/assets/buttons/ability_button.png";
-const summonButtonPath = "/assets/buttons/summon_button.png";
 
 export class BattleScene extends Phaser.Scene {
   private playerCardIds: string[] = [...standardDeckCardIds];
@@ -155,11 +147,8 @@ export class BattleScene extends Phaser.Scene {
       this.load.image(presentation.textureKey, presentation.path);
     }
     this.load.image(summonedCardPresentation.textureKey, summonedCardPresentation.path);
-    this.load.image(summonerTextureKey, "/assets/summoners/summoner.png");
+    this.load.image(summonerTextureKey, "/assets/summoners/summoner-illustrated.png");
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
-    this.load.image(elementButtonTextureKey, elementButtonPath);
-    this.load.image(abilityButtonTextureKey, abilityButtonPath);
-    this.load.image(summonButtonTextureKey, summonButtonPath);
     this.load.image(
       rangedAttackProjectileTextureKey,
       rangedAttackProjectileAssetPath
@@ -193,7 +182,7 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main
       .setOrigin(0, 0)
       .setZoom(browserSizeCanvas.renderScale)
-      .setBackgroundColor("#101827");
+      .setBackgroundColor("#031822");
 
     const layout = calculateBattleLayout(gameViewport.width, gameViewport.height);
 
@@ -599,18 +588,40 @@ export class BattleScene extends Phaser.Scene {
 
   private drawField(): void {
     const bounds = this.fieldBounds();
-    this.battlefield.fillStyle(0x111c31, 1);
+    this.battlefield.fillGradientStyle(0x092b39, 0x0b3040, 0x062c37, 0x082735, 1);
     this.battlefield.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-    this.battlefield.lineStyle(1, 0x334155, 1);
+    this.battlefield.lineStyle(1, 0x8bd6e0, 0.35);
     this.battlefield.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
     const centerY = bounds.y + bounds.height / 2;
-    this.battlefield.lineStyle(2, 0x475569, 0.7);
+    this.battlefield.lineStyle(1, 0x9fc1d0, 0.22);
     this.battlefield.lineBetween(bounds.x, centerY, bounds.x + bounds.width, centerY);
     for (let offset = -3; offset <= 3; offset += 1) {
       const x = bounds.x + bounds.width / 2 + offset * (bounds.width / 7);
-      this.battlefield.lineStyle(1, 0x1f2a44, 0.9);
+      this.battlefield.lineStyle(0.5, 0x70e5dc, 0.075);
       this.battlefield.lineBetween(x, bounds.y, x, bounds.y + bounds.height);
+    }
+    for (let row = 1; row < 5; row++) {
+      const y = bounds.y + bounds.height * row / 5;
+      this.battlefield.lineBetween(bounds.x, y, bounds.right, y);
+    }
+    const centerX = bounds.centerX;
+    this.battlefield.lineStyle(0.7, 0xf1c968, 0.16);
+    this.battlefield.strokeCircle(centerX, centerY, 72);
+    this.battlefield.strokeCircle(centerX, centerY, 65);
+    this.battlefield.strokeCircle(centerX, centerY, 29);
+    for (let index = 0; index < 8; index++) {
+      const angle = index * Math.PI / 4;
+      const nextAngle = angle + Math.PI / 2;
+      this.battlefield.lineBetween(centerX + Math.cos(angle) * 65, centerY + Math.sin(angle) * 65,
+        centerX + Math.cos(nextAngle) * 65, centerY + Math.sin(nextAngle) * 65);
+    }
+    this.battlefield.lineStyle(1.5, 0xf1c968, 0.7);
+    for (const [x, dx] of [[bounds.x + 4, 1], [bounds.right - 4, -1]]) {
+      for (const [y, dy] of [[bounds.y + 4, 1], [bounds.bottom - 4, -1]]) {
+        this.battlefield.lineBetween(x, y, x + dx * 15, y);
+        this.battlefield.lineBetween(x, y, x, y + dy * 15);
+      }
     }
   }
 
@@ -654,14 +665,27 @@ export class BattleScene extends Phaser.Scene {
 
   private drawLeaders(leaders: LeaderState[]): void {
     for (const leader of leaders) {
-      const screen = this.worldToScreen(leader.position);
-      const color = leader.team === "Player" ? 0x3b82f6 : 0xef4444;
+      const position = this.worldToScreen(leader.position);
+      const bounds = this.fieldBounds();
+      // 肖像だけを盤面内に収め、戦闘・回復・復活の基準座標は維持する。
+      const screen = { x: position.x, y: Phaser.Math.Clamp(position.y, bounds.top + 26, bounds.bottom - 26) };
+      const color = leader.team === "Player" ? 0x70e5dc : 0xe99991;
+      const alpha = leader.currentHp > 0 ? 1 : 0.35;
+      this.circleOverlay.fillStyle(0x031822, 0.95 * alpha);
+      this.circleOverlay.fillCircle(screen.x, screen.y, 24);
+      this.circleOverlay.lineStyle(4, color, 0.1 * alpha);
+      this.circleOverlay.strokeCircle(screen.x, screen.y, 24);
       this.updateLeaderSprite(leader, screen);
-      this.circleOverlay.lineStyle(3, color, 0.75);
-      this.circleOverlay.strokeCircle(screen.x, screen.y, 28);
-      this.circleOverlay.lineStyle(3, 0xf8fafc, 0.9);
-      this.circleOverlay.strokeCircle(screen.x, screen.y, 25);
-      this.drawBattlefieldHpBar("Leader", screen, leader.currentHp / leader.maxHp, color);
+      this.battlefieldOverlay.lineStyle(1, 0xf1c968, 0.8 * alpha);
+      this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 24);
+      this.battlefieldOverlay.lineStyle(1.5, color, 0.9 * alpha);
+      for (let index = 0; index < 4; index++) {
+        const angle = Math.PI / 4 + index * Math.PI / 2;
+        this.battlefieldOverlay.lineBetween(
+          screen.x + Math.cos(angle) * 24, screen.y + Math.sin(angle) * 24,
+          screen.x + Math.cos(angle) * 28, screen.y + Math.sin(angle) * 28
+        );
+      }
     }
   }
 
@@ -950,7 +974,7 @@ export class BattleScene extends Phaser.Scene {
     for (const leader of this.session.state.leaders) {
       const sprite = this.add.image(0, 0, summonerTextureKey);
       sprite.setDisplaySize(summonerSpriteDisplaySize, summonerSpriteDisplaySize);
-      sprite.setDepth(1);
+      sprite.setDepth(battleStatusOverlayDepth + 0.25);
       sprite.setFlipX(leader.team === "Cpu");
       this.leaderSprites.set(leader.team, sprite);
     }
