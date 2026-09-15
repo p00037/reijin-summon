@@ -1,11 +1,30 @@
-.battle-flow { position: fixed; z-index: 30; left: 50%; bottom: 10px; transform: translateX(-50%); box-sizing: border-box; width: min(560px, calc(100% - 24px)); padding: 12px 16px; background: #071829f2; border: 1px solid #568d9b; border-radius: 12px; color: #edf8fa; font: 14px/1.5 system-ui, sans-serif; box-shadow: 0 8px 30px #0008; text-align: center; }
+.battle-flow {
+  position: fixed; z-index: 30; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between;
+  gap: calc(10px * var(--battle-scale, 1)); padding: calc(9px * var(--battle-scale, 1)) calc(13px * var(--battle-scale, 1));
+  border: 1px solid #8bd6e038; border-top-color: #f1c96880; background: #062432f5; color: #eaf8ff;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", Georgia, serif;
+}
 .battle-flow[hidden], .battle-flow button[hidden] { display: none; }
-.battle-flow h2 { margin: 0; font-size: 18px; }
-.battle-flow p { margin: 4px 0 10px; }
-.battle-flow > div { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.battle-flow button { min-height: 44px; padding: 8px 18px; border: 1px solid #6399a8; border-radius: 8px; background: #16485b; color: #fff; font: inherit; cursor: pointer; touch-action: manipulation; }
-.battle-flow button:focus-visible { outline: 3px solid #f0d895; outline-offset: 2px; }
-.battle-flow button:first-child { background: #247885; }
-.battle-flow--result { bottom: 50%; transform: translate(-50%, 50%); padding: 28px 20px; }
-.battle-flow--result h2 { font-size: 32px; }
-@media (max-height: 600px) { .battle-flow:not(.battle-flow--result) { padding: 6px 10px; bottom: 4px; } .battle-flow:not(.battle-flow--result) h2, .battle-flow:not(.battle-flow--result) p { display: none; } }
+.battle-flow__eyebrow { display: block; color: #70e5dc; font: calc(6px * var(--battle-scale, 1)) system-ui, sans-serif; letter-spacing: .15em; }
+.battle-flow h2 { margin: 4px 0; font-size: calc(13px * var(--battle-scale, 1)); font-weight: normal; letter-spacing: .08em; }
+.battle-flow p { margin: 0; color: #9fc1d0; font: calc(7px * var(--battle-scale, 1))/1.6 system-ui, sans-serif; }
+.battle-flow__actions { display: flex; gap: calc(6px * var(--battle-scale, 1)); flex-shrink: 0; }
+.battle-flow button { min-height: max(30px, calc(28px * var(--battle-scale, 1))); padding: calc(6px * var(--battle-scale, 1)) calc(10px * var(--battle-scale, 1)); border: 1px solid #70e5dc50; border-radius: 3px; color: #eaf8ff; background: #0b3544; font: calc(8px * var(--battle-scale, 1)) system-ui, sans-serif; cursor: pointer; touch-action: manipulation; }
+.battle-flow button:hover { background: #155365; border-color: #70e5dc; }
+.battle-flow button:focus-visible { outline: 3px solid #f1c968; outline-offset: 3px; }
+.battle-flow button:first-child, .battle-flow button:nth-child(2) { background: linear-gradient(120deg, #8aeedb, #5ecbd9); border-color: #8aeedb; color: #06242c; font-weight: 700; }
+.battle-flow button:first-child:hover, .battle-flow button:nth-child(2):hover { background: #adf9e8; }
+.battle-flow--result { transform: translate(-50%, -50%); display: block; padding: 32px 22px; text-align: center; background: radial-gradient(ellipse at top, #124654, #041d2bf5 75%); box-shadow: 0 25px 90px #000b; }
+.battle-flow--result::before { content: "◈"; display: block; margin-bottom: 15px; color: #f1c968; font: 38px Georgia, serif; }
+.battle-flow--result .battle-flow__eyebrow { color: #f1c968; font: 11px system-ui, sans-serif; letter-spacing: .3em; }
+.battle-flow--result h2 { margin: 15px 0; font-size: 23px; line-height: 1.6; }
+.battle-flow--result p { font-size: 11px; line-height: 1.8; }
+.battle-flow--result .battle-flow__actions { margin-top: 23px; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.battle-flow--result button { min-height: 44px; padding: 10px 16px; font-size: 12px; }
+.battle-flow[data-result="CpuWin"] .battle-flow__eyebrow { color: #e99991; }
+@media (max-width: 650px), (max-height: 450px) {
+  .battle-flow:not(.battle-flow--result) .battle-flow__copy { display: none; }
+  .battle-flow:not(.battle-flow--result) { justify-content: center; padding: 4px; }
+  .battle-flow:not(.battle-flow--result) button { font-size: 10px; padding: 5px 9px; }
+  .battle-flow--result { padding: 16px; }.battle-flow--result::before { margin-bottom: 6px; font-size: 23px; }.battle-flow--result h2 { font-size: 18px; margin: 8px 0; }
+}

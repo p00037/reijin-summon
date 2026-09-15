@@ -9,7 +9,7 @@ body,
 
 body {
   overflow: hidden;
-  background: #020617;
+  background: radial-gradient(ellipse at center, #0b3645, #03131f 75%);
 }
 
 canvas {
