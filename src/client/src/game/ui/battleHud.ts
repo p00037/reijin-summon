@@ -9,7 +9,6 @@ export type BattleHudCallbacks = {
   onBuild: () => void;
   onAbility: () => void;
   onSummon: () => void;
-  onRetry: () => void;
 };
 
 type Gauge = { fill: Phaser.GameObjects.Rectangle; text: Phaser.GameObjects.Text; width: number };
@@ -47,10 +46,9 @@ export class BattleHud {
     this.buildButton = this.button(layout.buildButton, "◇", "魔法陣", callbacks.onBuild);
     this.abilityButton = this.button(layout.abilityButton, "✧", "アビリティ", callbacks.onAbility);
     this.summonButton = this.button(layout.summonButton, "◎", "召喚", callbacks.onSummon);
-    this.button(layout.retryButton, "↻", "再配置", callbacks.onRetry);
     this.abilityGauge = this.gauge(layout.abilityButton.x + 5, layout.abilityButton.y + 42, 42, "", 0xc2acef, true);
-    this.text(layout.retryButton.x + 26, 324, "COMMAND", 6, "#9fc1d0");
-    this.text(layout.retryButton.x + 26, 346, "◈", 13, "#f1c968");
+    this.text(layout.summonButton.x + 26, 324, "COMMAND", 6, "#9fc1d0");
+    this.text(layout.summonButton.x + 26, 346, "◈", 13, "#f1c968");
     this.resultText = this.text(gameViewport.width / 2, 192, "", 64, "#f1c968").setDepth(100).setStroke("#031822", 5);
     this.waitingHint = this.text(layout.waitingArea.x + layout.waitingArea.width / 2, layout.waitingArea.y + layout.waitingArea.height / 2, "", 10, "#9fc1d0");
   }
@@ -69,7 +67,6 @@ export class BattleHud {
     this.setEnabled(this.buildButton, model.canBuild);
     this.setEnabled(this.abilityButton, model.canUseAbility);
     this.setEnabled(this.summonButton, model.canSummon);
-    this.summonButton.label.setText(state.phase === "Setup" ? "戦闘開始" : "召喚");
     const hasDefeatedUnits = state.units.some(unit => unit.team === "Player" && unit.mode === "Defeated");
     this.waitingHint.setVisible(!hasDefeatedUnits && state.phase !== "Setup");
     this.waitingHint.setText("復活待機エリア  /  倒れた仲間を自分の召喚師へドラッグして復活");

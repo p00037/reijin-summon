@@ -97,13 +97,14 @@ test("有効な選択ユニットと既存召喚判定をボタン状態へ反�
   assert.equal(finished.canSummon, false);
 });
 
-test("Setup enables summon confirmation without allowing builds", () => {
+test("配置中は建築と召喚を無効にする", () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
 
   const model = createBattleHudModel(state, "PlayerMelee", false, false);
 
   assert.equal(model.canBuild, false);
-  assert.equal(model.canSummon, true);
+  assert.equal(model.canSummon, false);
+  assert.equal(createBattleHudModel(state, "PlayerMelee", true, false).canSummon, false);
   assert.equal(model.resultText, "");
 });
 

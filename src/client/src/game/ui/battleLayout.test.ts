@@ -17,7 +17,6 @@ test("644x468内にabilityButtonを含むHUD・上詰めフィールド・待機
   assert.deepEqual(layout.buildButton, { x: 591.6, y: 69, width: 52, height: 52 });
   assert.deepEqual(layout.abilityButton, { x: 591.6, y: 129, width: 52, height: 52 });
   assert.deepEqual(layout.summonButton, { x: 591.6, y: 189, width: 52, height: 52 });
-  assert.deepEqual(layout.retryButton, { x: 591.6, y: 249, width: 52, height: 52 });
   assert.equal(layout.waitingArea.y + layout.waitingArea.height, 458);
 });
 
@@ -28,5 +27,6 @@ test("待機場所と左HUDと時間表示はHUD入力範囲で戦場は操作�
   assert.equal(isPointInHud(layout, 70, 390), true);
   assert.equal(isPointInHud(layout, 600, 20), true);
   assert.equal(isPointInHud(layout, 600, 140), true);
+  assert.equal(isPointInHud(layout, 600, 270), false);
   assert.equal(isPointInHud(layout, 70, 20), false);
 });
