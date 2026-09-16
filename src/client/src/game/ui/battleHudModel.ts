@@ -81,12 +81,7 @@ export function createBattleHudModel(
     canUseAbility: Boolean(
       battleInProgress && selectedUnitCanUseAbility && canUseSelectedAbility
     ),
-    canSummon:
-      state.result === "InProgress"
-      && (
-        state.phase === "Setup"
-        || (state.phase === "InProgress" && canSummonPlayer)
-      )
+    canSummon: battleInProgress && canSummonPlayer
   };
 }
 

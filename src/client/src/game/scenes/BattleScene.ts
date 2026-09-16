@@ -215,8 +215,7 @@ export class BattleScene extends Phaser.Scene {
     this.hud = new BattleHud(this, layout, {
       onBuild: () => this.handleBuild(),
       onAbility: () => this.handleAbility(),
-      onSummon: () => this.handleSummon(),
-      onRetry: () => this.restartBattle()
+      onSummon: () => this.handleSummon()
     });
     this.flow = mountBattleFlow({
       start: () => this.session.applyCommand({ commandType: "StartBattle", team: "Player" }),
@@ -471,10 +470,6 @@ export class BattleScene extends Phaser.Scene {
 
   private handleSummon(): void {
     if (this.session.state.result !== "InProgress") {
-      return;
-    }
-    if (this.session.state.phase === "Setup") {
-      this.session.applyCommand({ commandType: "StartBattle", team: "Player" });
       return;
     }
     if (this.session.state.phase !== "InProgress") {
