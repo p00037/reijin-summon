@@ -18,6 +18,8 @@ import {
   resetUnitAbilityState
 } from "./abilitySystem";
 import { areCollisionCirclesTouching } from "./collisionGeometry";
+import { damageSummonedUnit } from "./combatDamage";
+import { getSummonBeam, isCircleInBeam } from "./summonGeometry";
 
 type MoveUnitCommand = Extract<BattleCommand, { commandType: "MoveUnit" }>;
 
@@ -71,7 +73,8 @@ export function tickMovement(
     const activeStartSeconds = Math.min(deltaSeconds, Math.max(0, activityStartSecondsByUnit.get(unit.unitId) ?? 0));
     const activeSeconds = Math.max(0, deltaSeconds - activeStartSeconds);
     const initialPosition = { ...unit.position };
-    const contactMultiplier = hasEnemyContact(state, config, unit) ? config.contactSlowMultiplier : 1;
+    const contactMultiplier = hasEnemyContact(state, config, unit) || isInEnemyBeam(state, config, unit)
+      ? config.contactSlowMultiplier : 1;
     const moveSpeed = unit.stats.moveSpeed * effectiveMoveSpeedMultiplier(state, config, unit) * contactMultiplier;
     const targetDistance = Math.sqrt(distanceSq(unit.position, unit.destination));
     const movementSeconds = moveSpeed > 0 ? Math.min(activeSeconds, targetDistance / moveSpeed) : 0;
@@ -232,6 +235,13 @@ export function calculateUnitHealingElapsed(
   return elapsedByUnit;
 }
 
+function isInEnemyBeam(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
+  return state.summonedUnits.some(candidate =>
+    candidate.team !== unit.team && candidate.currentHp > 0 && candidate.summonId === "jackpot" &&
+    isCircleInBeam(unit.position, config.unitCollisionRadius, getSummonBeam(candidate, state, config))
+  );
+}
+
 function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
   const enemyTeam = oppositeTeam(unit.team);
   return (
@@ -325,6 +335,10 @@ function secondsWithinRadius(
 }
 
 function applyDamage(target: AttackTarget, damage: number, config: BattleConfig): void {
+  if (target.kind === "SummonedUnit") {
+    damageSummonedUnit(target.target, damage);
+    return;
+  }
   if (target.kind === "Leader") {
     target.target.currentHp = Math.max(0, target.target.currentHp - damage * config.directLeaderDamageMultiplier);
     return;

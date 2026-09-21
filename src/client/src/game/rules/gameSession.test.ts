@@ -122,6 +122,12 @@ test("召喚獣がリーダーへ与えた実ダメージ800でMP1回復する",
   const leader = findLeader(session.state, "Player");
   session.state.summonedUnits.push({
     summonedUnitId: 99,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Cpu",
     position: { ...leader.position },
     destination: { ...leader.position },

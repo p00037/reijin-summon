@@ -2,17 +2,22 @@ import { createDefaultBattleState } from "./battleState";
 import type { BattleConfig, BattleState, TeamId, UnitState, Vec2 } from "./types";
 import { findCard } from "../deck/cardCatalog";
 import { validateDeck } from "../deck/deckModel";
+import { pickCpuSummon, type SummonId } from "./summonCatalog";
 
 export function createDeckBattleState(
   config: BattleConfig,
   playerCardIds: readonly string[],
-  cpuCardIds: readonly string[]
+  cpuCardIds: readonly string[],
+  playerSummonId: SummonId = "raphael",
+  random: () => number = Math.random
 ): BattleState {
   for (const ids of [playerCardIds, cpuCardIds]) {
     const validation = validateDeck(ids);
     if (!validation.valid) throw new Error(validation.errors.join(" / "));
   }
   const state = createDefaultBattleState(config);
+  state.playerSummonId = playerSummonId;
+  state.cpuSummonId = pickCpuSummon(random);
   const templates = state.units;
   const makeTeam = (ids: readonly string[], team: TeamId): UnitState[] => ids.map((id, index) => {
     const card = findCard(id)!;

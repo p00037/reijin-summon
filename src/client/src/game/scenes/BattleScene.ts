@@ -3,6 +3,9 @@ import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive } from "../core/battleState";
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDeckBattleState } from "../core/deckBattleState";
+import { getSummonDefinition, isSummonId, summonCatalog, type SummonId } from "../core/summonCatalog";
+import { SummonEffects, summonCardFor } from "../render/summonPresentation";
+import { summonUnavailableReason } from "../rules/summonSystem";
 import { standardDeckCardIds, findCard } from "../deck/cardCatalog";
 import { validateDeck } from "../deck/deckModel";
 import { mountBattleFlow } from "../ui/battleFlow";
@@ -35,7 +38,6 @@ import {
   cardBorderWidth,
   cardImageCenterAt,
   cardImageDepth,
-  summonedCardPresentation,
   unitCardImageTopOffset,
   unitCardPresentation,
   presentationForUnit
@@ -96,6 +98,9 @@ const elementalSpriteDisplaySize = 15;
 export class BattleScene extends Phaser.Scene {
   private playerCardIds: string[] = [...standardDeckCardIds];
   private cpuCardIds: string[] = [...standardDeckCardIds];
+  private playerSummonId: SummonId = "raphael";
+  private summonEffects!: SummonEffects;
+  private summonNameLabels = new Map<number, Phaser.GameObjects.Text>();
   private flow?: ReturnType<typeof mountBattleFlow>;
   private session!: GameSession;
   private battlefield!: Phaser.GameObjects.Graphics;
@@ -130,11 +135,12 @@ export class BattleScene extends Phaser.Scene {
     super("BattleScene");
   }
 
-  init(data: { playerCardIds?: string[]; cpuCardIds?: string[] } = {}): void {
+  init(data: { playerCardIds?: string[]; cpuCardIds?: string[]; playerSummonId?: SummonId } = {}): void {
     const player = data.playerCardIds ?? this.playerCardIds;
     const cpu = data.cpuCardIds ?? this.cpuCardIds;
     this.playerCardIds = [...(validateDeck(player).valid ? player : standardDeckCardIds)];
     this.cpuCardIds = [...(validateDeck(cpu).valid ? cpu : standardDeckCardIds)];
+    this.playerSummonId = isSummonId(data.playerSummonId) ? data.playerSummonId : "raphael";
   }
 
   preload(): void {
@@ -146,7 +152,10 @@ export class BattleScene extends Phaser.Scene {
     for (const presentation of Object.values(unitCardPresentation)) {
       this.load.image(presentation.textureKey, presentation.path);
     }
-    this.load.image(summonedCardPresentation.textureKey, summonedCardPresentation.path);
+    for (const summon of summonCatalog) {
+      const presentation = summonCardFor(summon.id);
+      if (!this.textures.exists(presentation.textureKey)) this.load.image(presentation.textureKey, presentation.path);
+    }
     this.load.image(summonerTextureKey, "/assets/summoners/summoner-illustrated.png");
     this.load.image(elementalTextureKey, "/assets/elements/crystal.png");
     this.load.image(
@@ -157,7 +166,7 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     const config = createDefaultBattleConfig();
-    this.session = new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds));
+    this.session = new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds, this.playerSummonId));
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
     this.unitImages = new Map();
@@ -166,6 +175,7 @@ export class BattleScene extends Phaser.Scene {
     this.unitNumberLabels = new Map();
     this.summonedUnitImages = new Map();
     this.summonedUnitCardBorders = new Map();
+    this.summonNameLabels = new Map();
     this.unitCardPositions = new Map();
     this.unitCardRotations = new Map();
     this.summonedCardPositions = new Map();
@@ -206,6 +216,7 @@ export class BattleScene extends Phaser.Scene {
         layout.field.height
       );
     const battlefieldMask = this.circleMaskShape.createGeometryMask();
+    this.summonEffects = new SummonEffects(this, point => this.worldToScreen(point), battlefieldMask);
     this.circleOverlay.setMask(battlefieldMask);
     if (abilityOverlayPresentation.clipToBattlefield) {
       this.abilityOverlay.setMask(battlefieldMask);
@@ -228,6 +239,7 @@ export class BattleScene extends Phaser.Scene {
       this.flow = undefined;
       this.input.removeAllListeners();
       this.hud.destroy();
+      this.summonEffects.destroy();
     });
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.handlePointerMove(pointer));
@@ -270,7 +282,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private restartBattle(): void {
-    this.scene.restart({ playerCardIds: [...this.playerCardIds], cpuCardIds: [...this.cpuCardIds] });
+    this.scene.restart({ playerCardIds: [...this.playerCardIds], cpuCardIds: [...this.cpuCardIds], playerSummonId: this.playerSummonId });
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
@@ -564,6 +576,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawUnits(state.units);
     this.drawAbilityTargeting();
     this.drawAttackEvents(state);
+    this.summonEffects.draw(state, this.session.config);
     const facingRotation = this.selectedUnitFacingRotation();
     const canUseSelectedAbility = this.selectedUnitId !== null
       && canUseAbility(
@@ -577,7 +590,8 @@ export class BattleScene extends Phaser.Scene {
       state,
       this.selectedUnitId,
       this.session.canSummon("Player"),
-      canUseSelectedAbility
+      canUseSelectedAbility,
+      state.playerSummonGauge >= 1 ? summonUnavailableReason(state, this.session.config, "Player") : null
     );
   }
 
@@ -1130,18 +1144,21 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private updateSummonedUnitImage(summoned: SummonedUnitState, screen: Vec2): void {
+    const presentation = summonCardFor(summoned.summonId);
     let image = this.summonedUnitImages.get(summoned.summonedUnitId);
     if (!image) {
-      image = this.add.image(0, 0, summonedCardPresentation.textureKey);
+      const imageAvailable = this.textures.exists(presentation.textureKey);
+      image = this.add.image(0, 0, imageAvailable ? presentation.textureKey : "__WHITE");
+      if (!imageAvailable) image.setTint(0x214557);
       const imageLayout = calculateCardImageLayout(
-        summonedCardPresentation,
+        presentation,
         image.width,
         image.height
       );
       image.setDisplaySize(imageLayout.displayWidth, imageLayout.displayHeight);
       image.setDepth(cardImageDepth);
       const borderGeometry = calculateCardBorderGeometry(
-        summonedCardPresentation
+        presentation
       );
       const border = this.add.rectangle(
         0,
@@ -1159,6 +1176,11 @@ export class BattleScene extends Phaser.Scene {
       this.summonedUnitImages.set(summoned.summonedUnitId, image);
       this.summonedUnitCardBorders.set(summoned.summonedUnitId, border);
       this.summonedCardRotations.set(summoned.summonedUnitId, rotation);
+      const label = this.add.text(screen.x, screen.y, getSummonDefinition(summoned.summonId).name, withCanvasTextResolution({
+        fontFamily: '"Yu Gothic", sans-serif', fontSize: "6px", color: "#ffffff", backgroundColor: "#062432", padding: { x: 2, y: 2 },
+        wordWrap: { width: presentation.displayWidth - 4, useAdvancedWrap: true }, align: "center"
+      })).setOrigin(0.5).setDepth(battleStatusOverlayDepth);
+      this.summonNameLabels.set(summoned.summonedUnitId, label);
     }
 
     const border = this.summonedUnitCardBorders.get(summoned.summonedUnitId);
@@ -1174,7 +1196,7 @@ export class BattleScene extends Phaser.Scene {
       border.setRotation(rotation);
     }
     const imageLayout = calculateCardImageLayout(
-      summonedCardPresentation,
+      presentation,
       image.width,
       image.height
     );
@@ -1182,6 +1204,7 @@ export class BattleScene extends Phaser.Scene {
     image.setPosition(imageCenter.x, imageCenter.y);
     image.setAlpha(summoned.currentHp > 0 ? 1 : 0.25);
     image.setRotation(rotation);
+    this.summonNameLabels.get(summoned.summonedUnitId)?.setPosition(screen.x, screen.y + presentation.displayHeight / 2 - 9);
     this.summonedCardPositions.set(summoned.summonedUnitId, { ...screen });
     this.summonedCardRotations.set(summoned.summonedUnitId, rotation);
   }
@@ -1197,6 +1220,8 @@ export class BattleScene extends Phaser.Scene {
         this.summonedUnitCardBorders.delete(id);
         this.summonedCardPositions.delete(id);
         this.summonedCardRotations.delete(id);
+        this.summonNameLabels.get(id)?.destroy();
+        this.summonNameLabels.delete(id);
       }
     }
   }

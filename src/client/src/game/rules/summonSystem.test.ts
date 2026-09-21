@@ -34,6 +34,12 @@ test("召喚ユニットは攻撃可能時に敵リーダーへ1回分のダメ�
   const state = createDefaultBattleState(config);
   state.summonedUnits.push({
     summonedUnitId: 1,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Player",
     position: { x: 0, y: 4.1 },
     destination: { x: 0, y: 4.1 },
@@ -109,6 +115,12 @@ test("このtickで消滅する召喚ユニットは接触ダメージを与え�
   const state = createDefaultBattleState(config);
   state.summonedUnits.push({
     summonedUnitId: 1,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Player",
     position: { x: 7, y: 0 },
     destination: { x: 7, y: 0 },
@@ -174,7 +186,7 @@ test("召喚獣は通常対象へ0.5C、召喚士へ2Cごとに独立して攻�
 
   tickSummonedUnits(state, config, 1.5);
 
-  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 99 * 2);
+  assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 99 * 4);
   assert.equal(findLeader(state, "Cpu").currentHp, 7700);
   assert.equal(summoned.attackTimerSeconds, 0.5);
   assert.equal(summoned.leaderAttackTimerSeconds, 2);
@@ -250,6 +262,7 @@ test("2回の召喚は連番IDを割り当てる", () => {
   addCompletedPlayerElementals(state);
 
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
+  state.summonedUnits[0].currentHp = 0;
   state.playerSummonGauge = 1;
   assert.equal(tryExecuteSummon(state, config, "Player"), true);
 
@@ -283,6 +296,12 @@ test("非接触の召喚ユニットは敵リーダーへ移動する", () => {
   findLeader(state, "Cpu").position = { x: 7, y: 0 };
   state.summonedUnits.push({
     summonedUnitId: 1,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Player",
     position: { x: 6, y: 0 },
     destination: { x: 6, y: 0 },
@@ -314,6 +333,12 @@ test("召喚ユニットは接触した敵通常ユニットへ攻撃し、移�
   enemyUnit.destination = { x: -5.5, y: 0 };
   state.summonedUnits.push({
     summonedUnitId: 1,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Player",
     position: { x: -6, y: 0 },
     destination: { x: 7, y: 0 },
@@ -344,6 +369,12 @@ test("召喚ユニット同士は接触中に互いへ攻撃し、移動速度�
   state.summonedUnits.push(
     {
       summonedUnitId: 1,
+
+      summonId: "raphael",
+
+      damageMultiplier: 1,
+
+      specialAttackTimerSeconds: 0,
       team: "Player",
       position: { x: 0, y: 0 },
       destination: { x: 7, y: 0 },
@@ -360,6 +391,12 @@ test("召喚ユニット同士は接触中に互いへ攻撃し、移動速度�
     },
     {
       summonedUnitId: 2,
+
+      summonId: "raphael",
+
+      damageMultiplier: 1,
+
+      specialAttackTimerSeconds: 0,
       team: "Cpu",
       position: { x: 0.2, y: 0 },
       destination: { x: -7, y: 0 },
@@ -727,6 +764,12 @@ function addCompletedPlayerElementals(state: ReturnType<typeof createDefaultBatt
 function addSummonedUnit(state: BattleState, team: TeamId, currentHp: number): void {
   state.summonedUnits.push({
     summonedUnitId: state.nextSummonedUnitId++,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team,
     position: { x: 0, y: 0 },
     destination: { x: 0, y: 0 },

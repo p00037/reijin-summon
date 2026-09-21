@@ -1,13 +1,15 @@
 import { findCard } from "./cardCatalog";
+import type { SummonId } from "../core/summonCatalog";
 
 export type SavedDeck = {
   id: string;
   name: string;
   cardIds: string[];
+  summonId: SummonId;
 };
 
 export type DeckLibrary = {
-  version: 1;
+  version: 2;
   selectedDeckId: string | null;
   decks: SavedDeck[];
 };

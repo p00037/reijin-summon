@@ -47,7 +47,13 @@ export class GameSession {
         break;
       case "Summon":
         if (this.state.phase === "InProgress") {
+          const hpBefore = this.state.leaders.map(leader => ({ team: leader.team, hp: leader.currentHp }));
           tryExecuteSummon(this.state, this.config, command.team);
+          markDefeatedUnits(this.state);
+          removeDestroyedElementals(this.state);
+          for (const before of hpBefore) {
+            recordLeaderDamageForMp(this.state, this.config, before.team, before.hp - findLeader(this.state, before.team).currentHp);
+          }
           this.updateResult();
         }
         break;
@@ -72,6 +78,8 @@ export class GameSession {
 
   tick(deltaSeconds: number): void {
     this.state.recentAttackEvents = [];
+    // Keep command-generated summon effects until the renderer drains the queue.
+    if (this.state.recentSummonAttackEvents.length > 128) this.state.recentSummonAttackEvents.splice(0, this.state.recentSummonAttackEvents.length - 128);
     if (this.state.result !== "InProgress") {
       return;
     }
