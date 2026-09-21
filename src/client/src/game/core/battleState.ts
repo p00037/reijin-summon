@@ -7,6 +7,8 @@ export function createDefaultBattleState(config: BattleConfig): BattleState {
     countdownRemainingSeconds: 0,
     playerSummonGauge: 0,
     cpuSummonGauge: 0,
+    playerSummonId: "raphael",
+    cpuSummonId: "raphael",
     result: "InProgress",
     leaders: [
       createLeader("Player", config.playerLeaderPosition, config.leaderMaxHp),
@@ -23,6 +25,7 @@ export function createDefaultBattleState(config: BattleConfig): BattleState {
     elementals: [],
     summonedUnits: [],
     recentAttackEvents: [],
+    recentSummonAttackEvents: [],
     nextSummonedUnitId: 1,
     playerMp: 0,
     cpuMp: 0,

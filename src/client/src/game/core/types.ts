@@ -1,3 +1,5 @@
+import type { SummonId } from "./summonCatalog";
+
 export type TeamId = "Player" | "Cpu";
 export type UnitType = "Melee" | "Speed" | "Ranged";
 export type PlayerUnitId =
@@ -149,6 +151,9 @@ export type ElementalState = {
 
 export type SummonedUnitState = {
   summonedUnitId: number;
+  summonId: SummonId;
+  damageMultiplier: number;
+  specialAttackTimerSeconds: number;
   team: TeamId;
   position: Vec2;
   destination: Vec2;
@@ -170,18 +175,29 @@ export type AttackEvent = {
   targetPosition: Vec2;
 };
 
+export type SummonAttackEvent = {
+  summonId: SummonId;
+  team: TeamId;
+  origin: Vec2;
+  targets: Vec2[];
+  kind: "strike" | "roots" | "wave";
+};
+
 export type BattleState = {
   remainingSeconds: number;
   phase: MatchPhase;
   countdownRemainingSeconds: number;
   playerSummonGauge: number;
   cpuSummonGauge: number;
+  playerSummonId: SummonId;
+  cpuSummonId: SummonId;
   result: MatchResult;
   leaders: LeaderState[];
   units: UnitState[];
   elementals: ElementalState[];
   summonedUnits: SummonedUnitState[];
   recentAttackEvents: AttackEvent[];
+  recentSummonAttackEvents: SummonAttackEvent[];
   nextSummonedUnitId: number;
   playerMp: number;
   cpuMp: number;

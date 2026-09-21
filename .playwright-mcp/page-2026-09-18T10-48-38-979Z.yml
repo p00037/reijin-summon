@@ -1,0 +1,46 @@
+- main [ref=f1e4]:
+  - generic [ref=f1e5]:
+    - generic [ref=f1e6]:
+      - generic [aria-hidden] [ref=f1e7]: ◈
+      - text: THE ETERNAL WHEEL
+    - generic [ref=f1e8]: REAL-TIME CARD BATTLE
+  - generic [ref=f1e9]:
+    - region [ref=f1e10]:
+      - paragraph [ref=f1e11]: 運命を紡ぐ、召喚の物語
+      - heading "The Eternal Wheel エターナル・ウィール" [level=1] [ref=f1e13]:
+        - text: The Eternal
+        - emphasis [ref=f1e14]: Wheel
+        - generic [ref=f1e15]: エターナル・ウィール
+      - paragraph [ref=f1e16]: その一手が、戦場の運命を変える。
+      - paragraph [ref=f1e17]: 仲間を選び、魔法陣を築き、召喚獣を呼び醒ます。あなただけの編成で挑む、リアルタイムカードバトル。
+      - button "BUILD YOUR DECK デッキ編成へ" [ref=f1e18] [cursor=pointer]:
+        - generic [ref=f1e19]:
+          - generic [ref=f1e20]: BUILD YOUR DECK
+          - text: デッキ編成へ
+        - generic [aria-hidden] [ref=f1e21]: ↗
+      - paragraph [ref=f1e22]: カードを選んで、最初の戦いへ
+    - generic [aria-hidden] [ref=f1e23]:
+      - generic [ref=f1e26]: ✧
+      - generic [ref=f1e27]: ✧
+      - generic [ref=f1e31]:
+        - generic [ref=f1e32]: THE MOONLIT WITCH
+        - strong [ref=f1e33]: 三日月の魔女 ローレライ
+        - generic [ref=f1e34]: ◆ SUMMONER'S ARCHIVE ◆
+      - paragraph [ref=f1e35]: THE WHEEL OF FATE IS IN YOUR HANDS
+  - generic [ref=f1e36]:
+    - generic [ref=f1e37]:
+      - generic [ref=f1e38]: "01"
+      - paragraph [ref=f1e39]:
+        - strong [ref=f1e40]: 編成
+        - generic [ref=f1e41]: 仲間を選び、戦略を描く
+    - generic [ref=f1e42]:
+      - generic [ref=f1e43]: "02"
+      - paragraph [ref=f1e44]:
+        - strong [ref=f1e45]: 構築
+        - generic [ref=f1e46]: 戦場に魔法陣を築く
+    - generic [ref=f1e47]:
+      - generic [ref=f1e48]: "03"
+      - paragraph [ref=f1e49]:
+        - strong [ref=f1e50]: 召喚
+        - generic [ref=f1e51]: 召喚獣と勝利をつかむ
+    - generic [aria-hidden] [ref=f1e52]: ◈

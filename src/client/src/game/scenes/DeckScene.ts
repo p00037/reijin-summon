@@ -7,8 +7,8 @@ export class DeckScene extends Phaser.Scene {
   create(): void {
     const host = document.createElement("div");
     document.body.append(host);
-    const cleanup = mountDeckEditor(host, cardIds => {
-      this.scene.start("BattleScene", { playerCardIds: [...cardIds] });
+    const cleanup = mountDeckEditor(host, (cardIds, playerSummonId) => {
+      this.scene.start("BattleScene", { playerCardIds: [...cardIds], playerSummonId });
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       cleanup();

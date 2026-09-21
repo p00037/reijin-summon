@@ -4,6 +4,7 @@ import { gameViewport } from "../gameViewport";
 import { withCanvasTextResolution } from "../browserSizeCanvas";
 import { isPointInHud, type BattleLayout, type UiRect } from "./battleLayout";
 import { createBattleHudModel, type HudGaugeModel } from "./battleHudModel";
+import { getSummonDefinition } from "../core/summonCatalog";
 
 export type BattleHudCallbacks = {
   onBuild: () => void;
@@ -30,6 +31,9 @@ export class BattleHud {
   private readonly buildButton: Button;
   private readonly abilityButton: Button;
   private readonly summonButton: Button;
+  private readonly playerSummonName: Phaser.GameObjects.Text;
+  private readonly cpuSummonName: Phaser.GameObjects.Text;
+  private readonly summonHint: Phaser.GameObjects.Text;
 
   constructor(private readonly scene: Phaser.Scene, private readonly layout: BattleLayout, callbacks: BattleHudCallbacks) {
     this.panel(layout.leftPanel);
@@ -47,15 +51,18 @@ export class BattleHud {
     this.abilityButton = this.button(layout.abilityButton, "✧", "アビリティ", callbacks.onAbility);
     this.summonButton = this.button(layout.summonButton, "◎", "召喚", callbacks.onSummon);
     this.abilityGauge = this.gauge(layout.abilityButton.x + 5, layout.abilityButton.y + 42, 42, "", 0xc2acef, true);
-    this.text(layout.summonButton.x + 26, 324, "COMMAND", 6, "#9fc1d0");
-    this.text(layout.summonButton.x + 26, 346, "◈", 13, "#f1c968");
+    this.text(layout.summonButton.x + 26, 253, "敵の召喚獣", 7, "#e99991");
+    this.cpuSummonName = this.text(layout.summonButton.x + 26, 274, "", 7, "#eaf8ff").setWordWrapWidth(48, true).setAlign("center");
+    this.text(layout.summonButton.x + 26, 300, "自分の召喚獣", 7, "#70e5dc");
+    this.playerSummonName = this.text(layout.summonButton.x + 26, 321, "", 7, "#eaf8ff").setWordWrapWidth(48, true).setAlign("center");
+    this.summonHint = this.text(layout.summonButton.x + 26, 358, "", 6, "#f1c968").setWordWrapWidth(48, true).setAlign("center");
     this.resultText = this.text(gameViewport.width / 2, 192, "", 64, "#f1c968").setDepth(100).setStroke("#031822", 5);
     this.waitingHint = this.text(layout.waitingArea.x + layout.waitingArea.width / 2, layout.waitingArea.y + layout.waitingArea.height / 2, "", 10, "#9fc1d0");
   }
 
   contains(x: number, y: number): boolean { return isPointInHud(this.layout, x, y); }
 
-  update(state: BattleState, selectedUnitId: PlayerUnitId | null, canSummonPlayer: boolean, canUseSelectedAbility: boolean): void {
+  update(state: BattleState, selectedUnitId: PlayerUnitId | null, canSummonPlayer: boolean, canUseSelectedAbility: boolean, summonReason: string | null = null): void {
     const model = createBattleHudModel(state, selectedUnitId, canSummonPlayer, canUseSelectedAbility);
     this.applyGauge(this.playerHp, model.playerHp, model.playerHp.text.replace("自分 ", ""));
     this.applyGauge(this.cpuHp, model.cpuHp, model.cpuHp.text.replace("敵 ", ""));
@@ -67,6 +74,9 @@ export class BattleHud {
     this.setEnabled(this.buildButton, model.canBuild);
     this.setEnabled(this.abilityButton, model.canUseAbility);
     this.setEnabled(this.summonButton, model.canSummon);
+    this.playerSummonName.setText(getSummonDefinition(state.playerSummonId).name);
+    this.cpuSummonName.setText(getSummonDefinition(state.cpuSummonId).name);
+    this.summonHint.setText(summonReason ?? "");
     const hasDefeatedUnits = state.units.some(unit => unit.team === "Player" && unit.mode === "Defeated");
     this.waitingHint.setVisible(!hasDefeatedUnits && state.phase !== "Setup");
     this.waitingHint.setText("復活待機エリア  /  倒れた仲間を自分の召喚師へドラッグして復活");

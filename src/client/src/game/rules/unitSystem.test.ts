@@ -464,6 +464,12 @@ test("移動中でも接敵中のマスターは距離0.5の敵召喚獣を攻�
   findLeader(state, "Cpu").position = { x: 10, y: 0 };
   state.summonedUnits.push({
     summonedUnitId: 1,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Cpu",
     position: { x: 0.5, y: 0 },
     destination: { x: 0.5, y: 0 },
@@ -563,6 +569,12 @@ test("movement is slowed at the Unit-to-SummonedUnit collision-circle boundary",
   unit.destination = { x: 3, y: 0 };
   state.summonedUnits.push({
     summonedUnitId: 1,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Cpu",
     position: { x: 1.7388, y: 0 },
     destination: { x: 1.7388, y: 0 },
@@ -758,6 +770,12 @@ test("通常ユニットは敵召喚獣への攻撃後に通常対象用0.5秒�
   }
   state.summonedUnits.push({
     summonedUnitId: 1,
+
+    summonId: "raphael",
+
+    damageMultiplier: 1,
+
+    specialAttackTimerSeconds: 0,
     team: "Cpu",
     position: { x: 1, y: 0 },
     destination: { x: 0, y: 0 },

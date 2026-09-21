@@ -1,13 +1,14 @@
 import { standardDeckCardIds } from "./cardCatalog";
 import type { DeckLibrary, SavedDeck } from "./deckModel";
+import { isSummonId } from "../core/summonCatalog";
 
 export const deckLibraryStorageKey = "reijin-summon.deck-library";
 
 function createInitialLibrary(): DeckLibrary {
   return {
-    version: 1,
+    version: 2,
     selectedDeckId: "standard",
-    decks: [{ id: "standard", name: "標準デッキ", cardIds: [...standardDeckCardIds] }]
+    decks: [{ id: "standard", name: "標準デッキ", cardIds: [...standardDeckCardIds], summonId: "raphael" }]
   };
 }
 
@@ -21,12 +22,13 @@ function isSavedDeck(value: unknown): value is SavedDeck {
     && value.id.trim().length > 0
     && typeof value.name === "string"
     && Array.isArray(value.cardIds)
-    && value.cardIds.every((cardId) => typeof cardId === "string");
+    && value.cardIds.every((cardId) => typeof cardId === "string")
+    && isSummonId(value.summonId);
 }
 
 function isDeckLibrary(value: unknown): value is DeckLibrary {
   if (!isRecord(value)
-    || value.version !== 1
+    || value.version !== 2
     || (value.selectedDeckId !== null && typeof value.selectedDeckId !== "string")
     || !Array.isArray(value.decks)
     || !value.decks.every(isSavedDeck)) {
@@ -41,7 +43,7 @@ function isDeckLibrary(value: unknown): value is DeckLibrary {
 
 export function loadDeckLibrary(
   storage: Pick<Storage, "getItem">
-): { library: DeckLibrary; error: string | null } {
+): { library: DeckLibrary; error: string | null; notice?: string } {
   let raw: string | null;
   try {
     raw = storage.getItem(deckLibraryStorageKey);
@@ -56,6 +58,32 @@ export function loadDeckLibrary(
     parsed = JSON.parse(raw);
   } catch {
     return { library: createInitialLibrary(), error: "保存済みデッキを読み込めませんでした。データが破損しています。" };
+  }
+
+  if (isRecord(parsed) && parsed.version === 1) {
+    const migrated = {
+      version: 2,
+      selectedDeckId: parsed.selectedDeckId,
+      decks: Array.isArray(parsed.decks)
+        ? parsed.decks.map((deck) => isRecord(deck) ? { ...deck, summonId: "raphael" } : deck)
+        : parsed.decks
+    };
+    if (isDeckLibrary(migrated)) return { library: migrated, error: null };
+  }
+
+  if (isRecord(parsed) && parsed.version === 2 && Array.isArray(parsed.decks)) {
+    let replacedUnknownSummon = false;
+    const normalized = {
+      ...parsed,
+      decks: parsed.decks.map((deck) => {
+        if (!isRecord(deck) || isSummonId(deck.summonId)) return deck;
+        replacedUnknownSummon = true;
+        return { ...deck, summonId: "raphael" };
+      })
+    };
+    if (replacedUnknownSummon && isDeckLibrary(normalized)) {
+      return { library: normalized, error: null, notice: "不明な召喚獣が保存されていたため、ラファエルを選択しました。" };
+    }
   }
 
   if (!isDeckLibrary(parsed)) {

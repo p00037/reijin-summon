@@ -1,13 +1,14 @@
 import "./deckEditor.css";
 
 import { createDefaultBattleConfig } from "../core/battleConfig";
+import { getSummonDefinition, summonCatalog, type SummonId } from "../core/summonCatalog";
 import type { UnitType } from "../core/types";
 import { cardCatalog, findCard, standardDeckCardIds, type CardDefinition } from "./cardCatalog";
 import type { DeckLibrary, SavedDeck } from "./deckModel";
 import { validateDeck } from "./deckModel";
 import { loadDeckLibrary, saveDeckLibrary } from "./deckStorage";
 
-type DeckDraft = { id: string; name: string; cardIds: string[]; isNew: boolean };
+type DeckDraft = { id: string; name: string; cardIds: string[]; summonId: SummonId; isNew: boolean };
 
 type EditorSession = {
   library: DeckLibrary;
@@ -63,7 +64,8 @@ function initialSession(): EditorSession {
   const fallback: SavedDeck = {
     id: "standard",
     name: "標準デッキ",
-    cardIds: [...standardDeckCardIds]
+    cardIds: [...standardDeckCardIds],
+    summonId: "raphael"
   };
   const selected = firstDeck ?? fallback;
   if (library.decks.length === 0) {
@@ -75,7 +77,7 @@ function initialSession(): EditorSession {
     drafts: new Map(),
     selectedDeckId: selected.id,
     selectedCardId: selected.cardIds.find((id) => findCard(id) !== undefined) ?? cardCatalog[0].id,
-    notice: loaded.error,
+    notice: loaded.error ?? loaded.notice ?? null,
     noticeKind: loaded.error ? "error" : "info",
     storageLoadError: loaded.error
   };
@@ -90,8 +92,8 @@ function currentDraft(session: EditorSession): DeckDraft {
   if (existing) return existing;
   const saved = savedDeck(session, session.selectedDeckId);
   const draft: DeckDraft = saved
-    ? { id: saved.id, name: saved.name, cardIds: [...saved.cardIds], isNew: false }
-    : { id: session.selectedDeckId, name: "新しいデッキ", cardIds: [], isNew: true };
+    ? { id: saved.id, name: saved.name, cardIds: [...saved.cardIds], summonId: saved.summonId, isNew: false }
+    : { id: session.selectedDeckId, name: "新しいデッキ", cardIds: [], summonId: "raphael", isNew: true };
   session.drafts.set(draft.id, draft);
   return draft;
 }
@@ -101,6 +103,7 @@ function isDirty(session: EditorSession, draft: DeckDraft): boolean {
   return draft.isNew
     || saved === undefined
     || saved.name !== draft.name
+    || saved.summonId !== draft.summonId
     || saved.cardIds.length !== draft.cardIds.length
     || saved.cardIds.some((id, index) => id !== draft.cardIds[index]);
 }
@@ -110,6 +113,7 @@ function allDecks(session: EditorSession): DeckDraft[] {
     id: deck.id,
     name: deck.name,
     cardIds: [...deck.cardIds],
+    summonId: deck.summonId,
     isNew: false
   });
   const savedIds = new Set(saved.map((deck) => deck.id));
@@ -154,7 +158,7 @@ function cardDetail(card: CardDefinition): string {
 /** デッキ編成画面をマウントし、破棄用関数を返す。 */
 export function mountDeckEditor(
   parent: HTMLElement,
-  onStart: (cardIds: string[]) => void
+  onStart: (cardIds: string[], summonId: SummonId) => void
 ): () => void {
   const session = editorSession ??= initialSession();
   const root = document.createElement("section");
@@ -184,6 +188,7 @@ export function mountDeckEditor(
     const validation = validateDeck(draft.cardIds);
     const selected = findCard(session.selectedCardId) ?? cardCatalog[0];
     const dirty = isDirty(session, draft);
+    const selectedSummon = getSummonDefinition(draft.summonId);
     const selectedIds = new Set(draft.cardIds);
     const deckOptions = allDecks(session).map((deck) =>
       `<option value="${escapeHtml(deck.id)}"${deck.id === draft.id ? " selected" : ""}>${escapeHtml(deck.name || "名称未設定")}${isDirty(session, deck) ? " *" : ""}</option>`
@@ -212,6 +217,10 @@ export function mountDeckEditor(
         : addCheck.cost > 10
           ? `追加すると合計コスト${addCheck.cost}になります。`
           : "";
+    const summons = summonCatalog.map((summon) => `<button type="button" class="deck-editor__summon${summon.id === draft.summonId ? " is-active" : ""}" data-summon="${summon.id}" aria-pressed="${summon.id === draft.summonId}">
+      <span class="deck-editor__summon-art"><span aria-hidden="true">${escapeHtml(summon.name)}</span><img src="${summon.imagePath}" alt="" loading="lazy" draggable="false" data-image-fallback></span>
+      <strong>${escapeHtml(summon.name)}</strong>
+    </button>`).join("");
 
     root.innerHTML = `
       <header class="deck-editor__header">
@@ -243,6 +252,15 @@ export function mountDeckEditor(
           <div class="deck-editor__section-heading"><div><p>02 / YOUR CREW</p><h2 id="deck-formation-title">編成中</h2></div><strong>${draft.cardIds.length}<small>/ 5枚</small></strong></div>
           <label class="deck-editor__name">デッキ名<input data-action="name" maxlength="40" value="${escapeHtml(draft.name)}" autocomplete="off"></label>
           <ol class="deck-editor__slots">${slots}</ol>
+          <section class="deck-editor__summon-selection" aria-labelledby="deck-summon-title">
+            <div class="deck-editor__summon-heading"><h3 id="deck-summon-title">召喚獣</h3><span>デッキと一緒に保存</span></div>
+            <div class="deck-editor__summon-grid">${summons}</div>
+            <div class="deck-editor__summon-detail">
+              <strong>${escapeHtml(selectedSummon.name)}</strong>
+              <span>基礎HP ${selectedSummon.baseHp} · 攻撃 ${selectedSummon.attackDamage} · 被ダメージ ${Math.round(selectedSummon.damageMultiplier * 100)}%</span>
+              <p>${escapeHtml(selectedSummon.description)}</p>
+            </div>
+          </section>
           <div class="deck-editor__cost"><span>合計コスト</span><strong>${validation.cost}<small>/ 10</small></strong></div>
           <div class="deck-editor__validation" ${validation.valid ? "hidden" : ""} role="status">${validation.errors.map(escapeHtml).join("<br>")}</div>
           <div class="deck-editor__actions">
@@ -288,11 +306,11 @@ export function mountDeckEditor(
       render();
       return;
     }
-    const candidateDeck: SavedDeck = { id: draft.id, name: trimmedName, cardIds: [...draft.cardIds] };
+    const candidateDeck: SavedDeck = { id: draft.id, name: trimmedName, cardIds: [...draft.cardIds], summonId: draft.summonId };
     const decks = session.library.decks.some((deck) => deck.id === draft.id)
       ? session.library.decks.map((deck) => deck.id === draft.id ? candidateDeck : deck)
       : [...session.library.decks, candidateDeck];
-    const candidateLibrary: DeckLibrary = { version: 1, selectedDeckId: draft.id, decks };
+    const candidateLibrary: DeckLibrary = { version: 2, selectedDeckId: draft.id, decks };
     const result = saveDeckLibrary(browserStorage(), candidateLibrary);
     storageReplacePending = false;
     if (result.error) {
@@ -320,6 +338,13 @@ export function mountDeckEditor(
       render({ revealDetail: true });
       return;
     }
+    const summonId = button.dataset.summon as SummonId | undefined;
+    if (summonId) {
+      draft.summonId = summonId;
+      session.notice = null;
+      render();
+      return;
+    }
     if (button.dataset.remove !== undefined) {
       draft.cardIds.splice(Number(button.dataset.remove), 1);
       session.notice = null;
@@ -335,7 +360,7 @@ export function mountDeckEditor(
       }
       case "new": {
         const id = newId();
-        session.drafts.set(id, { id, name: "新しいデッキ", cardIds: [], isNew: true });
+        session.drafts.set(id, { id, name: "新しいデッキ", cardIds: [], summonId: "raphael", isNew: true });
         session.selectedDeckId = id;
         session.notice = "新しいデッキを作成しました。名前とカードを選んで保存してください。";
         session.noticeKind = "info";
@@ -370,7 +395,7 @@ export function mountDeckEditor(
         } else {
           const remaining = session.library.decks.filter((deck) => deck.id !== draft.id);
           const nextId = remaining[0]?.id ?? null;
-          const candidate: DeckLibrary = { version: 1, selectedDeckId: nextId, decks: remaining };
+          const candidate: DeckLibrary = { version: 2, selectedDeckId: nextId, decks: remaining };
           const result = saveDeckLibrary(browserStorage(), candidate);
           if (result.error) {
             session.notice = `${result.error} デッキは削除されていません。`;
@@ -387,7 +412,7 @@ export function mountDeckEditor(
           session.selectedDeckId = next.id;
         } else {
           const id = newId();
-          session.drafts.set(id, { id, name: "新しいデッキ", cardIds: [], isNew: true });
+          session.drafts.set(id, { id, name: "新しいデッキ", cardIds: [], summonId: "raphael", isNew: true });
           session.selectedDeckId = id;
         }
         pendingDeleteId = null;
@@ -404,7 +429,7 @@ export function mountDeckEditor(
         saveDraft(true);
         break;
       case "start":
-        if (validateDeck(draft.cardIds).valid) onStart([...draft.cardIds]);
+        if (validateDeck(draft.cardIds).valid) onStart([...draft.cardIds], draft.summonId);
         break;
       case "go-detail":
         root.querySelector<HTMLElement>(".deck-editor__detail")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -425,6 +450,13 @@ export function mountDeckEditor(
     const saveButton = root.querySelector<HTMLButtonElement>('[data-action="save"]');
     if (saveButton) saveButton.textContent = "デッキを保存";
   });
+
+  root.addEventListener("error", (event) => {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement) || !image.hasAttribute("data-image-fallback")) return;
+    image.hidden = true;
+    image.parentElement?.classList.add("has-image-error");
+  }, true);
 
   root.addEventListener("change", (event) => {
     const select = event.target as HTMLSelectElement;

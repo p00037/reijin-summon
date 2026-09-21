@@ -134,9 +134,26 @@
 .deck-editor__confirm div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .deck-editor__danger { color: #fff !important; border-color: #e77665 !important; background: #9f3d35 !important; }
 
+.deck-editor__summon-selection { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.deck-editor__summon-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.deck-editor__summon-heading h3 { margin: 0; font-size: 1rem; }
+.deck-editor__summon-heading span { color: var(--muted); font: .65rem system-ui, sans-serif; }
+.deck-editor__summon-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.deck-editor__summon { min-width: 0; padding: 5px; display: grid; gap: 5px; text-align: left; }
+.deck-editor__summon.is-active { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.deck-editor__summon-art { position: relative; aspect-ratio: 4 / 3; display: grid; place-items: center; overflow: hidden; background: #061a26; }
+.deck-editor__summon-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.deck-editor__summon-art > span { padding: 5px; color: var(--muted); font: .6rem/1.35 system-ui, sans-serif; text-align: center; }
+.deck-editor__summon-art:not(.has-image-error) > span { visibility: hidden; }
+.deck-editor__summon strong { overflow: hidden; font: .66rem/1.35 system-ui, sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.deck-editor__summon-detail { margin-top: 8px; padding: 9px 10px; display: grid; gap: 3px; border-left: 2px solid var(--gold); background: rgba(9, 56, 70, .75); }
+.deck-editor__summon-detail strong { color: var(--gold); font-size: .82rem; }
+.deck-editor__summon-detail span, .deck-editor__summon-detail p { color: var(--muted); font: .65rem/1.5 system-ui, sans-serif; }
+
 @media (max-width: 1200px) {
-  .deck-editor__main { grid-template-columns: minmax(390px, 1.2fr) minmax(300px, .8fr); grid-template-rows: minmax(340px, 1fr) auto; padding: 16px 22px; }
-  .deck-editor__formation { grid-column: 1 / -1; max-height: 238px; padding: 12px; display: grid; grid-template-columns: 1fr minmax(220px, .8fr) 130px; grid-template-areas: "heading name cost" "slots slots slots" "validation actions actions"; gap: 8px 14px; overflow-y: auto; }
+  .deck-editor { overflow-y: auto; }
+  .deck-editor__main { flex: 0 0 auto; min-height: auto; grid-template-columns: minmax(390px, 1.2fr) minmax(300px, .8fr); grid-template-rows: minmax(340px, 1fr) auto; padding: 16px 22px; }
+  .deck-editor__formation { grid-column: 1 / -1; max-height: 360px; padding: 12px; display: grid; grid-template-columns: 1fr minmax(220px, .8fr) 130px; grid-template-areas: "heading name cost" "slots slots slots" "summon summon summon" "validation actions actions"; gap: 8px 14px; overflow-y: auto; }
   .deck-editor__formation .deck-editor__section-heading { grid-area: heading; min-height: 42px; margin: 0; padding: 0 0 6px; }
   .deck-editor__formation .deck-editor__name { grid-area: name; margin: 0; align-self: center; }
   .deck-editor__formation .deck-editor__name input { min-height: 38px; }
@@ -145,6 +162,8 @@
   .deck-editor__formation .deck-editor__actions { grid-area: actions; align-self: center; }
   .deck-editor__formation .deck-editor__confirm { grid-column: 1 / -1; }
   .deck-editor__slots { grid-area: slots; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .deck-editor__summon-selection { grid-area: summon; }
+  .deck-editor__summon-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .deck-editor__slot { min-height: 70px; grid-template-columns: 22px 40px minmax(0, 1fr); grid-template-rows: 68px; }
   .deck-editor__slot > span { grid-row: 1 / -1; }
   .deck-editor__slot img { width: 40px; height: 68px; }
@@ -174,6 +193,7 @@
   .deck-editor__card { min-height: 94px; grid-template-columns: 72px minmax(0, 1fr); }
   .deck-editor__card-art { min-height: 92px; }
   .deck-editor__slots { grid-template-columns: 1fr; }
+  .deck-editor__summon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .deck-editor__slot { min-height: 60px; grid-template-columns: 28px 46px minmax(0, 1fr); grid-template-rows: 60px; }
   .deck-editor__slot > span { grid-row: auto; }
   .deck-editor__slot img { width: 46px; height: 60px; }

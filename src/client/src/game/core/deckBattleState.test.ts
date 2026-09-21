@@ -65,3 +65,15 @@ test("不正な編成を戦闘の入口で拒否する", () => {
     assert.throws(() => createDeckBattleState(config, ["SC010"], ids));
   }
 });
+
+test("選択した召喚獣とCPU抽選結果を戦闘中の状態へ固定する", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDeckBattleState(config, ["SC002"], ["SC010"], "dullahan", () => 0.5);
+  assert.equal(state.playerSummonId, "dullahan");
+  assert.equal(state.cpuSummonId, "leviathan");
+});
+
+test("召喚獣を省略した場合はプレイヤーをラファエルにする", () => {
+  const state = createDeckBattleState(createDefaultBattleConfig(), ["SC002"], ["SC010"]);
+  assert.equal(state.playerSummonId, "raphael");
+});
