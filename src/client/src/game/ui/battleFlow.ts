@@ -1,3 +1,4 @@
+import {activeOnline} from '../network/onlineSession';
 import type { BattleState } from "../core/types";
 import { gameViewport } from "../gameViewport";
 import { calculateBattleLayout } from "./battleLayout";
@@ -55,6 +56,7 @@ export function mountBattleFlow(callbacks: { start: () => void; retry: () => voi
   return {
     update(state) {
       const mode = state.result !== "InProgress" ? state.result : state.phase;
+      if(activeOnline){start.textContent=activeOnline.view?.ready[activeOnline.team]?"準備完了を取り消す":"配置を確定して準備完了";start.disabled=!activeOnline.connected;}
       if (mode === lastMode) return;
       lastMode = mode;
       const setup = mode === "Setup";

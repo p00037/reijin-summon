@@ -1,3 +1,8 @@
+import {consumeAttackEvents,bindInputReset} from '../network/onlineInteraction';
+import {mountOnlineBattleStatus} from '../ui/onlineLobby';
+import {activeOnline} from '../network/onlineSession';
+import {cardCatalog} from '../deck/cardCatalog';
+import '../ui/onlineLobby.css';
 import Phaser from "phaser";
 import { planCpuCommands } from "../ai/cpuPlanner";
 import { findLeader, isUnitAlive } from "../core/battleState";
@@ -102,7 +107,7 @@ export class BattleScene extends Phaser.Scene {
   private summonEffects!: SummonEffects;
   private summonNameLabels = new Map<number, Phaser.GameObjects.Text>();
   private flow?: ReturnType<typeof mountBattleFlow>;
-  private session!: GameSession;
+  private session!: Pick<GameSession, "state" | "config" | "applyCommand" | "tick" | "canSummon">;
   private battlefield!: Phaser.GameObjects.Graphics;
   private battlefieldOverlay!: Phaser.GameObjects.Graphics;
   private abilityOverlay!: Phaser.GameObjects.Graphics;
@@ -144,7 +149,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   preload(): void {
-    for (const id of new Set([...this.playerCardIds, ...this.cpuCardIds])) {
+    for (const id of new Set(activeOnline ? cardCatalog.map(c=>c.id) : [...this.playerCardIds, ...this.cpuCardIds])) {
       const card = findCard(id)!;
       const key = `card-${id}`;
       if (!this.textures.exists(key)) this.load.image(key, card.imagePath);
@@ -166,7 +171,7 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     const config = createDefaultBattleConfig();
-    this.session = new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds, this.playerSummonId));
+    this.session = activeOnline ?? new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds, this.playerSummonId));
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
     this.unitImages = new Map();
@@ -231,9 +236,23 @@ export class BattleScene extends Phaser.Scene {
     this.flow = mountBattleFlow({
       start: () => this.session.applyCommand({ commandType: "StartBattle", team: "Player" }),
       retry: () => this.restartBattle(),
-      edit: () => this.scene.start("DeckScene")
+      edit: () => {if(activeOnline?.view?.phase==='Result'){activeOnline.rematch();return;}activeOnline?.ready(false);this.scene.start('DeckScene');}
     });
     this.flow.update(this.session.state);
+    if(activeOnline){
+      const online=activeOnline;
+      const reset=()=>{this.draggedUnitIdsByPointer.clear();this.clearRevivalDrag();this.selectedUnitId=null;this.moveMarkers.clear();};
+      let previousPhase=online.view?.phase;let previousConnection=online.inputReady;
+      const off=online.subscribe(()=>{if(!online.inputReady||online.inputReady!==previousConnection)reset();previousConnection=online.inputReady;
+        const phase=online.view?.phase;const rematch=previousPhase==='Result'&&phase==='Setup';previousPhase=phase;
+        if(rematch){reset();this.scene.start('DeckScene');}
+      });
+      const cleanup=mountOnlineBattleStatus(online,()=>this.scene.start('DeckScene'),()=>this.scene.start('TitleScene'));
+      const unbind=bindInputReset(reset,document,window);
+      this.events.on(Phaser.Scenes.Events.PAUSE,reset);this.events.on(Phaser.Scenes.Events.RESUME,reset);
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{off();cleanup();unbind();this.events.off(Phaser.Scenes.Events.PAUSE,reset);this.events.off(Phaser.Scenes.Events.RESUME,reset);});
+    }
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.flow?.destroy();
       this.flow = undefined;
@@ -260,7 +279,7 @@ export class BattleScene extends Phaser.Scene {
     const deltaSeconds = Math.min(deltaMs / 1000, maxFrameDeltaSeconds);
 
     if (
-      this.session.state.result === "InProgress"
+      !activeOnline && this.session.state.result === "InProgress"
       && this.session.state.phase === "InProgress"
     ) {
       this.cpuPlanTimerSeconds += deltaSeconds;
@@ -282,10 +301,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private restartBattle(): void {
+    if(activeOnline){activeOnline.rematch();return;}
     this.scene.restart({ playerCardIds: [...this.playerCardIds], cpuCardIds: [...this.cpuCardIds], playerSummonId: this.playerSummonId });
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
+    if(activeOnline&&!activeOnline.inputReady)return;
     this.draggedUnitIdsByPointer = clearPointerDrag(
       this.draggedUnitIdsByPointer,
       pointer.id
@@ -351,6 +372,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {
+    if(activeOnline&&!activeOnline.inputReady)return;
     if (
       !this.revivalDraggedUnitId
       || this.revivalDragPointerId !== pointer.id
@@ -365,6 +387,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    if(activeOnline&&!activeOnline.inputReady)return;
     const point = toLogicalCanvasPoint(pointer, browserSizeCanvas.renderScale);
     const draggedUnitId = this.draggedUnitIdsByPointer.get(pointer.id) ?? null;
     if (draggedUnitId) {
@@ -545,6 +568,7 @@ export class BattleScene extends Phaser.Scene {
 
   private draw(): void {
     const state = this.session.state;
+    this.createUnitImages();
     this.battlefield.clear();
     this.battlefieldOverlay.clear();
     this.abilityOverlay.clear();
@@ -921,7 +945,18 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private createUnitImages(): void {
+    const activeIds = new Set(this.session.state.units.map(unit => unit.unitId));
+    for (const id of this.unitImages.keys()) {
+      if (![...activeIds].some(activeId => activeId === id)) {
+        this.unitImages.get(id)?.destroy();this.unitImages.delete(id);
+        this.unitCardBorders.get(id)?.destroy();this.unitCardBorders.delete(id);
+        this.unitAttackPowerLabels.get(id)?.destroy();this.unitAttackPowerLabels.delete(id);
+        this.unitNumberLabels.get(id)?.destroy();this.unitNumberLabels.delete(id);
+        this.unitCardPositions.delete(id);this.unitCardRotations.delete(id);
+      }
+    }
     for (const unit of this.session.state.units) {
+      if(this.unitImages.has(unit.unitId))continue;
       const presentation = presentationForUnit(unit);
       const image = this.add.image(0, 0, presentation.textureKey);
       const imageLayout = calculateCardImageLayout(
@@ -1244,7 +1279,7 @@ export class BattleScene extends Phaser.Scene {
       additiveBlendMode: Phaser.BlendModes.ADD
     });
 
-    for (const event of state.recentAttackEvents) {
+    for (const event of consumeAttackEvents(state)) {
       const origin = this.worldToScreen(event.origin);
       const target = this.worldToScreen(event.targetPosition);
       const attacker = state.units.find(

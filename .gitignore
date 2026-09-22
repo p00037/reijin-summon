@@ -13,3 +13,6 @@ dev-server.*.log
 /tmp
 /.worktrees/
 /.superpowers/brainstorm
+
+!src/client/.env.example
+!src/server/.env.example
