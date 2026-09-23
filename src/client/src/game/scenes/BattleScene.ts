@@ -581,7 +581,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawElementals(state.elementals);
     this.drawSummonedUnits(state.summonedUnits);
     this.pruneMoveMarkers(state.units);
-    this.drawMoveMarkers();
+    this.drawMoveMarkers(state.units);
     const defeatedUnitIds = state.units
       .filter(
         (unit): unit is UnitState & { unitId: PlayerUnitId; team: "Player" } =>
@@ -755,10 +755,15 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  private drawMoveMarkers(): void {
-    this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.9);
-    for (const marker of this.moveMarkers.values()) {
+  private drawMoveMarkers(units: UnitState[]): void {
+    for (const [unitId, marker] of this.moveMarkers) {
+      const unit = units.find((candidate) => candidate.unitId === unitId);
+      if (!unit) continue;
+      const current = this.worldToScreen(unit.position);
       const screen = this.worldToScreen(marker);
+      this.battlefieldOverlay.lineStyle(1.5, 0xfacc15, 0.65);
+      this.battlefieldOverlay.lineBetween(current.x, current.y, screen.x, screen.y);
+      this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.9);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 10);
       this.battlefieldOverlay.lineBetween(screen.x - 6, screen.y, screen.x + 6, screen.y);
       this.battlefieldOverlay.lineBetween(screen.x, screen.y - 6, screen.x, screen.y + 6);
