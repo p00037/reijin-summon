@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: reijin-summon-server
+    runtime: node
+    plan: free
+    numInstances: 1
+    buildCommand: npm ci --include=dev && npm run build:server
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ENABLE_METRICS
+        value: "0"

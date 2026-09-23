@@ -15,7 +15,7 @@ import {
   tryUseAbility
 } from "./abilitySystem";
 
-test("APは戦闘中のプレイヤーユニットに20秒ごとに蓄積され、2で上限になる", () => {
+test("APは戦闘中の両陣営のユニットに20秒ごとに蓄積され、2で上限になる", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   state.phase = "InProgress";
@@ -29,7 +29,7 @@ test("APは戦闘中のプレイヤーユニットに20秒ごとに蓄積され�
   assert.equal(findUnit(state, "PlayerRanged").abilityAp, 2);
   assert.equal(findUnit(state, "PlayerSpeed").abilityAp, 3);
   assert.equal(findUnit(state, "PlayerRanged").abilityRecoverySeconds, 0);
-  assert.equal(findUnit(state, "CpuRanged").abilityAp, 0);
+  assert.equal(findUnit(state, "CpuRanged").abilityAp, 2);
 });
 
 test("APは戦闘フェーズ外と負の経過時間では蓄積されない", () => {
@@ -265,17 +265,11 @@ test("試合終了後はアビリティを使用できず状態を変更しな�
   assert.deepEqual(state, before);
 });
 
-test("CPUユニットIDではアビリティを使用できず状態を変更しない", () => {
-  const config = createDefaultBattleConfig();
-  const state = createDefaultBattleState(config);
-  state.phase = "InProgress";
-  findUnit(state, "CpuRanged").abilityAp = 2;
-  const before = structuredClone(state);
-
-  assert.equal(canUseAbility(state, config, "CpuRanged", 0), false);
-  assert.deepEqual(state, before);
-  assert.equal(tryUseAbility(state, config, "CpuRanged", 0), false);
-  assert.deepEqual(state, before);
+test('CPU側でもAPを消費してアビリティを使える', () => {
+ const config=createDefaultBattleConfig(); const state=createDefaultBattleState(config);
+ state.phase='InProgress'; const unit=findUnit(state,'CpuRanged'); unit.abilityAp=2;
+ assert.equal(tryUseAbility(state,config,unit.unitId,0),true);
+ assert.equal(unit.abilityAp,0); assert.equal(unit.masterRangeBoostRemainingSeconds,20);
 });
 
 test("未知のユニットIDでは例外を投げずアビリティを使用できず状態を変更しない", () => {
@@ -353,7 +347,7 @@ test("キーパーのアビリティ範囲は向きに追従する", () => {
   });
 });
 
-test("CPUキーパーのアビリティ範囲は回転角にかかわらず固定の+Y方向を維持する", () => {
+test("CPUキーパーも指定した向きにアビリティ範囲を作る", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const keeper = findUnit(state, "CpuMelee");
@@ -362,7 +356,7 @@ test("CPUキーパーのアビリティ範囲は回転角にかかわらず固�
   const area = abilityArea(state, config, keeper.unitId, Math.PI / 2)!;
 
   assert.deepEqual(area, {
-    center: { x: keeper.position.x, y: keeper.position.y + config.unitCardWorldHeight },
+    center: { x: keeper.position.x + config.unitCardWorldHeight, y: keeper.position.y },
     radius: config.unitCardWorldHeight / 2
   });
   assert.deepEqual(abilityTargets(state, config, keeper.unitId, Math.PI / 2), {

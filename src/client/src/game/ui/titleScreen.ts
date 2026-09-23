@@ -1,6 +1,6 @@
 import "./titleScreen.css";
 
-export function mountTitleScreen(onStart: () => void): () => void {
+export function mountTitleScreen(onStart: () => void, onOnline?: () => void): () => void {
   const host = document.createElement("main");
   host.className = "title-screen";
   host.innerHTML = `
@@ -14,7 +14,7 @@ export function mountTitleScreen(onStart: () => void): () => void {
         <h1 id="title-heading">The Eternal<br><em>Wheel</em><span>エターナル・ウィール</span></h1>
         <p class="title-screen__tagline">その一手が、<br>戦場の運命を変える。</p>
         <p class="title-screen__description">仲間を選び、魔法陣を築き、召喚獣を呼び醒ます。<br>あなただけの編成で挑む、リアルタイムカードバトル。</p>
-        <button class="title-screen__start" type="button"><span><small>BUILD YOUR DECK</small>デッキ編成へ</span><span aria-hidden="true">↗</span></button>
+        <button class="title-screen__start" type="button"><span><small>BUILD YOUR DECK</small>CPU戦へ</span><span aria-hidden="true">↗</span></button>
         <p class="title-screen__start-note">カードを選んで、最初の戦いへ</p>
       </section>
       <div class="title-screen__visual" aria-hidden="true">
@@ -34,6 +34,7 @@ export function mountTitleScreen(onStart: () => void): () => void {
       <span class="title-screen__footer-mark" aria-hidden="true">◈</span>
     </footer>`;
   host.querySelector("button")!.addEventListener("click", onStart);
+  if (onOnline) {const button=document.createElement('button');button.className='title-screen__start';button.textContent='オンライン対戦';button.style.marginTop='12px';button.addEventListener('click',onOnline);host.querySelector('.title-screen__start')!.after(button);}
   document.body.append(host);
   return () => host.remove();
 }

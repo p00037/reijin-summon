@@ -1,0 +1,6 @@
+.online-lobby{position:fixed;inset:0;background:#071b27;color:#edf9ff;z-index:100;overflow:auto;display:grid;place-items:center;padding:24px;font-family:system-ui}.online-lobby section{width:min(100%,560px);display:grid;gap:14px}.online-lobby label{display:grid;gap:8px}.online-lobby input,.online-lobby button{min-height:48px;font:inherit;font-size:18px;padding:10px;border-radius:8px;border:1px solid #527281}.online-lobby button{background:#163f50;color:#fff;touch-action:manipulation}.online-lobby [hidden]{display:none}.online-status{position:fixed;left:8px;top:8px;z-index:80;background:#071b27e8;color:white;padding:8px;border-radius:8px;max-width:calc(100vw - 16px);font:14px system-ui}.online-status button{min-height:44px;margin-left:8px}.online-status p{margin:0}#game canvas{touch-action:none}
+
+html #game{height:calc(100% - var(--online-status-height, 0px));margin-top:var(--online-status-height, 0px)}
+.online-status{box-sizing:border-box}.online-portrait-hint{display:none}@media(orientation:portrait){.online-portrait-hint{display:block;color:#bbddea}}
+
+html .deck-editor{top:var(--online-status-height, 0px)}

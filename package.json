@@ -3,17 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
+    "src/shared",
     "src/client",
     "src/server"
   ],
   "scripts": {
-    "dev": "concurrently -n server,client -c blue,green \"npm:dev -w src/server\" \"npm:dev -w src/client\"",
-    "dev:client": "npm run dev -w src/client",
-    "dev:server": "npm run dev -w src/server",
-    "build": "npm run build -w src/server && npm run build -w src/client",
-    "build:client": "npm run build -w src/client",
+    "dev": "npm run build:shared && concurrently -n shared,server,client \"npm:watch -w src/shared\" \"npm:dev -w src/server\" \"npm:dev -w src/client\"",
+    "dev:client": "npm run build:shared && npm run dev -w src/client",
+    "dev:server": "npm run build:shared && npm run dev -w src/server",
+    "build": "npm run build:shared && npm run build -w src/server && npm run build -w src/client",
+    "build:client": "npm run build:shared && npm run build -w src/client",
     "start": "npm run start -w src/server",
-    "typecheck": "npm run typecheck -w src/server && npm run typecheck -w src/client"
+    "typecheck": "npm run build:shared && npm run typecheck -w src/server && npm run typecheck -w src/client",
+    "build:shared": "npm run build -w src/shared",
+    "build:server": "npm run build:shared && npm run build -w src/server",
+    "test": "npm run build:shared && npm test -w src/shared && npm test -w src/client && npm test -w src/server",
+    "test:online:load": "tsx scripts/online-load-test.ts"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

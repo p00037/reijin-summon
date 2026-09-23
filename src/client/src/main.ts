@@ -1,3 +1,4 @@
+import { OnlineScene } from './game/scenes/OnlineScene';
 import Phaser from "phaser";
 import "./style.css";
 import { browserSizeCanvas } from "./game/browserSizeCanvas";
@@ -14,7 +15,7 @@ new Phaser.Game({
   input: {
     activePointers: 10
   },
-  scene: [TitleScene, DeckScene, BattleScene],
+  scene: [TitleScene, OnlineScene, DeckScene, BattleScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH

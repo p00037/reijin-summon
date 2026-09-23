@@ -9,7 +9,7 @@
 .battle-flow h2 { margin: 4px 0; font-size: calc(13px * var(--battle-scale, 1)); font-weight: normal; letter-spacing: .08em; }
 .battle-flow p { margin: 0; color: #9fc1d0; font: calc(7px * var(--battle-scale, 1))/1.6 system-ui, sans-serif; }
 .battle-flow__actions { display: flex; gap: calc(6px * var(--battle-scale, 1)); flex-shrink: 0; }
-.battle-flow button { min-height: max(30px, calc(28px * var(--battle-scale, 1))); padding: calc(6px * var(--battle-scale, 1)) calc(10px * var(--battle-scale, 1)); border: 1px solid #70e5dc50; border-radius: 3px; color: #eaf8ff; background: #0b3544; font: calc(8px * var(--battle-scale, 1)) system-ui, sans-serif; cursor: pointer; touch-action: manipulation; }
+.battle-flow button { min-height: max(44px, calc(28px * var(--battle-scale, 1))); padding: calc(6px * var(--battle-scale, 1)) calc(10px * var(--battle-scale, 1)); border: 1px solid #70e5dc50; border-radius: 3px; color: #eaf8ff; background: #0b3544; font: calc(8px * var(--battle-scale, 1)) system-ui, sans-serif; cursor: pointer; touch-action: manipulation; }
 .battle-flow button:hover { background: #155365; border-color: #70e5dc; }
 .battle-flow button:focus-visible { outline: 3px solid #f1c968; outline-offset: 3px; }
 .battle-flow button:first-child, .battle-flow button:nth-child(2) { background: linear-gradient(120deg, #8aeedb, #5ecbd9); border-color: #8aeedb; color: #06242c; font-weight: 700; }
