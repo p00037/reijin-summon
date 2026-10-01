@@ -2,7 +2,7 @@
 
 > **実装担当へ:** 必須スキルは `superpowers:executing-plans` または `superpowers:subagent-driven-development`。実行方式はユーザーの選択に従い、以下のチェック項目を順番に実施する。
 
-実装・検証: 2026-10-01。タスク1〜7の成果は完成、タスク8の独立レビューを実施中。テスト構成・引数互換・コミット単位の調整は検証記録に記載。
+実装・検証: 2026-10-01。全タスク完了。独立レビューのImportant1件を修正し、全386件・型チェック・ビルドが成功。実装上の判断と検証内容は[検証記録](../../card-abilities-validation.md)に記載。
 
 **目的:** SC001〜SC020の手動アビリティを承認済み仕様へ置き換え、ローカル戦・オンライン戦で同じ効果を提供する。
 
@@ -43,7 +43,7 @@
 
 **入出力:** `getAbilityDefinition(cardId: string | undefined): AbilityDefinition | null`、`abilityApCost(unit: UnitState): number | null`。定義は `id/name/description/apCost/area/target/effect` を持つ判別共用体。範囲は `none/self/circle/half/all`、circleは `forwardHeight/radiusHeight`。数値は設計の全20行を登録する。
 
-状態は `UnitState.baseIntelligence/nation/abilityEffects`、`ElementalState.nation/enchantments`、`BattleState.rainRemainingSeconds/recentAbilityEvents/nextAbilityEventId` を追加。効果は `{abilityId, sourceUnitId, castId, kind, amount, remainingSeconds}`。エンチャントは `{kind, elapsedSeconds}`。イベントは `{eventId, sourceUnitId, abilityId, targets: {unitId, position}[]}`。国籍はカードへ定義し、現対象はScaleGuild。
+状態は `UnitState.baseIntelligence/nation/abilityEffects`、`ElementalState.nation/enchantments`、`BattleState.rainRemainingSeconds/recentAbilityEvents/nextAbilityEventId` を追加。効果は `{abilityId, sourceUnitId, castId, kind, amount, remainingSeconds}`。エンチャントは `{kind, elapsedSeconds}`。イベントは `{eventId, sourceUnitId, abilityId, targets: {unitId, position}[], elementalTargets: {elementalId, position}[]}`。最終レビューで、エンチャントの実対象表示に必要な後者の配列を補った。国籍はカードへ定義し、現対象はScaleGuild。
 
 - [x] `abilityCatalog.test.ts` に20枚のAP配列 `[1,1,2,3,2,1,1,2,3,null,3,2,2,4,3,2,1,3,5,3]`、未知IDはnull、初期効果空・晴れ、配列がユニット間で共有されないテストを作る。
 - [x] `npm test -w src/shared` で新規ケースの失敗を確認。
@@ -119,12 +119,12 @@
 
 ## タスク8: 全体検証・成果整理
 
-- [ ] `npm test` を実行し、共有・クライアント・サーバーすべて成功を確認。
-- [ ] `npm run typecheck` と `npm run build` を実行し成功を確認。
-- [ ] 実画面でSC010、味方/敵抽選、雨、エンチャント、INT補正の組合せ、オンライン両視点の予告と実対象を確認。デッキコストを守り、検証のための製品データ改変を残さない。
-- [ ] `git diff --check` と変更一覧を確認し、COM自動使用判断・スキル実装が混入していないことを確認。
-- [ ] `docs/card-abilities-validation.md` に実施結果・未実施項目・暫定バランス値を日本語で記録し、関連資料の実装状態を更新する。
-- [ ] 選択された実行方式に沿ってレビューし、指摘の修正・関連検証後に結果を報告する。PR作成・統合はその時点の指示に従う。
+- [x] `npm test` を実行し、共有・クライアント・サーバーすべて成功を確認。
+- [x] `npm run typecheck` と `npm run build` を実行し成功を確認。
+- [x] 実画面でSC010、味方/敵抽選、雨、エンチャント、INT補正の組合せ、オンライン両視点の予告と実対象を確認。デッキコストを守り、検証のための製品データ改変を残さない。
+- [x] `git diff --check` と変更一覧を確認し、COM自動使用判断・スキル実装が混入していないことを確認。
+- [x] `docs/card-abilities-validation.md` に実施結果・未実施項目・暫定バランス値を日本語で記録し、関連資料の実装状態を更新する。
+- [x] 選択された実行方式に沿ってレビューし、指摘の修正・関連検証後に結果を報告する。PR作成・統合はその時点の指示に従う。
 
 ## 計画の確認結果
 

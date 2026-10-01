@@ -39,6 +39,7 @@ export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: 
   const { unit, def, targets } = context;
   const ids = def.random ? [targets.unitIds[Math.min(targets.unitIds.length - 1, Math.max(0, Math.floor(random() * targets.unitIds.length)))]] : targets.unitIds;
   const selected = ids.map(id => state.units.find(u => u.unitId === id)!);
+  const selectedElementals = targets.elementalIds.map(id => state.elementals.find(e => e.elementalId === id)!);
   const castId = state.nextAbilityEventId++;
   const casterInt = effectiveIntelligence(unit);
   const add = (target: UnitState, kind: TimedAbilityEffect['kind'], amount: number, duration: number) => applyTimedEffect(target, { abilityId: def.id, sourceUnitId: unit.unitId, castId, kind, amount, remainingSeconds: duration });
@@ -76,12 +77,18 @@ export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: 
       break;
     }
     case 'enchant':
-      state.elementals.filter(e => targets.elementalIds.includes(e.elementalId)).forEach(e => enchantElemental(e, effect.enchantment));
+      selectedElementals.forEach(e => enchantElemental(e, effect.enchantment));
       break;
   }
   unit.abilityAp = 0;
   unit.abilityRecoverySeconds = 0;
-  state.recentAbilityEvents.push({ eventId: castId, sourceUnitId: unit.unitId, abilityId: def.id, targets: selected.map(t => ({ unitId: t.unitId, position: { ...t.position } })) });
+  state.recentAbilityEvents.push({
+    eventId: castId,
+    sourceUnitId: unit.unitId,
+    abilityId: def.id,
+    targets: selected.map(t => ({ unitId: t.unitId, position: { ...t.position } })),
+    elementalTargets: selectedElementals.map(e => ({ elementalId: e.elementalId, position: { ...e.position } }))
+  });
   if (state.recentAbilityEvents.length > 128)
     state.recentAbilityEvents.splice(0, state.recentAbilityEvents.length - 128);
   return true;

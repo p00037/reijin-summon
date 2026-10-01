@@ -67,7 +67,7 @@ import {
 } from "../render/rangedAttackPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { canUseAbility, effectiveAttackDamage } from "../rules/abilitySystem";
-import { consumeAbilityEvents } from '../render/abilityEventPresentation';
+import { consumeAbilityEvents, abilityEventTargetPositions } from '../render/abilityEventPresentation';
 import type { AbilityEvent } from '@reijin-summon/shared';
 import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
@@ -843,7 +843,7 @@ export class BattleScene extends Phaser.Scene {
     this.abilityHighlights = this.abilityHighlights.filter(highlight => highlight.until > this.time.now);
     for (const {event} of this.abilityHighlights) {
       const source = this.session.state.units.find(unit => unit.unitId === event.sourceUnitId);
-      const points = event.targets.length ? event.targets.map(target => target.position) : source ? [source.position] : [];
+      const points = abilityEventTargetPositions(event, source?.position);
       this.abilityOverlay.lineStyle(3, 0x70e5dc, .95);
       for (const point of points) {
         const screen = this.worldToScreen(point);

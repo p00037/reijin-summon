@@ -4,6 +4,35 @@ import { Encoder, Decoder } from '@colyseus/schema';
 import { createDefaultBattleConfig, createDefaultBattleState, tryUseAbility, tickAbilities } from '@reijin-summon/shared';
 import { ArenaState, publishBattle } from '../src/rooms/schema/ArenaState.js';
 import { MatchController } from '../src/online/matchController.js';
+
+test('エンチャントの全実対象を空配列から差分配信し全量配信でも保持する', () => {
+  const config = createDefaultBattleConfig(), battle = createDefaultBattleState(config);
+  battle.phase = 'InProgress';
+  const source = new ArenaState(), destination = new ArenaState();
+  const encoder = new Encoder(source), decoder = new Decoder(destination);
+  publishBattle(source, battle);
+  decoder.decode(encoder.encodeAll());
+  encoder.discardChanges();
+  const unit = battle.units[0];
+  unit.position = { x: 0, y: 0 };
+  battle.elementals = [
+    { elementalId: 'Elemental1', team: 'Player', nation: unit.nation, position: { x: 2, y: 0 }, maxHp: 100, currentHp: 100, isComplete: true, enchantments: [] },
+    { elementalId: 'Elemental2', team: 'Player', nation: unit.nation, position: { x: -1, y: 1 }, maxHp: 100, currentHp: 100, isComplete: true, enchantments: [] }
+  ];
+  const expected = battle.elementals.map(elemental => ({ elementalId: elemental.elementalId, position: { ...elemental.position } }));
+  for (const cardId of ['SC003', 'SC014', 'SC019']) {
+    unit.cardId = cardId;
+    unit.abilityAp = 5;
+    assert.equal(tryUseAbility(battle, config, unit.unitId, 0), true);
+    publishBattle(source, battle);
+    decoder.decode(encoder.encode());
+    encoder.discardChanges();
+    assert.deepEqual(destination.battle!.toJSON().recentAbilityEvents.at(-1).elementalTargets, expected);
+  }
+  const full = new ArenaState();
+  new Decoder(full).decode(encoder.encodeAll());
+  assert.deepEqual(full.battle!.toJSON().recentAbilityEvents, destination.battle!.toJSON().recentAbilityEvents);
+});
 test('空の効果配列から付与・雨・エンチャント・イベント・期限削除を配信できる',()=>{
   const config=createDefaultBattleConfig(),battle=createDefaultBattleState(config); battle.phase='InProgress';
   const source=new ArenaState(),destination=new ArenaState();

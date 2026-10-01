@@ -14,6 +14,27 @@ function setup(cardId: string) {
   state.elementals = [1,2].map(n => ({elementalId: `Elemental${n}` as 'Elemental1'|'Elemental2',team:'Player',nation:'ScaleGuild',position:{x:0,y:0},maxHp:100,currentHp:100,isComplete:true,enchantments:[]}));
   return {state,unit};
 }
+
+for (const cardId of ['SC003', 'SC014', 'SC019']) {
+  test(`${cardId}の発動イベントは付与先全基のIDと発動時位置を保持する`, () => {
+    const { state, unit } = setup(cardId);
+    state.elementals[0].position = { x: 2, y: 0 };
+    state.elementals[1].position = { x: -1, y: 1 };
+    state.elementals.push({
+      ...state.elementals[0], elementalId: 'Elemental3', isComplete: false
+    });
+
+    assert.equal(tryUseAbility(state, config, unit.unitId, 0), true);
+    const event = state.recentAbilityEvents.at(-1)!;
+    assert.deepEqual(event.targets, []);
+    assert.deepEqual(event.elementalTargets, [
+      { elementalId: 'Elemental1', position: { x: 2, y: 0 } },
+      { elementalId: 'Elemental2', position: { x: -1, y: 1 } }
+    ]);
+    state.elementals[0].position.x = 3;
+    assert.equal(event.elementalTargets[0].position.x, 2);
+  });
+}
 test('速度オーラは固定加算・非重複、異種付与は併存しシャコ貝は基数加算', () => {
   const {state,unit} = setup('SC003');
   assert.equal(tryUseAbility(state,config,unit.unitId,0),true);

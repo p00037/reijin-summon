@@ -157,6 +157,7 @@ export type AbilityEvent = {
   sourceUnitId: UnitId;
   abilityId: string;
   targets: { unitId: UnitId; position: Vec2 }[];
+  elementalTargets: { elementalId: ElementalId; position: Vec2 }[];
 };
 
 export type ElementalState = {
