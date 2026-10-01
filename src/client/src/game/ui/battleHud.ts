@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { BattleState, PlayerUnitId } from "../core/types";
 import { gameViewport } from "../gameViewport";
 import { withCanvasTextResolution } from "../browserSizeCanvas";
-import { isPointInHud, type BattleLayout, type UiRect } from "./battleLayout";
+import { abilityInfoRect, revivalAreaRect, isPointInHud, type BattleLayout, type UiRect } from "./battleLayout";
 import { createBattleHudModel, type HudGaugeModel } from "./battleHudModel";
 import { getSummonDefinition } from "../core/summonCatalog";
 
@@ -34,6 +34,9 @@ export class BattleHud {
   private readonly playerSummonName: Phaser.GameObjects.Text;
   private readonly cpuSummonName: Phaser.GameObjects.Text;
   private readonly summonHint: Phaser.GameObjects.Text;
+  private readonly abilityName: Phaser.GameObjects.Text;
+  private readonly abilityDescription: Phaser.GameObjects.Text;
+  private readonly weatherText: Phaser.GameObjects.Text;
 
   constructor(private readonly scene: Phaser.Scene, private readonly layout: BattleLayout, callbacks: BattleHudCallbacks) {
     this.panel(layout.leftPanel);
@@ -56,8 +59,13 @@ export class BattleHud {
     this.text(layout.summonButton.x + 26, 300, "自分の召喚獣", 7, "#70e5dc");
     this.playerSummonName = this.text(layout.summonButton.x + 26, 321, "", 7, "#eaf8ff").setWordWrapWidth(48, true).setAlign("center");
     this.summonHint = this.text(layout.summonButton.x + 26, 358, "", 6, "#f1c968").setWordWrapWidth(48, true).setAlign("center");
+    const info = abilityInfoRect(layout);
+    this.abilityName = this.text(info.x, info.y + 1, '', 9, '#f1c968').setOrigin(0);
+    this.abilityDescription = this.text(info.x, info.y + 16, '', 8, '#eaf8ff').setOrigin(0).setWordWrapWidth(info.width, true);
+    this.weatherText = this.text(31, 368, '', 8, '#eaf8ff');
     this.resultText = this.text(gameViewport.width / 2, 192, "", 64, "#f1c968").setDepth(100).setStroke("#031822", 5);
-    this.waitingHint = this.text(layout.waitingArea.x + layout.waitingArea.width / 2, layout.waitingArea.y + layout.waitingArea.height / 2, "", 10, "#9fc1d0");
+    const revival = revivalAreaRect(layout);
+    this.waitingHint = this.text(revival.x + revival.width / 2, revival.y + revival.height / 2, "", 8, "#9fc1d0").setWordWrapWidth(revival.width - 16, true).setAlign('center');
   }
 
   contains(x: number, y: number): boolean { return isPointInHud(this.layout, x, y); }
@@ -70,6 +78,9 @@ export class BattleHud {
     this.applyGauge(this.summonGauge, model.summonGauge, model.summonGauge.text.replace("召喚ゲージ ", ""));
     this.applyGauge(this.abilityGauge, model.abilityGauge, model.abilityGauge.text);
     this.timeText.setText(model.remainingTimeText);
+    this.abilityName.setText(model.abilityName);
+    this.abilityDescription.setText(model.abilityDescription);
+    this.weatherText.setText(model.weatherText);
     this.resultText.setText(state.phase === "Countdown" && state.result === "InProgress" ? model.resultText : "");
     this.setEnabled(this.buildButton, model.canBuild);
     this.setEnabled(this.abilityButton, model.canUseAbility);

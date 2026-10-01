@@ -1,7 +1,11 @@
 import type { BattleConfig, BattleState, LeaderState, MpState, TeamId, UnitId, UnitState, UnitType } from "./types.js";
+import { findCard } from '../deck/cardCatalog.js';
 
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
+    rainRemainingSeconds: 0,
+    recentAbilityEvents: [],
+    nextAbilityEventId: 1,
     remainingSeconds: config.matchDurationSeconds,
     phase: "Setup",
     countdownRemainingSeconds: 0,
@@ -127,8 +131,13 @@ function createUnit(
   config: BattleConfig
 ): UnitState {
   const stats = config.statsByType[unitType];
+  const card = findCard(({ Melee: 'SC020', Speed: 'SC019', Ranged: 'SC014' })[unitType])!;
   return {
     unitId,
+    cardId: card.id,
+    nation: card.nation,
+    baseIntelligence: card.intelligence,
+    abilityEffects: [],
     team,
     unitType,
     position: { ...spawnPosition },
@@ -145,8 +154,6 @@ function createUnit(
     restHealingElapsedSeconds: 0,
     pendingElementalId: null,
     abilityAp: 0,
-    abilityRecoverySeconds: 0,
-    masterRangeBoostRemainingSeconds: 0,
-    seekerAttackBoostRemainingSeconds: 0
+    abilityRecoverySeconds: 0
   };
 }

@@ -3,12 +3,13 @@ import { createDefaultBattleConfig, createDefaultBattleState, type BattleState }
 // Build a typed Colyseus schema from the complete battle data shape. Empty arrays have explicit element templates.
 const base = createDefaultBattleState(createDefaultBattleConfig());
 const summon = { summonedUnitId: 0, summonId: 'raphael', damageMultiplier: 1, specialAttackTimerSeconds: 0, team: 'Player', position: { x: 0, y: 0 }, destination: { x: 0, y: 0 }, maxHp: 0, currentHp: 0, attackDamage: 0, leaderAttackDamage: 0, attackIntervalSeconds: 0, attackTimerSeconds: 0, leaderAttackIntervalSeconds: 0, leaderAttackTimerSeconds: 0, moveSpeed: 0, healthDecayPerSecond: 0 };
-const template = { ...base, units: base.units.map(u => ({ ...u, cardId: '', defeatedOrder: -1, pendingElementalId: '' })), elementals: [{ elementalId: '', team: 'Player', position: { x: 0, y: 0 }, maxHp: 0, currentHp: 0, isComplete: false, hasKeeperSpeedAura: false }], summonedUnits: [summon], recentAttackEvents: [{ attackerUnitId: '', origin: { x: 0, y: 0 }, targetPosition: { x: 0, y: 0 } }], recentSummonAttackEvents: [{ summonId: '', team: 'Player', origin: { x: 0, y: 0 }, targets: [{ x: 0, y: 0 }], kind: '' }] };
+const template = { ...base, recentAbilityEvents: [{ eventId: 0, sourceUnitId: '', abilityId: '', targets: [{ unitId: '', position: { x: 0, y: 0 } }] }], units: base.units.map(u => ({ ...u, abilityEffects: [{ abilityId: '', sourceUnitId: '', castId: 0, kind: '', amount: 0, remainingSeconds: 0 }], cardId: '', defeatedOrder: -1, pendingElementalId: '' })), elementals: [{ elementalId: '', team: 'Player', position: { x: 0, y: 0 }, maxHp: 0, currentHp: 0, isComplete: false, nation: '', enchantments: [{ kind: '', elapsedSeconds: 0 }] }], summonedUnits: [summon], recentAttackEvents: [{ attackerUnitId: '', origin: { x: 0, y: 0 }, targetPosition: { x: 0, y: 0 } }], recentSummonAttackEvents: [{ summonId: '', team: 'Player', origin: { x: 0, y: 0 }, targets: [{ x: 0, y: 0 }], kind: '' }] };
 type Data = Record<string, any>;
 function sync(target: Data, source: Data, sample: Data) {
     for (const [k, model] of Object.entries(sample)) {
         let value = source[k];
         if (Array.isArray(model)) {
+            value ??= [];
             if (!target[k])
                 target[k] = new ArraySchema();
             // Runtime constructors are retained in the registry below.

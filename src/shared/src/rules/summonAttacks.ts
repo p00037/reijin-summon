@@ -1,3 +1,4 @@
+import { damageUnit } from './combatDamage.js';
 import { findLeader, isUnitAlive, oppositeTeam } from "../core/battleState.js";
 import type { BattleConfig, BattleState, SummonedUnitState, Vec2 } from "../core/types.js";
 import { damageSummonedUnit } from "./combatDamage.js";
@@ -37,7 +38,7 @@ function applyGlobalAttack(
   const targets: Vec2[] = [];
   for (const unit of state.units) {
     if (unit.team !== summoned.team && isUnitAlive(unit)) {
-      unit.currentHp = Math.max(0, unit.currentHp - damage);
+      damageUnit(unit, damage, 'summon');
       targets.push({ ...unit.position });
     }
   }
@@ -60,7 +61,7 @@ function applyBeamAttack(state: BattleState, config: BattleConfig, summoned: Sum
   const damage = initial ? summonSpecialSettings.jackpot.initialDamage : summoned.attackDamage;
   for (const unit of state.units) {
     if (isUnitAlive(unit) && isCircleInBeam(unit.position, config.unitCollisionRadius, beam)) {
-      unit.currentHp = Math.max(0, unit.currentHp - damage);
+      damageUnit(unit, damage, 'summon');
     }
   }
   for (const target of state.summonedUnits) {

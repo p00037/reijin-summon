@@ -66,7 +66,9 @@ import {
   rangedAttackProjectileTextureKey
 } from "../render/rangedAttackPresentation";
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
-import { canUseAbility } from "../rules/abilitySystem";
+import { canUseAbility, effectiveAttackDamage } from "../rules/abilitySystem";
+import { consumeAbilityEvents } from '../render/abilityEventPresentation';
+import type { AbilityEvent } from '@reijin-summon/shared';
 import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
 import {
@@ -86,7 +88,7 @@ import {
   toLogicalCanvasPoint,
   withCanvasTextResolution
 } from "../browserSizeCanvas";
-import { calculateBattleLayout, type UiRect } from "../ui/battleLayout";
+import { calculateBattleLayout, revivalAreaRect, type UiRect } from "../ui/battleLayout";
 import {
   calculateDefeatedUnitLayout,
   createDefeatedUnitCardPresentation,
@@ -135,6 +137,8 @@ export class BattleScene extends Phaser.Scene {
   private defeatedUnitLabels = new Map<PlayerUnitId, Phaser.GameObjects.Text>();
   private moveMarkers = new Map<PlayerUnitId, Vec2>();
   private cpuPlanTimerSeconds = 0;
+  private lastAbilityEventId = 0;
+  private abilityHighlights: {event: AbilityEvent; until: number}[] = [];
 
   constructor() {
     super("BattleScene");
@@ -172,6 +176,8 @@ export class BattleScene extends Phaser.Scene {
   create(): void {
     const config = createDefaultBattleConfig();
     this.session = activeOnline ?? new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds, this.playerSummonId));
+    this.lastAbilityEventId = this.session.state.nextAbilityEventId - 1;
+    this.abilityHighlights = [];
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
     this.unitImages = new Map();
@@ -594,11 +600,12 @@ export class BattleScene extends Phaser.Scene {
       )
       .map((unit) => unit.unitId);
     this.defeatedUnitLayouts = calculateDefeatedUnitLayout(
-      calculateBattleLayout(gameViewport.width, gameViewport.height).waitingArea,
+      revivalAreaRect(calculateBattleLayout(gameViewport.width, gameViewport.height)),
       defeatedUnitIds
     );
     this.drawUnits(state.units);
     this.drawAbilityTargeting();
+    this.drawAbilityEvents();
     this.drawAttackEvents(state);
     this.summonEffects.draw(state, this.session.config);
     const facingRotation = this.selectedUnitFacingRotation();
@@ -783,19 +790,26 @@ export class BattleScene extends Phaser.Scene {
     }
 
     if (presentation.area) {
-      const center = this.worldToScreen(presentation.area.center);
-      const radius = this.worldRadiusToScreen(presentation.area.radius);
       this.abilityOverlay.fillStyle(
         presentation.color,
         presentation.area.fillAlpha
       );
-      this.abilityOverlay.fillCircle(center.x, center.y, radius);
       this.abilityOverlay.lineStyle(
         2,
         presentation.color,
         presentation.area.strokeAlpha
       );
-      this.abilityOverlay.strokeCircle(center.x, center.y, radius);
+      if (presentation.area.kind === 'circle') {
+        const center = this.worldToScreen(presentation.area.center);
+        const radius = this.worldRadiusToScreen(presentation.area.radius);
+        this.abilityOverlay.fillCircle(center.x, center.y, radius);
+        this.abilityOverlay.strokeCircle(center.x, center.y, radius);
+      } else {
+        const a = this.worldToScreen(presentation.area.min), b = this.worldToScreen(presentation.area.max);
+        const x = Math.min(a.x,b.x), y = Math.min(a.y,b.y), width = Math.abs(a.x-b.x), height = Math.abs(a.y-b.y);
+        this.abilityOverlay.fillRect(x,y,width,height);
+        this.abilityOverlay.strokeRect(x,y,width,height);
+      }
     }
 
     this.abilityOverlay.lineStyle(2, presentation.color, 0.95);
@@ -818,6 +832,23 @@ export class BattleScene extends Phaser.Scene {
           line.to.x,
           line.to.y
         );
+      }
+    }
+  }
+
+  private drawAbilityEvents(): void {
+    const consumed = consumeAbilityEvents(this.session.state.recentAbilityEvents, this.lastAbilityEventId);
+    this.lastAbilityEventId = consumed.lastSeen;
+    this.abilityHighlights.push(...consumed.events.map(event => ({event, until: this.time.now + 800})));
+    this.abilityHighlights = this.abilityHighlights.filter(highlight => highlight.until > this.time.now);
+    for (const {event} of this.abilityHighlights) {
+      const source = this.session.state.units.find(unit => unit.unitId === event.sourceUnitId);
+      const points = event.targets.length ? event.targets.map(target => target.position) : source ? [source.position] : [];
+      this.abilityOverlay.lineStyle(3, 0x70e5dc, .95);
+      for (const point of points) {
+        const screen = this.worldToScreen(point);
+        this.abilityOverlay.strokeCircle(screen.x, screen.y, 24);
+        this.abilityOverlay.strokeCircle(screen.x, screen.y, 29);
       }
     }
   }
@@ -1001,7 +1032,7 @@ export class BattleScene extends Phaser.Scene {
         { x: 0, y: 0 },
         rotation,
         presentation.displayHeight,
-        unit.stats.attackDamage
+        effectiveAttackDamage(unit, this.session.state, this.session.config)
       );
       attackPowerLabel
         .setDepth(attackPower.depth)
@@ -1119,7 +1150,7 @@ export class BattleScene extends Phaser.Scene {
         screen,
         rotation,
         presentation.displayHeight,
-        unit.stats.attackDamage
+        effectiveAttackDamage(unit, this.session.state, this.session.config)
       );
       attackPowerLabel
         .setText(attackPower.text)

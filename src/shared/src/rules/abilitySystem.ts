@@ -1,192 +1,117 @@
-import type {
-  BattleConfig,
-  BattleState,
-  ElementalId,
-  UnitId,
-  UnitState,
-  UnitType,
-  Vec2
-} from "../core/types.js";
-import { findUnit, isUnitAlive } from "../core/battleState.js";
-import { distanceSq } from "../core/vector.js";
-
-const apCostByType: Record<UnitType, number> = { Melee: 2, Speed: 3, Ranged: 2 };
-const secondsPerAp = 20;
-const masterRangeBoostSeconds = 20;
-const seekerAttackBoostSeconds = 15;
-
-export type AbilityArea = { center: Vec2; radius: number };
-export type AbilityTargets = { unitIds: UnitId[]; elementalIds: ElementalId[] };
-type AbilityUseContext = { unit: UnitState; targets: AbilityTargets };
-
-export function abilityApCost(unitType: UnitType): number {
-  return apCostByType[unitType];
+import type { BattleConfig, BattleState, UnitState, TimedAbilityEffect } from '../core/types.js';
+import { getSummonGauge, isUnitAlive, setSummonGauge } from '../core/battleState.js';
+import { getAbilityDefinition } from './abilityCatalog.js';
+import { abilityTargets, matchingElemental } from './abilityTargets.js';
+import { applyTimedEffect, clearUnitEffects, effectiveAttackDamage, effectiveIntelligence, effectiveMoveSpeed, intelligenceMultiplier, tickUnitEffects } from './abilityEffects.js';
+import { enchantElemental, hasActiveSummon, tickEnchantments } from './abilityEnchantments.js';
+import { damageUnit } from './combatDamage.js';
+export { abilityArea, abilityTargets } from './abilityTargets.js';
+export type { AbilityArea, AbilityTargets } from './abilityTargets.js';
+export { effectiveAttackDamage } from './abilityEffects.js';
+export function abilityApCost(unit: UnitState): number | null {
+  return getAbilityDefinition(unit.cardId)?.apCost ?? null;
 }
-
 export function resetUnitAbilityState(unit: UnitState): void {
   unit.abilityAp = 0;
   unit.abilityRecoverySeconds = 0;
-  unit.masterRangeBoostRemainingSeconds = 0;
-  unit.seekerAttackBoostRemainingSeconds = 0;
+  clearUnitEffects(unit);
 }
-
-export function abilityArea(
-  state: BattleState,
-  config: BattleConfig,
-  unitId: UnitId,
-  facingRotation: number
-): AbilityArea | null {
-  const unit = findUnit(state, unitId);
-  if (unit.unitType === "Ranged") {
+function resolveAbilityUse(state: BattleState, config: BattleConfig, unitId: string, facingRotation: number) {
+  if (!Number.isFinite(facingRotation) || state.phase !== 'InProgress' || state.result !== 'InProgress')
     return null;
-  }
-  if (unit.unitType === "Speed") {
-    return { center: { ...unit.position }, radius: config.unitCardWorldHeight * 1.5 };
-  }
-  const height = config.unitCardWorldHeight;
-  return {
-    center: {
-      x: unit.position.x + Math.sin(facingRotation) * height,
-      y: unit.position.y + Math.cos(facingRotation) * height
-    },
-    radius: height / 2
-  };
+  const unit = state.units.find(u => u.unitId === unitId), def = getAbilityDefinition(unit?.cardId);
+  if (!unit || !def || !isUnitAlive(unit) || unit.abilityAp < def.apCost || (def.rainOnly && state.rainRemainingSeconds <= 0))
+    return null;
+  if (def.effect.kind === 'gauge' && (getSummonGauge(state, unit.team) >= 1 || hasActiveSummon(state, unit.team)))
+    return null;
+  const targets = abilityTargets(state, config, unit.unitId, facingRotation);
+  if (def.target !== 'none' && targets.unitIds.length + targets.elementalIds.length === 0)
+    return null;
+  return { unit, def, targets };
 }
-
-export function abilityTargets(
-  state: BattleState,
-  config: BattleConfig,
-  unitId: UnitId,
-  facingRotation: number
-): AbilityTargets {
-  const unit = findUnit(state, unitId);
-  const area = abilityArea(state, config, unitId, facingRotation);
-  if (!area) {
-    return { unitIds: [], elementalIds: [] };
-  }
-  const radiusSq = area.radius * area.radius;
-  if (unit.unitType === "Speed") {
-    return {
-      unitIds: state.units
-        .filter((candidate) => candidate.team === unit.team && isUnitAlive(candidate) && distanceSq(candidate.position, area.center) <= radiusSq)
-        .map((candidate) => candidate.unitId),
-      elementalIds: []
-    };
-  }
-  return {
-    unitIds: [],
-    elementalIds: state.elementals
-      .filter(
-        (elemental) =>
-          elemental.team === unit.team &&
-          elemental.isComplete &&
-          elemental.currentHp > 0 &&
-          distanceSq(elemental.position, area.center) <= radiusSq
-      )
-      .map((elemental) => elemental.elementalId)
-  };
-}
-
 export function canUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation: number): boolean {
   return resolveAbilityUse(state, config, unitId, facingRotation) !== null;
 }
-
-export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation: number): boolean {
+export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: string, facingRotation: number, random: () => number = Math.random): boolean {
   const context = resolveAbilityUse(state, config, unitId, facingRotation);
-  if (!context) {
+  if (!context)
     return false;
-  }
-  const { unit, targets } = context;
-  if (unit.unitType === "Ranged") {
-    unit.masterRangeBoostRemainingSeconds = masterRangeBoostSeconds;
-  } else if (unit.unitType === "Speed") {
-    for (const targetUnitId of targets.unitIds) {
-      findUnit(state, targetUnitId).seekerAttackBoostRemainingSeconds = seekerAttackBoostSeconds;
+  const { unit, def, targets } = context;
+  const ids = def.random ? [targets.unitIds[Math.min(targets.unitIds.length - 1, Math.max(0, Math.floor(random() * targets.unitIds.length)))]] : targets.unitIds;
+  const selected = ids.map(id => state.units.find(u => u.unitId === id)!);
+  const castId = state.nextAbilityEventId++;
+  const casterInt = effectiveIntelligence(unit);
+  const add = (target: UnitState, kind: TimedAbilityEffect['kind'], amount: number, duration: number) => applyTimedEffect(target, { abilityId: def.id, sourceUnitId: unit.unitId, castId, kind, amount, remainingSeconds: duration });
+  const effect = def.effect;
+  switch (effect.kind) {
+    case 'timed': {
+      const durations = selected.map(target => effect.duration * (effect.intelligenceScaled ? intelligenceMultiplier(casterInt, effectiveIntelligence(target)) : 1));
+      selected.forEach((target, i) => effect.modifiers.forEach(m => add(target, m.kind, m.amount, durations[i])));
+      break;
     }
-  } else {
-    const targetIds = new Set(targets.elementalIds);
-    for (const elemental of state.elementals) {
-      if (targetIds.has(elemental.elementalId)) {
-        elemental.hasKeeperSpeedAura = true;
-      }
+    case 'dispel':
+      selected.forEach(clearUnitEffects);
+      break;
+    case 'rain':
+      state.rainRemainingSeconds = 100;
+      break;
+    case 'gauge':
+      setSummonGauge(state, unit.team, Math.min(1, getSummonGauge(state, unit.team) + .3));
+      break;
+    case 'rose': {
+      const n = state.elementals.filter(e => matchingElemental(unit, e)).length;
+      add(unit, 'speed', 1 + n / 6, 10);
+      add(unit, 'defense', Math.max(.7, 1 - .05 * n), 10);
+      break;
     }
+    case 'wave':
+      selected.forEach(target => damageUnit(target, 415 * intelligenceMultiplier(casterInt, effectiveIntelligence(target)), 'ability'));
+      break;
+    case 'absorb': {
+      for (const target of state.units)
+        target.abilityEffects = target.abilityEffects.filter(e => !(e.abilityId === def.id && e.sourceUnitId === unit.unitId));
+      const target = selected[0], amount = Math.floor(effectiveAttackDamage(target, state, config) / 2);
+      add(target, 'attack', -amount, 22);
+      add(unit, 'attack', amount, 22);
+      break;
+    }
+    case 'enchant':
+      state.elementals.filter(e => targets.elementalIds.includes(e.elementalId)).forEach(e => enchantElemental(e, effect.enchantment));
+      break;
   }
   unit.abilityAp = 0;
   unit.abilityRecoverySeconds = 0;
+  state.recentAbilityEvents.push({ eventId: castId, sourceUnitId: unit.unitId, abilityId: def.id, targets: selected.map(t => ({ unitId: t.unitId, position: { ...t.position } })) });
+  if (state.recentAbilityEvents.length > 128)
+    state.recentAbilityEvents.splice(0, state.recentAbilityEvents.length - 128);
   return true;
 }
-
-function resolveAbilityUse(
-  state: BattleState,
-  config: BattleConfig,
-  unitId: string,
-  facingRotation: number
-): AbilityUseContext | null {
-  if (!Number.isFinite(facingRotation)) {
-    return null;
-  }
-  if (state.result !== "InProgress" || state.phase !== "InProgress") {
-    return null;
-  }
-  const unit = state.units.find((candidate) => candidate.unitId === unitId);
-  if (!unit || !isUnitAlive(unit) || unit.abilityAp < abilityApCost(unit.unitType)) {
-    return null;
-  }
-  const targets = abilityTargets(state, config, unit.unitId, facingRotation);
-  if (unit.unitType !== "Ranged" && targets.unitIds.length === 0 && targets.elementalIds.length === 0) {
-    return null;
-  }
-  return { unit, targets };
-}
-
 export function effectiveAttackRange(unit: UnitState): number {
-  return unit.stats.attackRange * (unit.masterRangeBoostRemainingSeconds > 0 ? 1.5 : 1);
+  return unit.stats.attackRange;
 }
-
-export function effectiveAttackDamage(unit: UnitState): number {
-  return unit.stats.attackDamage + (unit.seekerAttackBoostRemainingSeconds > 0 ? 10 : 0);
-}
-
 export function effectiveMoveSpeedMultiplier(state: BattleState, config: BattleConfig, unit: UnitState): number {
-  if (!isUnitAlive(unit)) {
-    return 1;
-  }
-  const radiusSq = (config.unitCardWorldHeight * 1.5) ** 2;
-  return state.elementals.some(
-    (elemental) =>
-      elemental.team === unit.team &&
-      elemental.isComplete &&
-      elemental.currentHp > 0 &&
-      elemental.hasKeeperSpeedAura === true &&
-      distanceSq(elemental.position, unit.position) <= radiusSq
-  )
-    ? 1.5
-    : 1;
+  return unit.stats.moveSpeed > 0 ? effectiveMoveSpeed(state, config, unit) / unit.stats.moveSpeed : 1;
 }
-
-export function tickAbilities(state: BattleState, _config: BattleConfig, deltaSeconds: number): void {
-  const elapsedSeconds = Math.max(0, deltaSeconds);
-  for (const unit of state.units) {
-    unit.masterRangeBoostRemainingSeconds = remainingDuration(unit.masterRangeBoostRemainingSeconds, elapsedSeconds);
-    unit.seekerAttackBoostRemainingSeconds = remainingDuration(unit.seekerAttackBoostRemainingSeconds, elapsedSeconds);
-  }
-  if (state.phase !== "InProgress") {
+export function tickAbilities(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
+  if (state.phase !== 'InProgress' || state.result !== 'InProgress' || !Number.isFinite(deltaSeconds))
     return;
-  }
-
+  const elapsed = Math.max(0, deltaSeconds);
+  state.rainRemainingSeconds = Math.max(0, state.rainRemainingSeconds - elapsed);
+  tickEnchantments(state, config, elapsed);
   for (const unit of state.units) {
-    const maxAbilityAp = abilityApCost(unit.unitType);
-    if (!isUnitAlive(unit) || unit.abilityAp >= maxAbilityAp) {
+    if (!isUnitAlive(unit)) {
+      resetUnitAbilityState(unit);
       continue;
     }
-    const total = unit.abilityRecoverySeconds + elapsedSeconds;
-    const gainedAp = Math.floor(total / secondsPerAp);
-    unit.abilityAp = Math.min(maxAbilityAp, unit.abilityAp + gainedAp);
-    unit.abilityRecoverySeconds = unit.abilityAp >= maxAbilityAp ? 0 : total - gainedAp * secondsPerAp;
+    tickUnitEffects(unit, elapsed);
+    const cap = abilityApCost(unit);
+    if (cap === null) {
+      unit.abilityAp = 0;
+      unit.abilityRecoverySeconds = 0;
+      continue;
+    }
+    const total = unit.abilityRecoverySeconds + elapsed, gained = Math.floor((total + 1e-9) / 20);
+    unit.abilityAp = Math.min(cap, unit.abilityAp + gained);
+    unit.abilityRecoverySeconds = unit.abilityAp >= cap ? 0 : Math.max(0, total - gained * 20);
   }
-}
-
-function remainingDuration(durationSeconds: number, elapsedSeconds: number): number {
-  const remaining = durationSeconds - elapsedSeconds;
-  return remaining > 1e-9 ? remaining : 0;
 }

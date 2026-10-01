@@ -10,11 +10,13 @@ test("SC001〜SC020をWiki記載のカード情報で提供する", () => {
     id: "SC001", name: "海の商人 ユージアル", unitType: "Ranged", cost: 2,
     level: 2, maxHp: 800, attackDamage: 31, intelligence: 6,
     imagePath: "/assets/units/cards/SC001.png"
+    , nation: 'ScaleGuild', abilityId: 'SC001'
   });
   assert.deepEqual(findCard("SC020"), {
     id: "SC020", name: "緑海の重装歩兵 ティアーズ", unitType: "Melee", cost: 3,
     level: 3, maxHp: 1099, attackDamage: 56, intelligence: 6,
     imagePath: "/assets/units/cards/SC020.png"
+    , nation: 'ScaleGuild', abilityId: 'SC020'
   });
   assert.equal(findCard("SC021"), undefined);
   assert.deepEqual(standardDeckCardIds, ["SC020", "SC019", "SC014"]);

@@ -15,32 +15,35 @@ function createStartedSession(config = createDefaultBattleConfig()): GameSession
 test("UseAbilityはSetupとCountdownでは無視される", () => {
   const session = new GameSession();
   const master = findUnit(session.state, "PlayerRanged");
-  master.abilityAp = 2;
+  master.cardId = 'SC004';
+  master.abilityAp = 3;
 
   session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged", facingRotation: 0 });
-  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
+  assert.equal(session.state.rainRemainingSeconds, 0);
 
   session.applyCommand({ commandType: "StartBattle", team: "Player" });
   session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged", facingRotation: 0 });
-  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
-  assert.equal(master.abilityAp, 2);
+  assert.equal(session.state.rainRemainingSeconds, 0);
+  assert.equal(master.abilityAp, 3);
 });
 
 test("UseAbilityはInProgressのPlayerユニットで発動する", () => {
   const session = createStartedSession();
   const master = findUnit(session.state, "PlayerRanged");
-  master.abilityAp = 2;
+  master.cardId = 'SC004';
+  master.abilityAp = 3;
 
   session.applyCommand({ commandType: "UseAbility", team: "Player", unitId: "PlayerRanged", facingRotation: 0 });
 
-  assert.equal(master.masterRangeBoostRemainingSeconds, 20);
+  assert.equal(session.state.rainRemainingSeconds, 100);
   assert.equal(master.abilityAp, 0);
 });
 
 test("UseAbilityはCPU指定の壊れたコマンドを無視する", () => {
   const session = createStartedSession();
   const master = findUnit(session.state, "PlayerRanged");
-  master.abilityAp = 2;
+  master.cardId = 'SC004';
+  master.abilityAp = 3;
   const malformedCommand = {
     commandType: "UseAbility",
     team: "Cpu",
@@ -50,8 +53,8 @@ test("UseAbilityはCPU指定の壊れたコマンドを無視する", () => {
 
   session.applyCommand(malformedCommand);
 
-  assert.equal(master.masterRangeBoostRemainingSeconds, 0);
-  assert.equal(master.abilityAp, 2);
+  assert.equal(session.state.rainRemainingSeconds, 0);
+  assert.equal(master.abilityAp, 3);
 });
 
 test("UseAbilityのため戦闘中のtick 20秒でアビリティAPが1増える", () => {
@@ -309,7 +312,7 @@ test("moving into the leader healing area only counts time after entry", () => {
   session.tick(3);
 
   assert.equal(unit.currentHp, 606);
-  assert.equal(Number(unit.leaderHealingElapsedSeconds.toFixed(2)), 1.1);
+  assert.equal(Number(unit.leaderHealingElapsedSeconds.toFixed(2)), 0.1);
 });
 
 test("stopped keeper in the leader healing area receives both periodic heals", () => {
@@ -337,7 +340,7 @@ test("moving keeper only counts rest time after reaching its destination", () =>
   session.tick(3);
 
   assert.equal(keeper.currentHp, 560);
-  assert.equal(Number(keeper.restHealingElapsedSeconds.toFixed(2)), 0.75);
+  assert.equal(Number(keeper.restHealingElapsedSeconds.toFixed(2)), 0.5);
 });
 
 test("keeper completing an elemental build only counts rest time after completion", () => {
@@ -398,16 +401,18 @@ test("BeginElementalBuildはコマンドのteamと実ユニットteamが違う�
   assert.equal(cpuUnit.pendingElementalId, null);
 });
 
-test("UseAbilityは指定した向きのキーパー範囲を使用する", () => {
+test("UseAbilityは同国エレメントに速度エンチャントを付与する", () => {
   const session = createStartedSession();
   const keeper = findUnit(session.state, "PlayerMelee");
   keeper.position = { x: 0, y: 0 };
   keeper.destination = { ...keeper.position };
+  keeper.cardId = 'SC003';
   keeper.abilityAp = 2;
   session.state.elementals = [
     {
       elementalId: "Elemental1",
       team: "Player",
+      nation: "ScaleGuild",
       position: { x: session.config.unitCardWorldHeight, y: 0 },
       maxHp: 1000,
       currentHp: 1000,
@@ -423,7 +428,7 @@ test("UseAbilityは指定した向きのキーパー範囲を使用する", () =
   });
 
   assert.equal(keeper.abilityAp, 0);
-  assert.equal(session.state.elementals[0].hasKeeperSpeedAura, true);
+  assert.equal(session.state.elementals[0].enchantments?.[0].kind, 'speed');
 });
 
 test("UseAbilityは非有限の向きが指定された不正コマンドを無視する", () => {

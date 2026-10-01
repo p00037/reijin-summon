@@ -10,14 +10,13 @@ import {
   abilityArea,
   abilityTargets
 } from "../rules/abilitySystem";
+import type { AbilityArea } from '@reijin-summon/shared';
 
 export type AbilityTargetingPresentation = {
-  area: {
-    center: Vec2;
-    radius: number;
+  area: (AbilityArea & {
     fillAlpha: number;
     strokeAlpha: number;
-  } | null;
+  }) | null;
   markers: Array<{
     kind: "Circle" | "LockOn";
     position: Vec2;
@@ -54,7 +53,8 @@ export function abilityTargetingPresentation(
   const selectedUnit = findUnit(state, selectedUnitId);
   if (
     !isUnitAlive(selectedUnit)
-    || selectedUnit.abilityAp < abilityApCost(selectedUnit.unitType)
+    || abilityApCost(selectedUnit) === null
+    || selectedUnit.abilityAp < (abilityApCost(selectedUnit) ?? Infinity)
   ) {
     return null;
   }
@@ -88,8 +88,7 @@ export function abilityTargetingPresentation(
 
   return {
     area: {
-      center: { ...area.center },
-      radius: area.radius,
+      ...area,
       fillAlpha: 0.16,
       strokeAlpha: 0.9
     },

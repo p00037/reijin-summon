@@ -15,7 +15,7 @@ export function toLocalState(source: BattleState, team: TeamId): BattleState {
         return value; if (Array.isArray(value))
         return value.map(transform); if (typeof value.x === 'number' && typeof value.y === 'number')
         return perspectivePoint(value, team); const out: any = {}; for (const [k, v] of Object.entries(value)) {
-        out[k] = ['team', 'leaderId'].includes(k) ? v === 'Player' ? 'Cpu' : 'Player' : ['unitId', 'attackerUnitId'].includes(k) ? swapId(v as string) : transform(v);
+        out[k] = ['team', 'leaderId'].includes(k) ? v === 'Player' ? 'Cpu' : 'Player' : ['unitId', 'attackerUnitId', 'sourceUnitId'].includes(k) ? swapId(v as string) : transform(v);
     } return out; };
     const local = transform(state) as BattleState;
     for (const key of Object.keys(state)) {
