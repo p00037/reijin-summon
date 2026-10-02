@@ -120,6 +120,9 @@ export type LeaderState = {
 export type UnitState = {
   unitId: UnitId;
   cardId?: string;
+  nation: string;
+  baseIntelligence: number;
+  abilityEffects: TimedAbilityEffect[];
   team: TeamId;
   unitType: UnitType;
   position: Vec2;
@@ -137,8 +140,24 @@ export type UnitState = {
   pendingElementalId: ElementalId | null;
   abilityAp: number;
   abilityRecoverySeconds: number;
-  masterRangeBoostRemainingSeconds: number;
-  seekerAttackBoostRemainingSeconds: number;
+};
+
+export type TimedAbilityEffect = {
+  abilityId: string;
+  sourceUnitId: UnitId;
+  castId: number;
+  kind: 'attack' | 'speed' | 'intelligence' | 'defense';
+  amount: number;
+  remainingSeconds: number;
+};
+export type EnchantmentKind = 'speed' | 'gauge' | 'shell';
+export type AbilityEnchantment = { kind: EnchantmentKind; elapsedSeconds: number };
+export type AbilityEvent = {
+  eventId: number;
+  sourceUnitId: UnitId;
+  abilityId: string;
+  targets: { unitId: UnitId; position: Vec2 }[];
+  elementalTargets: { elementalId: ElementalId; position: Vec2 }[];
 };
 
 export type ElementalState = {
@@ -148,7 +167,8 @@ export type ElementalState = {
   maxHp: number;
   currentHp: number;
   isComplete: boolean;
-  hasKeeperSpeedAura?: boolean;
+  nation?: string;
+  enchantments?: AbilityEnchantment[];
 };
 
 export type SummonedUnitState = {
@@ -186,6 +206,9 @@ export type SummonAttackEvent = {
 };
 
 export type BattleState = {
+  rainRemainingSeconds: number;
+  recentAbilityEvents: AbilityEvent[];
+  nextAbilityEventId: number;
   remainingSeconds: number;
   phase: MatchPhase;
   countdownRemainingSeconds: number;

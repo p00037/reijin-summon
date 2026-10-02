@@ -173,7 +173,7 @@ test("AP表示は20秒単位の回復途中を加味する", () => {
 
   const charging = createBattleHudModel(state, "PlayerMelee", true, false);
 
-  assert.deepEqual(charging.abilityGauge, { text: "AP 1 / 2", ratio: 0.75 });
+  assert.deepEqual(charging.abilityGauge, { text: "AP 1 / 3", ratio: 0.5 });
   assert.equal(charging.canUseAbility, false);
 });
 
@@ -181,12 +181,12 @@ test("満タン時のAP表示を上限1にしてSceneの発動可否を反映す
   const state = createDefaultBattleState(createDefaultBattleConfig());
   state.phase = "InProgress";
   const selected = state.units.find((unit) => unit.unitId === "PlayerMelee")!;
-  selected.abilityAp = 2;
+  selected.abilityAp = 3;
   selected.abilityRecoverySeconds = 10;
 
   const ready = createBattleHudModel(state, "PlayerMelee", true, true);
 
-  assert.deepEqual(ready.abilityGauge, { text: "AP 2 / 2", ratio: 1 });
+  assert.deepEqual(ready.abilityGauge, { text: "AP 3 / 3", ratio: 1 });
   assert.equal(ready.canUseAbility, true);
 });
 

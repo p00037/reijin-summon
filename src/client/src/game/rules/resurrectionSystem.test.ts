@@ -164,8 +164,7 @@ test("MP3を消費して回復エリア内へ全HP復活しアビリティ状態
   unit.pendingElementalId = "Elemental1";
   unit.abilityAp = 2;
   unit.abilityRecoverySeconds = 12;
-  unit.masterRangeBoostRemainingSeconds = 8;
-  unit.seekerAttackBoostRemainingSeconds = 7;
+  unit.abilityEffects = [{abilityId: 'SC016', sourceUnitId: unit.unitId, castId: 1, kind: 'attack', amount: 10, remainingSeconds: 22}];
   state.phase = "InProgress";
   state.playerMp = 3;
   const target = { ...findLeader(state, "Player").position };
@@ -186,8 +185,7 @@ test("MP3を消費して回復エリア内へ全HP復活しアビリティ状態
   assert.equal(unit.pendingElementalId, null);
   assert.equal(unit.abilityAp, 0);
   assert.equal(unit.abilityRecoverySeconds, 0);
-  assert.equal(unit.masterRangeBoostRemainingSeconds, 0);
-  assert.equal(unit.seekerAttackBoostRemainingSeconds, 0);
+  assert.deepEqual(unit.abilityEffects, []);
 });
 
 test("MP不足ではMPを消費しない", () => {

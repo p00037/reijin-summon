@@ -10,12 +10,14 @@ export type CardDefinition = {
   attackDamage: number;
   intelligence: number;
   imagePath: string;
+  nation: string;
+  abilityId: string | null;
 };
 
-type CardData = Omit<CardDefinition, "imagePath">;
+type CardData = Omit<CardDefinition, "imagePath" | "nation" | "abilityId">;
 
 function defineCard(card: CardData): CardDefinition {
-  return { ...card, imagePath: `/assets/units/cards/${card.id}.png` };
+  return { ...card, nation: 'ScaleGuild', abilityId: card.id === 'SC010' ? null : card.id, imagePath: `/assets/units/cards/${card.id}.png` };
 }
 
 export const cardCatalog: readonly CardDefinition[] = [

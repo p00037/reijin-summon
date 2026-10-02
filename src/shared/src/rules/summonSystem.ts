@@ -5,7 +5,7 @@ import { calculateSummonArea, calculateSummonCentroid } from "./areaCalculator.j
 import { areCollisionCirclesTouching } from "./collisionGeometry.js";
 import { completedElementalsForTeam } from "./elementalSystem.js";
 import { getSummonDefinition } from "../core/summonCatalog.js";
-import { damageSummonedUnit } from "./combatDamage.js";
+import { damageSummonedUnit, damageUnit } from "./combatDamage.js";
 import { applySummonSpecialAttack, summonSpecialSettings } from "./summonAttacks.js";
 
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
@@ -132,7 +132,7 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     summoned.leaderAttackTimerSeconds = leader.remaining;
     if (normal.count > 0) {
       for (const target of touchingUnits) {
-        target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage * normal.count);
+        damageUnit(target, summoned.attackDamage * normal.count, 'summon');
       }
       for (const target of touchingSummonedUnits) {
         damageSummonedUnit(target, summoned.attackDamage * normal.count);

@@ -75,7 +75,8 @@ export function tickElementalBuilds(state: BattleState, config: BattleConfig, de
       maxHp: config.elementalMaxHp,
       currentHp: config.elementalMaxHp,
       isComplete: true,
-      hasKeeperSpeedAura: false
+      nation: unit.nation,
+      enchantments: []
     });
     unit.mode = "Active";
     unit.pendingElementalId = null;

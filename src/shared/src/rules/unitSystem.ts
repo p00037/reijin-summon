@@ -14,11 +14,11 @@ import { clampVec2, distanceSq, moveTowards } from "../core/vector.js";
 import {
   effectiveAttackDamage,
   effectiveAttackRange,
-  effectiveMoveSpeedMultiplier,
   resetUnitAbilityState
 } from "./abilitySystem.js";
+import { effectiveMoveSpeed } from './abilityEffects.js';
 import { areCollisionCirclesTouching } from "./collisionGeometry.js";
-import { damageSummonedUnit } from "./combatDamage.js";
+import { damageSummonedUnit, damageUnit } from "./combatDamage.js";
 import { getSummonBeam, isCircleInBeam } from "./summonGeometry.js";
 
 type MoveUnitCommand = Extract<BattleCommand, { commandType: "MoveUnit" }>;
@@ -75,7 +75,7 @@ export function tickMovement(
     const initialPosition = { ...unit.position };
     const contactMultiplier = hasEnemyContact(state, config, unit) || isInEnemyBeam(state, config, unit)
       ? config.contactSlowMultiplier : 1;
-    const moveSpeed = unit.stats.moveSpeed * effectiveMoveSpeedMultiplier(state, config, unit) * contactMultiplier;
+    const moveSpeed = effectiveMoveSpeed(state, config, unit) * contactMultiplier;
     const targetDistance = Math.sqrt(distanceSq(unit.position, unit.destination));
     const movementSeconds = moveSpeed > 0 ? Math.min(activeSeconds, targetDistance / moveSpeed) : 0;
     unit.position = moveTowards(unit.position, unit.destination, moveSpeed * activeSeconds);
@@ -90,8 +90,8 @@ export function tickMovement(
   return timelines;
 }
 
-export function tickCombat(state: BattleState, config: BattleConfig, deltaSeconds: number): void {
-  state.recentAttackEvents = [];
+export function tickCombat(state: BattleState, config: BattleConfig, deltaSeconds: number, appendEvents = false): void {
+  if (!appendEvents) state.recentAttackEvents = [];
   markDefeatedUnits(state);
 
   for (const unit of state.units) {
@@ -114,7 +114,7 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       continue;
     }
 
-    const attackDamage = effectiveAttackDamage(unit);
+    const attackDamage = effectiveAttackDamage(unit, state, config);
     const damage =
       target.kind === "Elemental"
         ? attackDamage * unit.stats.elementalAttackMultiplier
@@ -335,6 +335,10 @@ function secondsWithinRadius(
 }
 
 function applyDamage(target: AttackTarget, damage: number, config: BattleConfig): void {
+  if (target.kind === 'Unit') {
+    damageUnit(target.target, damage, 'normal');
+    return;
+  }
   if (target.kind === "SummonedUnit") {
     damageSummonedUnit(target.target, damage);
     return;
@@ -359,7 +363,7 @@ function defeatUnit(state: BattleState, unit: UnitState): void {
 }
 
 function elapsedIntervals(elapsed: number, interval: number): { count: number; remainder: number } {
-  const count = Math.floor((elapsed + Number.EPSILON) / interval);
+  const count = Math.floor((elapsed + 1e-9) / interval);
   return { count, remainder: Math.max(0, elapsed - count * interval) };
 }
 

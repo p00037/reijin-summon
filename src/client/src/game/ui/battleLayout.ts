@@ -55,6 +55,15 @@ export function isPointInHud(layout: BattleLayout, x: number, y: number): boolea
   ].some((rect) => containsPoint(rect, x, y));
 }
 
+export function revivalAreaRect(layout: BattleLayout): UiRect {
+  return { ...layout.waitingArea, width: layout.waitingArea.width / 2 - 8 };
+}
+
+export function abilityInfoRect(layout: BattleLayout): UiRect {
+  const area = layout.waitingArea;
+  return { x: area.x + area.width / 2 + 4, y: area.y + 6, width: area.width / 2 - 12, height: area.height - 12 };
+}
+
 function containsPoint(rect: UiRect, x: number, y: number): boolean {
   return x >= rect.x
     && x <= rect.x + rect.width

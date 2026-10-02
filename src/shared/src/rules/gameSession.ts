@@ -12,7 +12,7 @@ export class GameSession {
   readonly config: BattleConfig;
   readonly state: BattleState;
 
-  constructor(config = createDefaultBattleConfig(), state = createDefaultBattleState(config)) {
+  constructor(config = createDefaultBattleConfig(), state = createDefaultBattleState(config), private readonly random: () => number = Math.random) {
     this.config = config;
     this.state = state;
   }
@@ -64,7 +64,8 @@ export class GameSession {
         break;
       case "UseAbility":
         if (this.state.phase === "InProgress") {
-          tryUseAbility(this.state, this.config, command.unitId, command.facingRotation);
+          tryUseAbility(this.state, this.config, command.unitId, command.facingRotation, this.random);
+          markDefeatedUnits(this.state);
         }
         break;
       case "ReviveUnit":
@@ -102,19 +103,32 @@ export class GameSession {
       return;
     }
 
-    const elapsedSeconds = Math.max(0, deltaSeconds);
+    if (!Number.isFinite(deltaSeconds)) return;
+    const initialRemainingSeconds = this.state.remainingSeconds;
+    const duration = Math.min(Math.max(0, deltaSeconds), initialRemainingSeconds);
+    let elapsed = 0;
+    // 全モードで同じ刻みを使い、期限とオーラ境界を移動に追従させる。
+    do {
+      const step = Math.min(duration - elapsed, 1 / 60);
+      elapsed += step;
+      if (duration - elapsed < 1e-9) elapsed = duration;
+      this.state.remainingSeconds = Math.max(0, initialRemainingSeconds - elapsed);
+      this.tickBattle(step);
+    } while (duration - elapsed > 1e-9 && this.state.result === 'InProgress');
+  }
+
+  private tickBattle(elapsedSeconds: number): void {
     tickAbilities(this.state, this.config, elapsedSeconds);
     tickMpRecovery(this.state, this.config, elapsedSeconds);
     const playerLeaderHpBeforeCombat = findLeader(this.state, "Player").currentHp;
     const cpuLeaderHpBeforeCombat = findLeader(this.state, "Cpu").currentHp;
     const activityStarts = activityStartSecondsByUnit(this.state, elapsedSeconds);
-    this.state.remainingSeconds = Math.max(0, this.state.remainingSeconds - elapsedSeconds);
     tickElementalBuilds(this.state, this.config, elapsedSeconds);
     tickSummonGauges(this.state, this.config, elapsedSeconds);
     const movementTimelines = tickMovement(this.state, this.config, elapsedSeconds, activityStarts);
     const healingElapsed = calculateUnitHealingElapsed(this.state, this.config, movementTimelines);
     tickUnitHealing(this.state, this.config, elapsedSeconds, healingElapsed);
-    tickCombat(this.state, this.config, elapsedSeconds);
+    tickCombat(this.state, this.config, elapsedSeconds, true);
     tickSummonedUnits(this.state, this.config, elapsedSeconds);
     markDefeatedUnits(this.state);
     recordLeaderDamageForMp(

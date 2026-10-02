@@ -62,7 +62,7 @@ export class OnlineSession {
         }
     }
     private attach(room: Room) {
-        this.synchronized=false;this.target=null;this.state.recentAttackEvents=[];this.state.recentSummonAttackEvents=[];
+        this.synchronized=false;this.target=null;this.state.recentAttackEvents=[];this.state.recentSummonAttackEvents=[];this.state.recentAbilityEvents=[];
         this.room = room;
         this.connected = true;
         this.status = '接続済み';
@@ -76,6 +76,7 @@ export class OnlineSession {
             this.target = null;
             this.state.recentAttackEvents = [];
             this.state.recentSummonAttackEvents = [];
+            this.state.recentAbilityEvents = [];
             this.save();
         } this.view = v; if (v.phase === 'Closed') {
             this.connected = false;

@@ -7,6 +7,7 @@ import { cardCatalog, findCard, standardDeckCardIds, type CardDefinition } from 
 import type { DeckLibrary, SavedDeck } from "./deckModel";
 import { validateDeck } from "./deckModel";
 import { loadDeckLibrary, saveDeckLibrary } from "./deckStorage";
+import { getAbilityDefinition } from '@reijin-summon/shared';
 
 type DeckDraft = { id: string; name: string; cardIds: string[]; summonId: SummonId; isNew: boolean };
 
@@ -20,19 +21,10 @@ type EditorSession = {
   storageLoadError: string | null;
 };
 
-const typePresentation: Record<UnitType, { label: string; ability: string }> = {
-  Melee: {
-    label: "キーパー",
-    ability: "守護の潮流（AP 2）：前方の完成済み味方エレメンタルに、周囲の味方の移動速度を1.5倍にする加護を付与。"
-  },
-  Speed: {
-    label: "シーカー",
-    ability: "海駆けの号令（AP 3）：自身を含む周囲の生存中の味方へ15秒間、攻撃力+10。"
-  },
-  Ranged: {
-    label: "マスター",
-    ability: "深海の照準（AP 2）：自身の攻撃射程を20秒間1.5倍にする。"
-  }
+const typePresentation: Record<UnitType, { label: string }> = {
+  Melee: { label: 'キーパー' },
+  Speed: { label: 'シーカー' },
+  Ranged: { label: 'マスター' }
 };
 
 const battleConfig = createDefaultBattleConfig();
@@ -132,6 +124,7 @@ function escapeHtml(value: string): string {
 function cardDetail(card: CardDefinition): string {
   const type = typePresentation[card.unitType];
   const stats = battleConfig.statsByType[card.unitType];
+  const ability = getAbilityDefinition(card.id);
   return `
     <div class="deck-editor__detail-art"><img src="${card.imagePath}" alt="" draggable="false"></div>
     <div class="deck-editor__detail-copy">
@@ -143,7 +136,7 @@ function cardDetail(card: CardDefinition): string {
         <span><small>AT</small><strong>${card.attackDamage}</strong></span>
         <span><small>INT</small><strong>${card.intelligence}</strong></span>
       </div>
-      <p class="deck-editor__reference-note">INTは参照値です。現在の戦闘効果には使用されません。</p>
+      <p class="deck-editor__reference-note">INT差はダメージアビリティの威力と妨害の効果時間に影響します。</p>
       <dl class="deck-editor__combat-stats">
         <div><dt>移動速度</dt><dd>${stats.moveSpeed.toFixed(3)}</dd></div>
         <div><dt>攻撃射程</dt><dd>${stats.attackRange}</dd></div>
@@ -151,7 +144,7 @@ function cardDetail(card: CardDefinition): string {
         <div><dt>生成時間</dt><dd>${stats.elementalBuildSeconds}秒</dd></div>
         <div><dt>復活MP</dt><dd>${card.cost}</dd></div>
       </dl>
-      <div class="deck-editor__ability"><span>現在の兵種アビリティ</span><p>${type.ability}</p></div>
+      <div class="deck-editor__ability"><span>固有アビリティ</span><p>${ability ? `${escapeHtml(ability.name)}（AP ${ability.apCost}）：${escapeHtml(ability.description)}` : 'アビリティなし'}</p></div>
     </div>`;
 }
 

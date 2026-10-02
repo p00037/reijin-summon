@@ -97,10 +97,9 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
     {
       ap: master.abilityAp,
       progress: master.abilityRecoverySeconds,
-      range: master.masterRangeBoostRemainingSeconds,
-      damage: master.seekerAttackBoostRemainingSeconds
+      effects: master.abilityEffects
     },
-    { ap: 0, progress: 0, range: 0, damage: 0 }
+    { ap: 0, progress: 0, effects: [] }
   );
 });
 

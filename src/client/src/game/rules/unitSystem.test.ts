@@ -58,14 +58,14 @@ test("攻撃範囲内の敵リーダーへ直接ダメージを与える", () =>
   assert.equal(findLeader(state, "Cpu").currentHp, 8000 - 61 * 0.25);
 });
 
-test("実効射程内なら基礎射程外のマスターも攻撃する", () => {
+test("旧射程強化を撤去し基礎射程外では攻撃しない", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const attacker = findUnit(state, "PlayerRanged");
   const enemy = findUnit(state, "CpuMelee");
   attacker.position = { x: 0, y: 0 };
   attacker.destination = { ...attacker.position };
-  attacker.masterRangeBoostRemainingSeconds = 20;
+
   enemy.position = { x: 4, y: 0 };
   enemy.destination = { ...enemy.position };
   for (const candidate of state.units.filter(
@@ -77,17 +77,17 @@ test("実効射程内なら基礎射程外のマスターも攻撃する", () =>
 
   tickCombat(state, config, 0);
 
-  assert.equal(enemy.currentHp, 1100 - 36);
+  assert.equal(enemy.currentHp, 1100);
 });
 
-test("実効攻撃力はシーカー強化中に基礎攻撃力へ10加算する", () => {
+test("吸収の攻撃強化を通常攻撃のダメージへ反映する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const attacker = findUnit(state, "PlayerSpeed");
   const enemy = findUnit(state, "CpuMelee");
   attacker.position = { x: 0, y: 0 };
   attacker.destination = { ...attacker.position };
-  attacker.seekerAttackBoostRemainingSeconds = 15;
+  attacker.abilityEffects = [{abilityId:'SC016',sourceUnitId:attacker.unitId,castId:1,kind:'attack',amount:10,remainingSeconds:22}];
   enemy.position = { x: 0.5, y: 0 };
   enemy.destination = { ...enemy.position };
   for (const candidate of state.units.filter(
@@ -119,7 +119,7 @@ test("速度強化範囲内では移動距離が基礎の1.5倍になる", () =>
     maxHp: 120,
     currentHp: 120,
     isComplete: true,
-    hasKeeperSpeedAura: true
+    enchantments: [{kind: 'speed', elapsedSeconds: 0}]
   });
 
   tickMovement(state, config, 1);
@@ -149,7 +149,7 @@ test("接敵中の速度強化は1.5倍と接敵減速を両方適用する", ()
     maxHp: 120,
     currentHp: 120,
     isComplete: true,
-    hasKeeperSpeedAura: true
+    enchantments: [{kind: 'speed', elapsedSeconds: 0}]
   });
 
   tickMovement(state, config, 1);
@@ -213,15 +213,13 @@ test("戦闘不能時にアビリティ状態をすべてリセットする", ()
   unit.currentHp = 0;
   unit.abilityAp = 2;
   unit.abilityRecoverySeconds = 12;
-  unit.masterRangeBoostRemainingSeconds = 8;
-  unit.seekerAttackBoostRemainingSeconds = 7;
+  unit.abilityEffects = [{abilityId: 'SC016', sourceUnitId: unit.unitId, castId: 1, kind: 'attack', amount: 10, remainingSeconds: 22}];
 
   markDefeatedUnits(state);
 
   assert.equal(unit.abilityAp, 0);
   assert.equal(unit.abilityRecoverySeconds, 0);
-  assert.equal(unit.masterRangeBoostRemainingSeconds, 0);
-  assert.equal(unit.seekerAttackBoostRemainingSeconds, 0);
+  assert.deepEqual(unit.abilityEffects, []);
 });
 
 test("combat chooses nearest target across all target kinds", () => {

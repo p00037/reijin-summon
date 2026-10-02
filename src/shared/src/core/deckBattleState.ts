@@ -31,6 +31,9 @@ export function createDeckBattleState(
       ...template,
       unitId: `${team}:${card.id}`,
       cardId: card.id,
+      nation: card.nation,
+      baseIntelligence: card.intelligence,
+      abilityEffects: [],
       position: { ...position }, spawnPosition: { ...position }, destination: { ...position },
       stats: { ...config.statsByType[card.unitType], level: card.level, revivalCost: card.cost, maxHp: card.maxHp, attackDamage: card.attackDamage },
       currentHp: card.maxHp
