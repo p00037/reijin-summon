@@ -7,7 +7,7 @@ import { cardCatalog, findCard, standardDeckCardIds, type CardDefinition } from 
 import type { DeckLibrary, SavedDeck } from "./deckModel";
 import { validateDeck } from "./deckModel";
 import { loadDeckLibrary, saveDeckLibrary } from "./deckStorage";
-import { getAbilityDefinition } from '@reijin-summon/shared';
+import { getAbilityDefinition, getSkillDefinition } from '@reijin-summon/shared';
 
 type DeckDraft = { id: string; name: string; cardIds: string[]; summonId: SummonId; isNew: boolean };
 
@@ -125,6 +125,7 @@ function cardDetail(card: CardDefinition): string {
   const type = typePresentation[card.unitType];
   const stats = battleConfig.statsByType[card.unitType];
   const ability = getAbilityDefinition(card.id);
+  const skill = getSkillDefinition(card.id);
   return `
     <div class="deck-editor__detail-art"><img src="${card.imagePath}" alt="" draggable="false"></div>
     <div class="deck-editor__detail-copy">
@@ -145,6 +146,7 @@ function cardDetail(card: CardDefinition): string {
         <div><dt>復活MP</dt><dd>${card.cost}</dd></div>
       </dl>
       <div class="deck-editor__ability"><span>固有アビリティ</span><p>${ability ? `${escapeHtml(ability.name)}（AP ${ability.apCost}）：${escapeHtml(ability.description)}` : 'アビリティなし'}</p></div>
+      <div class="deck-editor__ability"><span>スキル（自動発動）</span><p>${skill ? `${escapeHtml(skill.name)}：${escapeHtml(skill.description)}` : 'スキルなし'}</p></div>
     </div>`;
 }
 

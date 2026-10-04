@@ -3,6 +3,8 @@ import { findCard } from '../deck/cardCatalog.js';
 
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
+    recentSkillEvents: [],
+    nextSkillEventId: 1,
     rainRemainingSeconds: 0,
     recentAbilityEvents: [],
     nextAbilityEventId: 1,

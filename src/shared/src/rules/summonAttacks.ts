@@ -38,7 +38,7 @@ function applyGlobalAttack(
   const targets: Vec2[] = [];
   for (const unit of state.units) {
     if (unit.team !== summoned.team && isUnitAlive(unit)) {
-      damageUnit(unit, damage, 'summon');
+      damageUnit(unit, damage, 'summon', state);
       targets.push({ ...unit.position });
     }
   }
@@ -61,7 +61,7 @@ function applyBeamAttack(state: BattleState, config: BattleConfig, summoned: Sum
   const damage = initial ? summonSpecialSettings.jackpot.initialDamage : summoned.attackDamage;
   for (const unit of state.units) {
     if (isUnitAlive(unit) && isCircleInBeam(unit.position, config.unitCollisionRadius, beam)) {
-      damageUnit(unit, damage, 'summon');
+      damageUnit(unit, damage, 'summon', state);
     }
   }
   for (const target of state.summonedUnits) {

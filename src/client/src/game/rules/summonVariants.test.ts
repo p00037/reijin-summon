@@ -149,20 +149,23 @@ test("レーザーは味方を減速せず遠い敵ユニットを減速させ�
 });
 
 test("召喚時ダメージの戦闘不能とMP・勝敗をコマンド内で反映する", () => {
-  const { state, config } = fixture();
-  state.playerSummonId = "leviathan";
-  const enemy = findUnit(state, "CpuMelee");
-  enemy.currentHp = 50;
-  enemy.mode = "BuildingElemental";
-  enemy.pendingElementalId = "Elemental3";
-  state.cpuLeaderDamageProgress = 750;
-  findLeader(state, "Cpu").currentHp = 50;
-  const session = new GameSession(config, state);
-  session.applyCommand({ commandType: "Summon", team: "Player" });
-  assert.equal(enemy.mode, "Defeated");
-  assert.equal(enemy.pendingElementalId, null);
-  assert.equal(state.result, "PlayerWin");
-  assert.equal(state.cpuMp, 1);
+  for (const [roll, expectedMp] of [[0, 4], [.5, 1]]) {
+    const { state, config } = fixture();
+    state.playerSummonId = "leviathan";
+    const enemy = findUnit(state, "CpuMelee");
+    enemy.currentHp = 50;
+    enemy.mode = "BuildingElemental";
+    enemy.pendingElementalId = "Elemental3";
+    state.cpuLeaderDamageProgress = 750;
+    findLeader(state, "Cpu").currentHp = 50;
+    const session = new GameSession(config, state, () => roll);
+    session.applyCommand({ commandType: "Summon", team: "Player" });
+    assert.equal(enemy.mode, "Defeated");
+    assert.equal(enemy.pendingElementalId, null);
+    assert.equal(state.result, "PlayerWin");
+    // ティアーズの死亡スキル成功時はLV3のMPも加算する。
+    assert.equal(state.cpuMp, expectedMp);
+  }
 });
 
 test("接触攻撃の周期は更新の分割や端数に依存しない", () => {

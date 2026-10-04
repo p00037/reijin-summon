@@ -20,6 +20,9 @@ import { effectiveMoveSpeed } from './abilityEffects.js';
 import { areCollisionCirclesTouching } from "./collisionGeometry.js";
 import { damageSummonedUnit, damageUnit } from "./combatDamage.js";
 import { getSummonBeam, isCircleInBeam } from "./summonGeometry.js";
+import { createDefaultBattleConfig } from '../core/battleConfig.js';
+import { healUnit } from './skillEffects.js';
+import { triggerDefeatSkills } from './skillSystem.js';
 
 type MoveUnitCommand = Extract<BattleCommand, { commandType: "MoveUnit" }>;
 
@@ -90,9 +93,9 @@ export function tickMovement(
   return timelines;
 }
 
-export function tickCombat(state: BattleState, config: BattleConfig, deltaSeconds: number, appendEvents = false): void {
+export function tickCombat(state: BattleState, config: BattleConfig, deltaSeconds: number, appendEvents = false, random: () => number = Math.random): void {
   if (!appendEvents) state.recentAttackEvents = [];
-  markDefeatedUnits(state);
+  markDefeatedUnits(state, config, random);
 
   for (const unit of state.units) {
     if (unit.mode !== "Active" || !isUnitAlive(unit)) {
@@ -104,7 +107,7 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       continue;
     }
 
-    const target = findAttackTarget(state, unit);
+    const target = findAttackTarget(state, config, unit);
     if (!target) {
       continue;
     }
@@ -119,7 +122,7 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       target.kind === "Elemental"
         ? attackDamage * unit.stats.elementalAttackMultiplier
         : attackDamage;
-    applyDamage(target, damage, config);
+    applyDamage(target, damage, config, state, unit.unitId);
     state.recentAttackEvents.push({
       attackerUnitId: unit.unitId,
       origin: { ...unit.position },
@@ -132,15 +135,14 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
     }
   }
 
-  markDefeatedUnits(state);
+  markDefeatedUnits(state, config, random);
 }
 
-export function markDefeatedUnits(state: BattleState): void {
-  for (const unit of state.units) {
-    if (unit.mode !== "Defeated" && unit.currentHp <= 0) {
-      defeatUnit(state, unit);
-    }
-  }
+export function markDefeatedUnits(state: BattleState, config: BattleConfig = createDefaultBattleConfig(), random: () => number = Math.random): void {
+  const defeats = state.units.filter(unit => unit.mode !== 'Defeated' && unit.currentHp <= 0)
+    .map(unit => ({ unit, ap: unit.abilityAp, sourceUnitId: unit.lethalSourceUnitId ?? null }));
+  for (const { unit } of defeats) defeatUnit(state, unit);
+  if (defeats.length) triggerDefeatSkills(state, config, defeats, random);
 }
 
 function canAttack(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
@@ -267,9 +269,9 @@ function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitSta
   );
 }
 
-function findAttackTarget(state: BattleState, attacker: UnitState): AttackTarget | null {
+function findAttackTarget(state: BattleState, config: BattleConfig, attacker: UnitState): AttackTarget | null {
   const enemyTeam = oppositeTeam(attacker.team);
-  const attackRange = effectiveAttackRange(attacker);
+  const attackRange = effectiveAttackRange(attacker, config);
   const rangeSq = attackRange * attackRange;
   const enemyLeader = findLeader(state, enemyTeam);
   const targets: AttackTarget[] = [
@@ -334,9 +336,9 @@ function secondsWithinRadius(
   return Math.max(0, exit - entry) * durationSeconds;
 }
 
-function applyDamage(target: AttackTarget, damage: number, config: BattleConfig): void {
+function applyDamage(target: AttackTarget, damage: number, config: BattleConfig, state: BattleState, sourceUnitId: UnitId): void {
   if (target.kind === 'Unit') {
-    damageUnit(target.target, damage, 'normal');
+    damageUnit(target.target, damage, 'normal', state, sourceUnitId);
     return;
   }
   if (target.kind === "SummonedUnit") {
@@ -351,6 +353,7 @@ function applyDamage(target: AttackTarget, damage: number, config: BattleConfig)
 }
 
 function defeatUnit(state: BattleState, unit: UnitState): void {
+  unit.lethalSourceUnitId = null;
   unit.mode = "Defeated";
   unit.currentHp = 0;
   unit.defeatedOrder = state.nextDefeatedOrder++;
@@ -365,10 +368,6 @@ function defeatUnit(state: BattleState, unit: UnitState): void {
 function elapsedIntervals(elapsed: number, interval: number): { count: number; remainder: number } {
   const count = Math.floor((elapsed + 1e-9) / interval);
   return { count, remainder: Math.max(0, elapsed - count * interval) };
-}
-
-function healUnit(unit: UnitState, amount: number): void {
-  unit.currentHp = Math.min(unit.stats.maxHp, unit.currentHp + amount);
 }
 
 function resetUnitHealingTimers(unit: UnitState): void {

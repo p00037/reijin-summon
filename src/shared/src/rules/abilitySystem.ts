@@ -5,6 +5,7 @@ import { abilityTargets, matchingElemental } from './abilityTargets.js';
 import { applyTimedEffect, clearUnitEffects, effectiveAttackDamage, effectiveIntelligence, effectiveMoveSpeed, intelligenceMultiplier, tickUnitEffects } from './abilityEffects.js';
 import { enchantElemental, hasActiveSummon, tickEnchantments } from './abilityEnchantments.js';
 import { damageUnit } from './combatDamage.js';
+import { skillModifiers } from './skillEffects.js';
 export { abilityArea, abilityTargets } from './abilityTargets.js';
 export type { AbilityArea, AbilityTargets } from './abilityTargets.js';
 export { effectiveAttackDamage } from './abilityEffects.js';
@@ -66,7 +67,7 @@ export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: 
       break;
     }
     case 'wave':
-      selected.forEach(target => damageUnit(target, 415 * intelligenceMultiplier(casterInt, effectiveIntelligence(target)), 'ability'));
+      selected.forEach(target => damageUnit(target, 415 * intelligenceMultiplier(casterInt, effectiveIntelligence(target)), 'ability', state, unit.unitId));
       break;
     case 'absorb': {
       for (const target of state.units)
@@ -93,8 +94,8 @@ export function tryUseAbility(state: BattleState, config: BattleConfig, unitId: 
     state.recentAbilityEvents.splice(0, state.recentAbilityEvents.length - 128);
   return true;
 }
-export function effectiveAttackRange(unit: UnitState): number {
-  return unit.stats.attackRange;
+export function effectiveAttackRange(unit: UnitState, config?: BattleConfig): number {
+  return unit.stats.attackRange + (unit.unitType === 'Ranged' ? skillModifiers(unit, undefined, config).range : 0);
 }
 export function effectiveMoveSpeedMultiplier(state: BattleState, config: BattleConfig, unit: UnitState): number {
   return unit.stats.moveSpeed > 0 ? effectiveMoveSpeed(state, config, unit) / unit.stats.moveSpeed : 1;

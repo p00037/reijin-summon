@@ -118,6 +118,7 @@ export type LeaderState = {
 };
 
 export type UnitState = {
+  lethalSourceUnitId?: UnitId | null;
   unitId: UnitId;
   cardId?: string;
   nation: string;
@@ -158,6 +159,16 @@ export type AbilityEvent = {
   abilityId: string;
   targets: { unitId: UnitId; position: Vec2 }[];
   elementalTargets: { elementalId: ElementalId; position: Vec2 }[];
+};
+
+export type SkillEvent = {
+  eventId: number;
+  sourceUnitId: UnitId;
+  cardId: string;
+  position: Vec2;
+  resource: 'hp' | 'ap' | 'mp' | 'gauge' | 'revive';
+  amount: number;
+  targets: { unitId: UnitId; position: Vec2 }[];
 };
 
 export type ElementalState = {
@@ -206,6 +217,8 @@ export type SummonAttackEvent = {
 };
 
 export type BattleState = {
+  recentSkillEvents: SkillEvent[];
+  nextSkillEventId: number;
   rainRemainingSeconds: number;
   recentAbilityEvents: AbilityEvent[];
   nextAbilityEventId: number;

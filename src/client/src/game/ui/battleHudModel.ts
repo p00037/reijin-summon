@@ -1,7 +1,7 @@
 import { findLeader } from "../core/battleState";
 import type { BattleState, PlayerUnitId } from "../core/types";
 import { abilityApCost } from "../rules/abilitySystem";
-import { getAbilityDefinition } from '@reijin-summon/shared';
+import { getAbilityDefinition, getSkillDefinition, skillModifiers } from '@reijin-summon/shared';
 
 export const elementButtonTextureKey = "hud-element-button";
 export const abilityButtonTextureKey = "hud-ability-button";
@@ -15,6 +15,9 @@ export type HudGaugeModel = {
 export type BattleHudModel = {
   abilityName: string;
   abilityDescription: string;
+  skillName: string;
+  skillDescription: string;
+  skillStatus: string;
   weatherText: string;
   playerHp: HudGaugeModel;
   cpuHp: HudGaugeModel;
@@ -40,6 +43,11 @@ export function createBattleHudModel(
     ? state.units.find((unit) => unit.unitId === selectedUnitId)
     : undefined;
   const battleInProgress = state.result === "InProgress" && state.phase === "InProgress";
+  const skill = getSkillDefinition(selectedUnit?.cardId);
+  const skillStatus = !skill || !selectedUnit ? ''
+    : skill.effect.kind === 'killAp' ? '撃破時'
+    : ['deathGauge', 'deathAp', 'deathHealing', 'deathMp', 'revive'].includes(skill.effect.kind) ? '死亡時'
+    : skillModifiers(selectedUnit, state).active ? '発動中' : '条件待ち';
   const selectedUnitCanBuild =
     selectedUnit
     && selectedUnit.team === "Player"
@@ -70,6 +78,9 @@ export function createBattleHudModel(
   return {
     abilityName: selectedUnit ? getAbilityDefinition(selectedUnit.cardId)?.name ?? 'アビリティなし' : 'カードを選択',
     abilityDescription: getAbilityDefinition(selectedUnit?.cardId)?.description ?? '',
+    skillName: skill?.name ?? (selectedUnit ? 'スキルなし' : ''),
+    skillDescription: skill?.description ?? '',
+    skillStatus,
     weatherText: state.rainRemainingSeconds > 0 ? '雨' : '晴れ',
     playerHp: leaderGauge("自分", playerLeader.currentHp, playerLeader.maxHp),
     cpuHp: leaderGauge("敵", cpuLeader.currentHp, cpuLeader.maxHp),

@@ -11,6 +11,8 @@ export * from './rules/abilityEnchantments.js';
 export * from './rules/areaCalculator.js';
 export * from './rules/collisionGeometry.js';
 export * from './rules/combatDamage.js';
+export * from './rules/skillCatalog.js';
+export * from './rules/skillEffects.js';
 export * from './rules/elementalSystem.js';
 export * from './rules/gameSession.js';
 export * from './rules/initialPlacement.js';
