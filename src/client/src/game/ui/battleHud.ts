@@ -36,6 +36,8 @@ export class BattleHud {
   private readonly summonHint: Phaser.GameObjects.Text;
   private readonly abilityName: Phaser.GameObjects.Text;
   private readonly abilityDescription: Phaser.GameObjects.Text;
+  private readonly skillName: Phaser.GameObjects.Text;
+  private readonly skillDescription: Phaser.GameObjects.Text;
   private readonly weatherText: Phaser.GameObjects.Text;
 
   constructor(private readonly scene: Phaser.Scene, private readonly layout: BattleLayout, callbacks: BattleHudCallbacks) {
@@ -60,8 +62,11 @@ export class BattleHud {
     this.playerSummonName = this.text(layout.summonButton.x + 26, 321, "", 7, "#eaf8ff").setWordWrapWidth(48, true).setAlign("center");
     this.summonHint = this.text(layout.summonButton.x + 26, 358, "", 6, "#f1c968").setWordWrapWidth(48, true).setAlign("center");
     const info = abilityInfoRect(layout);
-    this.abilityName = this.text(info.x, info.y + 1, '', 9, '#f1c968').setOrigin(0);
-    this.abilityDescription = this.text(info.x, info.y + 16, '', 8, '#eaf8ff').setOrigin(0).setWordWrapWidth(info.width, true);
+    const columnWidth = (info.width - 8) / 2;
+    this.abilityName = this.text(info.x, info.y + 1, '', 8, '#f1c968').setOrigin(0).setWordWrapWidth(columnWidth, true);
+    this.abilityDescription = this.text(info.x, info.y + 21, '', 7, '#eaf8ff').setOrigin(0).setWordWrapWidth(columnWidth, true);
+    this.skillName = this.text(info.x + columnWidth + 8, info.y + 1, '', 8, '#70e5dc').setOrigin(0).setWordWrapWidth(columnWidth, true);
+    this.skillDescription = this.text(info.x + columnWidth + 8, info.y + 21, '', 7, '#eaf8ff').setOrigin(0).setWordWrapWidth(columnWidth, true);
     this.weatherText = this.text(31, 368, '', 8, '#eaf8ff');
     this.resultText = this.text(gameViewport.width / 2, 192, "", 64, "#f1c968").setDepth(100).setStroke("#031822", 5);
     const revival = revivalAreaRect(layout);
@@ -80,6 +85,8 @@ export class BattleHud {
     this.timeText.setText(model.remainingTimeText);
     this.abilityName.setText(model.abilityName);
     this.abilityDescription.setText(model.abilityDescription);
+    this.skillName.setText(`${model.skillName}${model.skillStatus ? `（${model.skillStatus}）` : ''}`);
+    this.skillDescription.setText(model.skillDescription);
     this.weatherText.setText(model.weatherText);
     this.resultText.setText(state.phase === "Countdown" && state.result === "InProgress" ? model.resultText : "");
     this.setEnabled(this.buildButton, model.canBuild);

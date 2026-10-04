@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { Encoder, Decoder } from '@colyseus/schema';
+import { createDefaultBattleConfig, createDeckBattleState, markDefeatedUnits } from '@reijin-summon/shared';
+import { ArenaState, publishBattle } from '../src/rooms/schema/ArenaState.js';
+
+test('死亡スキルの回復量と対象を空配列から差分・全量で配信できる', () => {
+  const config = createDefaultBattleConfig();
+  const battle = createDeckBattleState(config, ['SC006', 'SC016'], ['SC010'], 'raphael', () => 0);
+  battle.phase = 'InProgress';
+  for (const unit of battle.units) unit.position = { x: 0, y: 0 };
+  const source = new ArenaState(), destination = new ArenaState();
+  const encoder = new Encoder(source), decoder = new Decoder(destination);
+  publishBattle(source, battle);
+  decoder.decode(encoder.encodeAll());
+  encoder.discardChanges();
+  battle.units[0].currentHp = 0;
+  battle.units[1].currentHp = 100;
+  markDefeatedUnits(battle, config, () => 0);
+  publishBattle(source, battle);
+  decoder.decode(encoder.encode());
+  encoder.discardChanges();
+  const data = destination.battle!.toJSON();
+  const expected = battle.recentSkillEvents.map(event => ({ ...event, amount: Math.fround(event.amount) }));
+  assert.deepEqual(data.recentSkillEvents, expected);
+  assert.ok(Math.abs(data.units[1].currentHp - battle.units[1].currentHp) < 0.0001);
+  assert.equal(data.nextSkillEventId, 2);
+  const full = new ArenaState();
+  new Decoder(full).decode(encoder.encodeAll());
+  assert.deepEqual(full.battle!.toJSON().recentSkillEvents, expected);
+  battle.recentSkillEvents = [];
+  publishBattle(source, battle);
+  decoder.decode(encoder.encode());
+  assert.deepEqual(destination.battle!.toJSON().recentSkillEvents, []);
+});

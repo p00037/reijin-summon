@@ -1,5 +1,6 @@
 import type { BattleConfig, BattleState, TimedAbilityEffect, UnitState } from '../core/types.js';
 import { elementalAttackPenalty, elementalSpeedBonus } from './abilityEnchantments.js';
+import { skillModifiers } from './skillEffects.js';
 
 export function intelligenceMultiplier(casterInt: number, targetInt: number): number {
   return Math.max(0.1, 1 + 0.1 * (casterInt - targetInt));
@@ -33,16 +34,16 @@ export function tickUnitEffects(unit: UnitState, seconds: number): void {
 
 export function effectiveAttackDamage(unit: UnitState, state?: BattleState, config?: BattleConfig): number {
   const auraPenalty = state && config ? elementalAttackPenalty(state, config, unit) : 0;
-  return Math.max(0, unit.stats.attackDamage + sumEffects(unit, 'attack') - auraPenalty);
+  return Math.max(0, unit.stats.attackDamage + skillModifiers(unit, state, config).attack + sumEffects(unit, 'attack') - auraPenalty);
 }
 
 export function effectiveMoveSpeed(state: BattleState, config: BattleConfig, unit: UnitState): number {
   const bonus = elementalSpeedBonus(state, config, unit);
-  return (unit.stats.moveSpeed + bonus) * multiplyEffects(unit, 'speed');
+  return (unit.stats.moveSpeed + bonus) * skillModifiers(unit, state, config).speed * multiplyEffects(unit, 'speed');
 }
 
-export function unitDamageMultiplier(unit: UnitState): number {
-  return multiplyEffects(unit, 'defense');
+export function unitDamageMultiplier(unit: UnitState, state?: BattleState): number {
+  return skillModifiers(unit, state).defense * multiplyEffects(unit, 'defense');
 }
 
 function sumEffects(unit: UnitState, kind: TimedAbilityEffect['kind']): number {

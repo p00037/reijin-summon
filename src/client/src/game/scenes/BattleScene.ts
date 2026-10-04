@@ -68,6 +68,7 @@ import {
 import { canPlaceElementalAtUnit } from "../rules/elementalSystem";
 import { canUseAbility, effectiveAttackDamage } from "../rules/abilitySystem";
 import { consumeAbilityEvents, abilityEventTargetPositions } from '../render/abilityEventPresentation';
+import { skillEventLabel } from '../render/skillEventPresentation';
 import type { AbilityEvent } from '@reijin-summon/shared';
 import { canReviveUnit } from "../rules/resurrectionSystem";
 import { orderPolygonPoints } from "../rules/areaCalculator";
@@ -138,6 +139,7 @@ export class BattleScene extends Phaser.Scene {
   private moveMarkers = new Map<PlayerUnitId, Vec2>();
   private cpuPlanTimerSeconds = 0;
   private lastAbilityEventId = 0;
+  private lastSkillEventId = 0;
   private abilityHighlights: {event: AbilityEvent; until: number}[] = [];
 
   constructor() {
@@ -177,6 +179,7 @@ export class BattleScene extends Phaser.Scene {
     const config = createDefaultBattleConfig();
     this.session = activeOnline ?? new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds, this.playerSummonId));
     this.lastAbilityEventId = this.session.state.nextAbilityEventId - 1;
+    this.lastSkillEventId = this.session.state.nextSkillEventId - 1;
     this.abilityHighlights = [];
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
@@ -606,6 +609,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawUnits(state.units);
     this.drawAbilityTargeting();
     this.drawAbilityEvents();
+    this.drawSkillEvents();
     this.drawAttackEvents(state);
     this.summonEffects.draw(state, this.session.config);
     const facingRotation = this.selectedUnitFacingRotation();
@@ -833,6 +837,19 @@ export class BattleScene extends Phaser.Scene {
           line.to.y
         );
       }
+    }
+  }
+
+  private drawSkillEvents(): void {
+    const consumed = consumeAbilityEvents(this.session.state.recentSkillEvents, this.lastSkillEventId);
+    this.lastSkillEventId = consumed.lastSeen;
+    for (const event of consumed.events) {
+      const point = this.worldToScreen(event.targets[0]?.position ?? event.position);
+      const text = this.add.text(point.x, point.y - 25, skillEventLabel(event), withCanvasTextResolution({
+        fontFamily: '"Yu Gothic", sans-serif', fontSize: '10px', color: '#70e5dc',
+        backgroundColor: '#031822', padding: { x: 4, y: 2 }
+      })).setOrigin(.5).setDepth(20);
+      this.tweens.add({ targets: text, y: text.y - 20, alpha: 0, duration: 1400, onComplete: () => text.destroy() });
     }
   }
 

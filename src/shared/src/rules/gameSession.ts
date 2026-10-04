@@ -54,7 +54,7 @@ export class GameSession {
         if (this.state.phase === "InProgress") {
           const hpBefore = this.state.leaders.map(leader => ({ team: leader.team, hp: leader.currentHp }));
           tryExecuteSummon(this.state, this.config, command.team);
-          markDefeatedUnits(this.state);
+          markDefeatedUnits(this.state, this.config, this.random);
           removeDestroyedElementals(this.state);
           for (const before of hpBefore) {
             recordLeaderDamageForMp(this.state, this.config, before.team, before.hp - findLeader(this.state, before.team).currentHp);
@@ -65,7 +65,7 @@ export class GameSession {
       case "UseAbility":
         if (this.state.phase === "InProgress") {
           tryUseAbility(this.state, this.config, command.unitId, command.facingRotation, this.random);
-          markDefeatedUnits(this.state);
+          markDefeatedUnits(this.state, this.config, this.random);
         }
         break;
       case "ReviveUnit":
@@ -118,6 +118,7 @@ export class GameSession {
   }
 
   private tickBattle(elapsedSeconds: number): void {
+    markDefeatedUnits(this.state, this.config, this.random);
     tickAbilities(this.state, this.config, elapsedSeconds);
     tickMpRecovery(this.state, this.config, elapsedSeconds);
     const playerLeaderHpBeforeCombat = findLeader(this.state, "Player").currentHp;
@@ -128,9 +129,9 @@ export class GameSession {
     const movementTimelines = tickMovement(this.state, this.config, elapsedSeconds, activityStarts);
     const healingElapsed = calculateUnitHealingElapsed(this.state, this.config, movementTimelines);
     tickUnitHealing(this.state, this.config, elapsedSeconds, healingElapsed);
-    tickCombat(this.state, this.config, elapsedSeconds, true);
+    tickCombat(this.state, this.config, elapsedSeconds, true, this.random);
     tickSummonedUnits(this.state, this.config, elapsedSeconds);
-    markDefeatedUnits(this.state);
+    markDefeatedUnits(this.state, this.config, this.random);
     recordLeaderDamageForMp(
       this.state,
       this.config,

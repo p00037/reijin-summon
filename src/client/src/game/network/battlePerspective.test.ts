@@ -4,6 +4,12 @@ import { perspectivePoint, toLocalState, toServerCommand } from './battlePerspec
 import { createDefaultBattleConfig } from '../core/battleConfig';
 import { createDefaultBattleState } from '../core/battleState';
 
+test('死亡スキルの発動位置と回復対象を後攻視点へ変換し、カードと回復量を保つ', () => {
+ const state = createDefaultBattleState(createDefaultBattleConfig());
+ state.recentSkillEvents = [{eventId: 2, sourceUnitId: 'CpuMelee', cardId: 'SC006', position: {x: 1, y: 2}, resource: 'hp', amount: 400, targets: [{unitId: 'CpuRanged', position: {x: 3, y: 4}}]}];
+ assert.deepEqual(toLocalState(state, 'Cpu').recentSkillEvents, [{eventId: 2, sourceUnitId: 'PlayerMelee', cardId: 'SC006', position: {x: -1, y: -2}, resource: 'hp', amount: 400, targets: [{unitId: 'PlayerRanged', position: {x: -3, y: -4}}]}]);
+});
+
 test('後攻視点はエンチャント実対象のIDを維持し発動時位置を反転する', () => {
  const state = createDefaultBattleState(createDefaultBattleConfig());
  state.recentAbilityEvents = [{eventId: 1, sourceUnitId: 'CpuRanged', abilityId: 'SC003', targets: [], elementalTargets: [

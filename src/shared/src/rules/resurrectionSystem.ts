@@ -1,5 +1,5 @@
 import { findLeader, findUnit, getMpState, setMpState } from "../core/battleState.js";
-import type { BattleConfig, BattleState, TeamId, UnitId, Vec2 } from "../core/types.js";
+import type { BattleConfig, BattleState, TeamId, UnitId, UnitState, Vec2 } from "../core/types.js";
 import { distanceSq } from "../core/vector.js";
 import { resetUnitAbilityState } from "./abilitySystem.js";
 
@@ -61,6 +61,12 @@ export function tryReviveUnit(
     mpState.recoveryProgress,
     mpState.leaderDamageProgress
   );
+  restoreUnit(unit, targetPosition);
+  return true;
+}
+
+export function restoreUnit(unit: UnitState, targetPosition: Vec2): void {
+  unit.lethalSourceUnitId = null;
   unit.mode = "Active";
   unit.currentHp = unit.stats.maxHp;
   unit.position = { ...targetPosition };
@@ -73,7 +79,6 @@ export function tryReviveUnit(
   unit.pendingElementalId = null;
   unit.defeatedOrder = null;
   resetUnitAbilityState(unit);
-  return true;
 }
 
 export function tickMpRecovery(state: BattleState, config: BattleConfig, deltaSeconds: number): void {

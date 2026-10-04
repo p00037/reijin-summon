@@ -132,7 +132,7 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     summoned.leaderAttackTimerSeconds = leader.remaining;
     if (normal.count > 0) {
       for (const target of touchingUnits) {
-        damageUnit(target, summoned.attackDamage * normal.count, 'summon');
+        damageUnit(target, summoned.attackDamage * normal.count, 'summon', state);
       }
       for (const target of touchingSummonedUnits) {
         damageSummonedUnit(target, summoned.attackDamage * normal.count);
