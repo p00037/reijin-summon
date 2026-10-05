@@ -141,13 +141,16 @@ export type UnitState = {
   pendingElementalId: ElementalId | null;
   abilityAp: number;
   abilityRecoverySeconds: number;
+  potentialProtectionSeconds?: number;
 };
 
 export type TimedAbilityEffect = {
   abilityId: string;
-  sourceUnitId: UnitId;
+  sourceUnitId: UnitId | '';
+  sourceSummonedUnitId?: number;
+  sourcePosition?: Vec2;
   castId: number;
-  kind: 'attack' | 'speed' | 'intelligence' | 'defense';
+  kind: 'attack' | 'speed' | 'intelligence' | 'defense' | 'pull';
   amount: number;
   remainingSeconds: number;
 };
@@ -183,6 +186,9 @@ export type ElementalState = {
 };
 
 export type SummonedUnitState = {
+  potentialActive?: boolean;
+  potentialRemainingSeconds?: number;
+  potentialTargets?: { unitId: UnitId }[];
   summonedUnitId: number;
   summonId: SummonId;
   damageMultiplier: number;
@@ -216,7 +222,18 @@ export type SummonAttackEvent = {
   kind: "strike" | "roots" | "wave";
 };
 
+export type SummonPotentialEvent = {
+  eventId: number;
+  summonedUnitId: number;
+  summonId: SummonId;
+  team: TeamId;
+  origin: Vec2;
+  targets: Vec2[];
+};
+
 export type BattleState = {
+  recentSummonPotentialEvents: SummonPotentialEvent[];
+  nextSummonPotentialEventId: number;
   recentSkillEvents: SkillEvent[];
   nextSkillEventId: number;
   rainRemainingSeconds: number;

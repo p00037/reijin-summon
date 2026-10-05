@@ -23,6 +23,7 @@ import { getSummonBeam, isCircleInBeam } from "./summonGeometry.js";
 import { createDefaultBattleConfig } from '../core/battleConfig.js';
 import { healUnit } from './skillEffects.js';
 import { triggerDefeatSkills } from './skillSystem.js';
+import { potentialPull } from './summonPotential.js';
 
 type MoveUnitCommand = Extract<BattleCommand, { commandType: "MoveUnit" }>;
 
@@ -78,10 +79,12 @@ export function tickMovement(
     const initialPosition = { ...unit.position };
     const contactMultiplier = hasEnemyContact(state, config, unit) || isInEnemyBeam(state, config, unit)
       ? config.contactSlowMultiplier : 1;
-    const moveSpeed = effectiveMoveSpeed(state, config, unit) * contactMultiplier;
-    const targetDistance = Math.sqrt(distanceSq(unit.position, unit.destination));
+    const pull = potentialPull(state, unit);
+    const destination = pull?.destination ?? unit.destination;
+    const moveSpeed = (pull?.speed ?? effectiveMoveSpeed(state, config, unit)) * contactMultiplier;
+    const targetDistance = Math.sqrt(distanceSq(unit.position, destination));
     const movementSeconds = moveSpeed > 0 ? Math.min(activeSeconds, targetDistance / moveSpeed) : 0;
-    unit.position = moveTowards(unit.position, unit.destination, moveSpeed * activeSeconds);
+    unit.position = moveTowards(unit.position, destination, moveSpeed * activeSeconds);
     timelines.set(unit.unitId, {
       initialPosition,
       finalPosition: { ...unit.position },
@@ -353,6 +356,9 @@ function applyDamage(target: AttackTarget, damage: number, config: BattleConfig,
 }
 
 function defeatUnit(state: BattleState, unit: UnitState): void {
+  for (const summon of state.summonedUnits) {
+    summon.potentialTargets = summon.potentialTargets?.filter(target => target.unitId !== unit.unitId);
+  }
   unit.lethalSourceUnitId = null;
   unit.mode = "Defeated";
   unit.currentHp = 0;

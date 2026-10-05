@@ -107,6 +107,7 @@ export function tickAbilities(state: BattleState, config: BattleConfig, deltaSec
   state.rainRemainingSeconds = Math.max(0, state.rainRemainingSeconds - elapsed);
   tickEnchantments(state, config, elapsed);
   for (const unit of state.units) {
+    unit.potentialProtectionSeconds = Math.max(0, (unit.potentialProtectionSeconds ?? 0) - elapsed);
     if (!isUnitAlive(unit)) {
       resetUnitAbilityState(unit);
       continue;

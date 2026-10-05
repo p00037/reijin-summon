@@ -7,7 +7,7 @@ import { cardCatalog, findCard, standardDeckCardIds, type CardDefinition } from 
 import type { DeckLibrary, SavedDeck } from "./deckModel";
 import { validateDeck } from "./deckModel";
 import { loadDeckLibrary, saveDeckLibrary } from "./deckStorage";
-import { getAbilityDefinition, getSkillDefinition } from '@reijin-summon/shared';
+import { getAbilityDefinition, getSkillDefinition, summonPotentialDescriptions } from '@reijin-summon/shared';
 
 type DeckDraft = { id: string; name: string; cardIds: string[]; summonId: SummonId; isNew: boolean };
 
@@ -254,6 +254,7 @@ export function mountDeckEditor(
               <strong>${escapeHtml(selectedSummon.name)}</strong>
               <span>基礎HP ${selectedSummon.baseHp} · 攻撃 ${selectedSummon.attackDamage} · 被ダメージ ${Math.round(selectedSummon.damageMultiplier * 100)}%</span>
               <p>${escapeHtml(selectedSummon.description)}</p>
+              <p><strong>潜在能力</strong>（召喚士HP30%以下で発動）<br>${escapeHtml(summonPotentialDescriptions[selectedSummon.id])}</p>
             </div>
           </section>
           <div class="deck-editor__cost"><span>合計コスト</span><strong>${validation.cost}<small>/ 10</small></strong></div>
