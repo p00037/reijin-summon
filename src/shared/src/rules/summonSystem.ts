@@ -7,6 +7,7 @@ import { completedElementalsForTeam } from "./elementalSystem.js";
 import { getSummonDefinition } from "../core/summonCatalog.js";
 import { damageSummonedUnit, damageUnit } from "./combatDamage.js";
 import { applySummonSpecialAttack, summonSpecialSettings } from "./summonAttacks.js";
+import { applySummonPotential, rememberPotentialSourcePositions, tickSummonPotential } from './summonPotential.js';
 
 export function canSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
   return summonUnavailableReason(state, config, team) === null;
@@ -44,6 +45,9 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
     ? summonSpecialSettings[definition.id] : null;
 
   const summoned: SummonedUnitState = {
+    potentialActive: false,
+    potentialRemainingSeconds: 0,
+    potentialTargets: [],
     summonedUnitId: state.nextSummonedUnitId,
     summonId: definition.id,
     damageMultiplier: definition.damageMultiplier,
@@ -65,6 +69,7 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   state.summonedUnits.push(summoned);
   state.nextSummonedUnitId += 1;
   setSummonGauge(state, team, 0);
+  applySummonPotential(state, config, summoned);
   applySummonSpecialAttack(state, config, summoned, true);
   return true;
 }
@@ -92,6 +97,7 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     if (summoned.currentHp <= 0) {
       continue;
     }
+    tickSummonPotential(summoned, deltaSeconds);
     const definition = getSummonDefinition(summoned.summonId);
     const specialSettings = summoned.summonId === "jackpot" || summoned.summonId === "yggdrasil" || summoned.summonId === "leviathan"
       ? summonSpecialSettings[summoned.summonId] : null;
@@ -158,6 +164,7 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
       summoned.position = moveTowards(summoned.position, summoned.destination, summoned.moveSpeed * speedMultiplier * deltaSeconds);
     }
   }
+  rememberPotentialSourcePositions(state);
   state.summonedUnits = state.summonedUnits.filter((summoned) => summoned.currentHp > 0);
 }
 

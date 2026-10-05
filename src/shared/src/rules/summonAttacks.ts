@@ -3,6 +3,7 @@ import { findLeader, isUnitAlive, oppositeTeam } from "../core/battleState.js";
 import type { BattleConfig, BattleState, SummonedUnitState, Vec2 } from "../core/types.js";
 import { damageSummonedUnit } from "./combatDamage.js";
 import { getSummonBeam, isCircleInBeam } from "./summonGeometry.js";
+import { applyYggdrasilPotentialSlow } from './summonPotential.js';
 
 // Approved provisional values; see the summon selection design document.
 export const summonSpecialSettings = {
@@ -17,6 +18,7 @@ export function applySummonSpecialAttack(
   if (summoned.summonId === "jackpot") {
     applyBeamAttack(state, config, summoned, initial);
   } else if (summoned.summonId === "yggdrasil") {
+    applyYggdrasilPotentialSlow(state, summoned);
     applyGlobalAttack(state, summoned, summoned.attackDamage, summoned.leaderAttackDamage, "roots");
     if (initial) {
       for (const elemental of state.elementals) {

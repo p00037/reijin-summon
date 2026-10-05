@@ -2,6 +2,7 @@ import { findLeader } from "../core/battleState";
 import type { BattleState, PlayerUnitId } from "../core/types";
 import { abilityApCost } from "../rules/abilitySystem";
 import { getAbilityDefinition, getSkillDefinition, skillModifiers } from '@reijin-summon/shared';
+import { isSummonPotentialReady } from '@reijin-summon/shared';
 
 export const elementButtonTextureKey = "hud-element-button";
 export const abilityButtonTextureKey = "hud-ability-button";
@@ -13,6 +14,9 @@ export type HudGaugeModel = {
 };
 
 export type BattleHudModel = {
+  potentialHint: string;
+  playerPotentialReady: boolean;
+  cpuPotentialReady: boolean;
   abilityName: string;
   abilityDescription: string;
   skillName: string;
@@ -75,7 +79,11 @@ export function createBattleHudModel(
         ? `${Math.max(1, Math.ceil(state.countdownRemainingSeconds))}`
         : "";
 
+  const playerPotentialReady = isSummonPotentialReady(state, 'Player');
   return {
+    potentialHint: canSummonPlayer && playerPotentialReady ? '潜在能力\n発動可能' : '',
+    playerPotentialReady,
+    cpuPotentialReady: isSummonPotentialReady(state, 'Cpu'),
     abilityName: selectedUnit ? getAbilityDefinition(selectedUnit.cardId)?.name ?? 'アビリティなし' : 'カードを選択',
     abilityDescription: getAbilityDefinition(selectedUnit?.cardId)?.description ?? '',
     skillName: skill?.name ?? (selectedUnit ? 'スキルなし' : ''),

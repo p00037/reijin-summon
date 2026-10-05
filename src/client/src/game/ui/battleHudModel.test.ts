@@ -1,5 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+
+test('潜在可能表示は双方のHP30%以下と戦闘中の条件を使う', () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.phase = 'InProgress';
+  state.leaders[0].currentHp = 2400;
+  state.leaders[1].currentHp = 2401;
+  let model = createBattleHudModel(state, null, true, false);
+  assert.equal(model.playerPotentialReady, true);
+  assert.ok(model.potentialHint?.includes('潜在能力'));
+  assert.equal(createBattleHudModel(state, null, false, false).potentialHint, '');
+  assert.equal(model.cpuPotentialReady, false);
+  state.leaders[1].currentHp = 2400;
+  model = createBattleHudModel(state, null, true, false);
+  assert.equal(model.cpuPotentialReady, true);
+  state.phase = 'Setup';
+  assert.equal(createBattleHudModel(state, null, false, false).playerPotentialReady, false);
+  state.phase = 'InProgress'; state.leaders[0].currentHp = 0;
+  assert.equal(createBattleHudModel(state, null, false, false).playerPotentialReady, false);
+});
 import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState } from "../core/battleState";
 import {

@@ -140,6 +140,7 @@ export class BattleScene extends Phaser.Scene {
   private cpuPlanTimerSeconds = 0;
   private lastAbilityEventId = 0;
   private lastSkillEventId = 0;
+  private lastSummonPotentialEventId = 0;
   private abilityHighlights: {event: AbilityEvent; until: number}[] = [];
 
   constructor() {
@@ -180,6 +181,7 @@ export class BattleScene extends Phaser.Scene {
     this.session = activeOnline ?? new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds, this.playerSummonId));
     this.lastAbilityEventId = this.session.state.nextAbilityEventId - 1;
     this.lastSkillEventId = this.session.state.nextSkillEventId - 1;
+    this.lastSummonPotentialEventId = this.session.state.nextSummonPotentialEventId - 1;
     this.abilityHighlights = [];
     this.leaderSprites = new Map();
     this.elementalSprites = new Map();
@@ -610,6 +612,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawAbilityTargeting();
     this.drawAbilityEvents();
     this.drawSkillEvents();
+    this.drawSummonPotentialEvents();
     this.drawAttackEvents(state);
     this.summonEffects.draw(state, this.session.config);
     const facingRotation = this.selectedUnitFacingRotation();
@@ -853,6 +856,28 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  private drawSummonPotentialEvents(): void {
+    const consumed = consumeAbilityEvents(this.session.state.recentSummonPotentialEvents, this.lastSummonPotentialEventId);
+    this.lastSummonPotentialEventId = consumed.lastSeen;
+    for (const event of consumed.events) {
+      const point = this.worldToScreen(event.origin);
+      const color = event.team === 'Player' ? '#70e5dc' : '#ffb39b';
+      const text = this.add.text(point.x, point.y - 55, `${getSummonDefinition(event.summonId).name}\n潜在能力発動`, withCanvasTextResolution({
+        fontFamily: '"Yu Gothic", sans-serif', fontSize: '12px', color,
+        backgroundColor: '#031822', padding: { x: 6, y: 4 }, align: 'center'
+      })).setOrigin(.5).setDepth(20);
+      this.tweens.add({ targets: text, y: text.y - 25, alpha: 0, duration: 1800, onComplete: () => text.destroy() });
+      const effect = this.add.graphics().setDepth(19);
+      const effectColor = event.team === 'Player' ? 0x70e5dc : 0xffb39b;
+      effect.lineStyle(3, effectColor, .9);
+      for (const target of event.targets) {
+        const screen = this.worldToScreen(target);
+        effect.strokeCircle(screen.x, screen.y, 24);
+      }
+      this.tweens.add({ targets: effect, alpha: 0, duration: 1000, onComplete: () => effect.destroy() });
+    }
+  }
+
   private drawAbilityEvents(): void {
     const consumed = consumeAbilityEvents(this.session.state.recentAbilityEvents, this.lastAbilityEventId);
     this.lastAbilityEventId = consumed.lastSeen;
@@ -895,7 +920,7 @@ export class BattleScene extends Phaser.Scene {
       const screen = this.worldToScreen(unit.position);
       const isSelected = unit.unitId === this.selectedUnitId;
       const color = unit.team === "Player" ? 0x60a5fa : 0xf87171;
-      const alpha = 1;
+      const alpha = (unit.potentialProtectionSeconds ?? 0) > 0 ? .55 + Math.abs(Math.sin(this.time.now / 80)) * .45 : 1;
 
       this.updateUnitImage(unit, screen, alpha);
 

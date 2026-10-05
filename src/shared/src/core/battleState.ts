@@ -3,6 +3,8 @@ import { findCard } from '../deck/cardCatalog.js';
 
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
+    recentSummonPotentialEvents: [],
+    nextSummonPotentialEventId: 1,
     recentSkillEvents: [],
     nextSkillEventId: 1,
     rainRemainingSeconds: 0,
@@ -140,6 +142,7 @@ function createUnit(
     nation: card.nation,
     baseIntelligence: card.intelligence,
     abilityEffects: [],
+    potentialProtectionSeconds: 0,
     team,
     unitType,
     position: { ...spawnPosition },

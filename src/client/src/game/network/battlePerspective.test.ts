@@ -1,5 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+test('潜在の対象・発動位置・引き寄せ元を後攻視点へ変換する', () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.recentSummonPotentialEvents = [{ eventId: 1, summonedUnitId: 7, summonId: 'bahamut', team: 'Cpu', origin: { x: 2, y: 3 }, targets: [{ x: 4, y: -1 }] }];
+  state.units[0].abilityEffects = [{ abilityId: 'potential:bahamut', sourceUnitId: '', sourceSummonedUnitId: 7, sourcePosition: { x: 2, y: 3 }, castId: 7, kind: 'pull', amount: .41, remainingSeconds: 12 }];
+  const local = toLocalState(state, 'Cpu');
+  assert.equal(local.recentSummonPotentialEvents[0].team, 'Player');
+  assert.deepEqual(local.recentSummonPotentialEvents[0].origin, { x: -2, y: -3 });
+  assert.deepEqual(local.recentSummonPotentialEvents[0].targets, [{ x: -4, y: 1 }]);
+  assert.equal(local.units[0].abilityEffects[0].sourceUnitId, '');
+  assert.equal(local.units[0].abilityEffects[0].sourceSummonedUnitId, 7);
+  assert.deepEqual(local.units[0].abilityEffects[0].sourcePosition, { x: -2, y: -3 });
+});
 import { perspectivePoint, toLocalState, toServerCommand } from './battlePerspective';
 import { createDefaultBattleConfig } from '../core/battleConfig';
 import { createDefaultBattleState } from '../core/battleState';

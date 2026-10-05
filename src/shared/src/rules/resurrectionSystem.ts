@@ -2,6 +2,8 @@ import { findLeader, findUnit, getMpState, setMpState } from "../core/battleStat
 import type { BattleConfig, BattleState, TeamId, UnitId, UnitState, Vec2 } from "../core/types.js";
 import { distanceSq } from "../core/vector.js";
 import { resetUnitAbilityState } from "./abilitySystem.js";
+import { summonPotentialSettings } from '../core/summonPotentialCatalog.js';
+import { potentialMpRecoveryMultiplier } from './summonPotential.js';
 
 const mpRecoverySeconds = [25, 24, 21, 19, 16, 13, 9, 5, 4, 3, 3] as const;
 
@@ -66,6 +68,7 @@ export function tryReviveUnit(
 }
 
 export function restoreUnit(unit: UnitState, targetPosition: Vec2): void {
+  unit.potentialProtectionSeconds = summonPotentialSettings.revivalProtectionSeconds;
   unit.lethalSourceUnitId = null;
   unit.mode = "Active";
   unit.currentHp = unit.stats.maxHp;
@@ -91,7 +94,7 @@ export function tickMpRecovery(state: BattleState, config: BattleConfig, deltaSe
 
     const recoverySeconds = mpRecoverySecondsForDefeatedLevel(defeatedLevelTotal(state, team));
     const recoveryProgress =
-      mpState.recoveryProgress + Math.max(0, deltaSeconds) / recoverySeconds;
+      mpState.recoveryProgress + Math.max(0, deltaSeconds) / recoverySeconds * potentialMpRecoveryMultiplier(state, team);
     const recoveredMp = Math.floor(recoveryProgress);
     const current = Math.min(config.maxMp, mpState.current + recoveredMp);
     const remainingProgress =

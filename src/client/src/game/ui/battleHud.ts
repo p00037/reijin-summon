@@ -79,6 +79,9 @@ export class BattleHud {
     const model = createBattleHudModel(state, selectedUnitId, canSummonPlayer, canUseSelectedAbility);
     this.applyGauge(this.playerHp, model.playerHp, model.playerHp.text.replace("自分 ", ""));
     this.applyGauge(this.cpuHp, model.cpuHp, model.cpuHp.text.replace("敵 ", ""));
+    const potentialPulse = .55 + Math.abs(Math.sin(this.scene.time.now / 220)) * .45;
+    this.playerHp.fill.setAlpha(model.playerPotentialReady ? potentialPulse : 1);
+    this.cpuHp.fill.setAlpha(model.cpuPotentialReady ? potentialPulse : 1);
     this.applyGauge(this.mp, model.mp, model.mp.text.replace("MP ", ""));
     this.applyGauge(this.summonGauge, model.summonGauge, model.summonGauge.text.replace("召喚ゲージ ", ""));
     this.applyGauge(this.abilityGauge, model.abilityGauge, model.abilityGauge.text);
@@ -94,7 +97,9 @@ export class BattleHud {
     this.setEnabled(this.summonButton, model.canSummon);
     this.playerSummonName.setText(getSummonDefinition(state.playerSummonId).name);
     this.cpuSummonName.setText(getSummonDefinition(state.cpuSummonId).name);
-    this.summonHint.setText(summonReason ?? "");
+    this.playerSummonName.setColor(model.playerPotentialReady ? '#f1c968' : '#eaf8ff');
+    this.cpuSummonName.setColor(model.cpuPotentialReady ? '#f1c968' : '#eaf8ff');
+    this.summonHint.setText(summonReason ?? model.potentialHint);
     const hasDefeatedUnits = state.units.some(unit => unit.team === "Player" && unit.mode === "Defeated");
     this.waitingHint.setVisible(!hasDefeatedUnits && state.phase !== "Setup");
     this.waitingHint.setText("復活待機エリア  /  倒れた仲間を自分の召喚師へドラッグして復活");
