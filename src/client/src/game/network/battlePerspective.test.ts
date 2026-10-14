@@ -16,6 +16,24 @@ test('潜在の対象・発動位置・引き寄せ元を後攻視点へ変換�
 import { perspectivePoint, toLocalState, toServerCommand } from './battlePerspective';
 import { createDefaultBattleConfig } from '../core/battleConfig';
 import { createDefaultBattleState } from '../core/battleState';
+import { createOnlineBattleState, tryExecuteSummon } from '@reijin-summon/shared';
+
+test('後攻視点の召喚では自分の編成補正だけを採用する', () => {
+  const config = createDefaultBattleConfig();
+  const state = createOnlineBattleState(config, {
+    Player: { cardIds: ['SC005', 'SC007'], summonId: 'raphael' },
+    Cpu: { cardIds: ['SC016', 'SC017'], summonId: 'bahamut' }
+  });
+  state.phase = 'InProgress';
+  state.cpuSummonGauge = 1;
+  const local = toLocalState(state, 'Cpu');
+  assert.equal(tryExecuteSummon(local, config, 'Player'), true);
+  assert.equal(local.summonedUnits[0].summonId, 'bahamut');
+  assert.equal(local.summonedUnits[0].attackDamage, 99);
+  assert.equal(local.summonedUnits[0].maxHp, 1650);
+  assert.ok(Math.abs(local.summonedUnits[0].damageMultiplier - .125) < 1e-8);
+  assert.equal(state.summonedUnits.length, 0);
+});
 
 test('死亡スキルの発動位置と回復対象を後攻視点へ変換し、カードと回復量を保つ', () => {
  const state = createDefaultBattleState(createDefaultBattleConfig());

@@ -1,4 +1,5 @@
 import type { SummonId } from "./summonCatalog.js";
+import type { SummonCustomization } from '../deck/summonCustomization.js';
 
 export type TeamId = "Player" | "Cpu";
 export type UnitType = "Melee" | "Speed" | "Ranged";
@@ -186,6 +187,7 @@ export type ElementalState = {
 };
 
 export type SummonedUnitState = {
+  customizationAttackRatio?: number;
   potentialActive?: boolean;
   potentialRemainingSeconds?: number;
   potentialTargets?: { unitId: UnitId }[];
@@ -246,6 +248,8 @@ export type BattleState = {
   cpuSummonGauge: number;
   playerSummonId: SummonId;
   cpuSummonId: SummonId;
+  playerSummonCustomization: SummonCustomization;
+  cpuSummonCustomization: SummonCustomization;
   result: MatchResult;
   leaders: LeaderState[];
   units: UnitState[];

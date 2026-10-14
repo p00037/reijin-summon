@@ -5,6 +5,7 @@ import { calculateSummonArea, calculateSummonCentroid } from "./areaCalculator.j
 import { areCollisionCirclesTouching } from "./collisionGeometry.js";
 import { completedElementalsForTeam } from "./elementalSystem.js";
 import { getSummonDefinition } from "../core/summonCatalog.js";
+import { getCustomizedSummonDefinition } from '../deck/summonCustomization.js';
 import { damageSummonedUnit, damageUnit } from "./combatDamage.js";
 import { applySummonSpecialAttack, summonSpecialSettings } from "./summonAttacks.js";
 import { applySummonPotential, rememberPotentialSourcePositions, tickSummonPotential } from './summonPotential.js';
@@ -22,11 +23,18 @@ export function summonUnavailableReason(state: BattleState, config: BattleConfig
 }
 
 function summonMaxHp(state: BattleState, config: BattleConfig, team: TeamId): number {
-  const definition = getSummonDefinition(team === "Player" ? state.playerSummonId : state.cpuSummonId);
+  const definition = summonDefinitionForTeam(state, team);
   const points = [findLeader(state, team).position, ...completedElementalsForTeam(state, team).map(elemental => elemental.position)];
   const battlefieldArea = (config.battlefieldMax.x - config.battlefieldMin.x) * (config.battlefieldMax.y - config.battlefieldMin.y);
   const fieldPercent = battlefieldArea > 0 ? calculateSummonArea(points) / battlefieldArea * 100 : 0;
   return definition.baseHp + config.summonedUnitHpPerFieldPercent * fieldPercent;
+}
+
+function summonDefinitionForTeam(state: BattleState, team: TeamId) {
+  return getCustomizedSummonDefinition(
+    team === 'Player' ? state.playerSummonId : state.cpuSummonId,
+    team === 'Player' ? state.playerSummonCustomization : state.cpuSummonCustomization
+  );
 }
 
 export function tryExecuteSummon(state: BattleState, config: BattleConfig, team: TeamId): boolean {
@@ -39,12 +47,13 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
   const elementals = completedElementalsForTeam(state, team);
   const summonPoints = [leader.position, ...elementals.map((elemental) => elemental.position)];
   const summonPosition = calculateSummonCentroid(summonPoints, leader.position);
-  const definition = getSummonDefinition(team === "Player" ? state.playerSummonId : state.cpuSummonId);
+  const definition = summonDefinitionForTeam(state, team);
   const maxHp = summonMaxHp(state, config, team);
   const specialSettings = definition.id === "jackpot" || definition.id === "yggdrasil" || definition.id === "leviathan"
     ? summonSpecialSettings[definition.id] : null;
 
   const summoned: SummonedUnitState = {
+    customizationAttackRatio: definition.customizationAttackRatio,
     potentialActive: false,
     potentialRemainingSeconds: 0,
     potentialTargets: [],

@@ -9,8 +9,16 @@ export class MatchController {
     private rematch = new Set<TeamId>();
     private view: RoomView = { phase: 'Waiting', matchId: randomUUID(), countdown: 5, ready: { Player: false, Cpu: false }, connected: { Player: false, Cpu: false }, result: 'InProgress', reason: '', battle: null };
     publicView(): RoomView { return { ...this.view, ready: { ...this.view.ready }, connected: { ...this.view.connected }, battle: this.view.phase === 'Battle' || this.view.phase === 'Result' ? this.session?.state ?? null : null }; }
-    privateView(team: TeamId): BattleState | null { if (!this.decks[team])
-        return null; const state = this.makeState(); state.units = state.units.filter(u => u.team === team); state.cpuSummonId = team === 'Cpu' ? this.decks.Cpu!.summonId : 'raphael'; state.playerSummonId = team === 'Player' ? this.decks.Player!.summonId : 'raphael'; return state; }
+    privateView(team: TeamId): BattleState | null {
+        if (!this.decks[team]) return null;
+        const state = this.makeState();
+        state.units = state.units.filter(u => u.team === team);
+        state.cpuSummonId = team === 'Cpu' ? this.decks.Cpu!.summonId : 'raphael';
+        state.playerSummonId = team === 'Player' ? this.decks.Player!.summonId : 'raphael';
+        const enemyCustomization = team === 'Player' ? 'cpuSummonCustomization' : 'playerSummonCustomization';
+        state[enemyCustomization] = { attackBonus: 0, defenseReduction: 0, hpBonus: 0 };
+        return state;
+    }
     private makeState() { const fallback: DeckChoice = { cardIds: ['SC001'], summonId: 'raphael' }; const state = createOnlineBattleState(createDefaultBattleConfig(), { Player: this.decks.Player ?? fallback, Cpu: this.decks.Cpu ?? fallback }); for (const unit of state.units) {
  const position=this.placements[unit.team]?.[unit.unitId];
  if(position){unit.position={...position};unit.spawnPosition={...position};unit.destination={...position};}

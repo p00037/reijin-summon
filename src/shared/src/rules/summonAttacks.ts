@@ -23,13 +23,13 @@ export function applySummonSpecialAttack(
     if (initial) {
       for (const elemental of state.elementals) {
         if (elemental.team !== summoned.team && elemental.isComplete && elemental.currentHp > 0) {
-          elemental.currentHp = Math.max(0, elemental.currentHp - summonSpecialSettings.yggdrasil.elementalInitialDamage);
+          elemental.currentHp = Math.max(0, elemental.currentHp - summonSpecialSettings.yggdrasil.elementalInitialDamage * (summoned.customizationAttackRatio ?? 1));
         }
       }
     }
   } else if (summoned.summonId === "leviathan") {
     const settings = summonSpecialSettings.leviathan;
-    const damage = initial ? settings.initialDamage : settings.periodicDamage;
+    const damage = (initial ? settings.initialDamage : settings.periodicDamage) * (summoned.customizationAttackRatio ?? 1);
     applyGlobalAttack(state, summoned, damage, damage, "wave");
   }
 }
@@ -60,7 +60,8 @@ function applyGlobalAttack(
 
 function applyBeamAttack(state: BattleState, config: BattleConfig, summoned: SummonedUnitState, initial: boolean): void {
   const beam = getSummonBeam(summoned, state, config);
-  const damage = initial ? summonSpecialSettings.jackpot.initialDamage : summoned.attackDamage;
+  const initialDamage = summonSpecialSettings.jackpot.initialDamage * (summoned.customizationAttackRatio ?? 1);
+  const damage = initial ? initialDamage : summoned.attackDamage;
   for (const unit of state.units) {
     if (isUnitAlive(unit) && isCircleInBeam(unit.position, config.unitCollisionRadius, beam)) {
       damageUnit(unit, damage, 'summon', state);
@@ -72,7 +73,7 @@ function applyBeamAttack(state: BattleState, config: BattleConfig, summoned: Sum
     }
   }
   const leader = findLeader(state, oppositeTeam(summoned.team));
-  leader.currentHp = Math.max(0, leader.currentHp - (initial ? summonSpecialSettings.jackpot.initialDamage : summoned.leaderAttackDamage));
+  leader.currentHp = Math.max(0, leader.currentHp - (initial ? initialDamage : summoned.leaderAttackDamage));
   const ownLeader = findLeader(state, summoned.team);
   if (!initial && isCircleInBeam(ownLeader.position, 0, beam)) {
     ownLeader.currentHp = Math.max(0, ownLeader.currentHp - summoned.leaderAttackDamage);
