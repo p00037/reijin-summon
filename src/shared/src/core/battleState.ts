@@ -17,6 +17,8 @@ export function createDefaultBattleState(config: BattleConfig): BattleState {
     cpuSummonGauge: 0,
     playerSummonId: "raphael",
     cpuSummonId: "raphael",
+    playerSummonCustomization: { attackBonus: 0, defenseReduction: 0, hpBonus: 0 },
+    cpuSummonCustomization: { attackBonus: 0, defenseReduction: 0, hpBonus: 0 },
     result: "InProgress",
     leaders: [
       createLeader("Player", config.playerLeaderPosition, config.leaderMaxHp),

@@ -7,7 +7,7 @@ import { cardCatalog, findCard, standardDeckCardIds, type CardDefinition } from 
 import type { DeckLibrary, SavedDeck } from "./deckModel";
 import { validateDeck } from "./deckModel";
 import { loadDeckLibrary, saveDeckLibrary } from "./deckStorage";
-import { getAbilityDefinition, getSkillDefinition, summonPotentialDescriptions } from '@reijin-summon/shared';
+import { getAbilityDefinition, getSkillDefinition, summonPotentialDescriptions, getCardSummonCustomization, getDeckSummonCustomization, getCustomizedSummonDefinition, type SummonCustomization } from '@reijin-summon/shared';
 
 type DeckDraft = { id: string; name: string; cardIds: string[]; summonId: SummonId; isNew: boolean };
 
@@ -121,6 +121,18 @@ function escapeHtml(value: string): string {
   })[character] ?? character);
 }
 
+function formatSummonValue(value: number): string {
+  return value.toLocaleString('ja-JP', { maximumFractionDigits: 2 });
+}
+
+function customizationText(effect: SummonCustomization): string {
+  const parts: string[] = [];
+  if (effect.attackBonus) parts.push(`ATK +${formatSummonValue(effect.attackBonus)}`);
+  if (effect.defenseReduction) parts.push(`被ダメージ率 −${formatSummonValue(effect.defenseReduction * 100)}ポイント`);
+  if (effect.hpBonus) parts.push(`最大HP +${formatSummonValue(effect.hpBonus)}`);
+  return parts.join(' · ') || '補正なし';
+}
+
 function cardDetail(card: CardDefinition): string {
   const type = typePresentation[card.unitType];
   const stats = battleConfig.statsByType[card.unitType];
@@ -147,6 +159,7 @@ function cardDetail(card: CardDefinition): string {
       </dl>
       <div class="deck-editor__ability"><span>固有アビリティ</span><p>${ability ? `${escapeHtml(ability.name)}（AP ${ability.apCost}）：${escapeHtml(ability.description)}` : 'アビリティなし'}</p></div>
       <div class="deck-editor__ability"><span>スキル（自動発動）</span><p>${skill ? `${escapeHtml(skill.name)}：${escapeHtml(skill.description)}` : 'スキルなし'}</p></div>
+      <div class="deck-editor__ability"><span>召喚獣カスタマイズ</span><p>${customizationText(getCardSummonCustomization(card.id))}</p></div>
     </div>`;
 }
 
@@ -184,6 +197,8 @@ export function mountDeckEditor(
     const selected = findCard(session.selectedCardId) ?? cardCatalog[0];
     const dirty = isDirty(session, draft);
     const selectedSummon = getSummonDefinition(draft.summonId);
+    const customization = getDeckSummonCustomization(draft.cardIds);
+    const customizedSummon = getCustomizedSummonDefinition(draft.summonId, customization);
     const selectedIds = new Set(draft.cardIds);
     const deckOptions = allDecks(session).map((deck) =>
       `<option value="${escapeHtml(deck.id)}"${deck.id === draft.id ? " selected" : ""}>${escapeHtml(deck.name || "名称未設定")}${isDirty(session, deck) ? " *" : ""}</option>`
@@ -252,7 +267,10 @@ export function mountDeckEditor(
             <div class="deck-editor__summon-grid">${summons}</div>
             <div class="deck-editor__summon-detail">
               <strong>${escapeHtml(selectedSummon.name)}</strong>
-              <span>基礎HP ${selectedSummon.baseHp} · 攻撃 ${selectedSummon.attackDamage} · 被ダメージ ${Math.round(selectedSummon.damageMultiplier * 100)}%</span>
+              <span>編成合計：${customizationText(customization)}</span>
+              <span>基礎HP ${formatSummonValue(selectedSummon.baseHp)} → ${formatSummonValue(customizedSummon.baseHp)} · ATK ${formatSummonValue(selectedSummon.attackDamage)} → ${formatSummonValue(customizedSummon.attackDamage)}</span>
+              <span>被ダメージ率 ${formatSummonValue(selectedSummon.damageMultiplier * 100)}% → ${formatSummonValue(customizedSummon.damageMultiplier * 100)}% · 召喚士攻撃 ${formatSummonValue(selectedSummon.leaderAttackDamage)} → ${formatSummonValue(customizedSummon.leaderAttackDamage)}</span>
+              <p>最大HPには陣地面積1%につき${battleConfig.summonedUnitHpPerFieldPercent}が加算されます。被ダメージ率の下限は5%。編成の補正は試合中固定です。</p>
               <p>${escapeHtml(selectedSummon.description)}</p>
               <p><strong>潜在能力</strong>（召喚士HP30%以下で発動）<br>${escapeHtml(summonPotentialDescriptions[selectedSummon.id])}</p>
             </div>

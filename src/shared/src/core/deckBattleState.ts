@@ -3,6 +3,7 @@ import type { BattleConfig, BattleState, TeamId, UnitState, Vec2 } from "./types
 import { findCard } from "../deck/cardCatalog.js";
 import { validateDeck } from "../deck/deckModel.js";
 import { pickCpuSummon, type SummonId } from "./summonCatalog.js";
+import { getDeckSummonCustomization } from '../deck/summonCustomization.js';
 
 export function createDeckBattleState(
   config: BattleConfig,
@@ -18,6 +19,8 @@ export function createDeckBattleState(
   const state = createDefaultBattleState(config);
   state.playerSummonId = playerSummonId;
   state.cpuSummonId = pickCpuSummon(random);
+  state.playerSummonCustomization = getDeckSummonCustomization(playerCardIds);
+  state.cpuSummonCustomization = getDeckSummonCustomization(cpuCardIds);
   const templates = state.units;
   const makeTeam = (ids: readonly string[], team: TeamId): UnitState[] => ids.map((id, index) => {
     const card = findCard(id)!;
