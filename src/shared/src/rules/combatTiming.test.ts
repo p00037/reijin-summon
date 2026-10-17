@@ -16,7 +16,7 @@ function keeperFixture() {
   keeper.position = { x: 0, y: 0 };
   keeper.destination = { ...keeper.position };
   keeper.currentHp = 500;
-  master.position = { x: 3, y: 0 };
+  master.position = { x: 2.5, y: 0 };
   master.destination = { ...master.position };
   return { config, state, keeper, master };
 }

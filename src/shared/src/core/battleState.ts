@@ -1,5 +1,6 @@
 import type { BattleConfig, BattleState, LeaderState, MpState, TeamId, UnitId, UnitState, UnitType } from "./types.js";
 import { findCard } from '../deck/cardCatalog.js';
+import { getUnitAttackRange } from './battleConfig.js';
 
 export function createDefaultBattleState(config: BattleConfig): BattleState {
   return {
@@ -150,7 +151,7 @@ function createUnit(
     position: { ...spawnPosition },
     spawnPosition: { ...spawnPosition },
     destination: { ...spawnPosition },
-    stats: { ...stats },
+    stats: { ...stats, attackRange: getUnitAttackRange(config, unitType, stats.level) },
     currentHp: stats.maxHp,
     mode: "Active",
     buildTimerSeconds: 0,
