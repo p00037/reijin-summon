@@ -146,7 +146,7 @@ test("召喚獣がリーダーへ与えた実ダメージ800でMP1回復する",
     healthDecayPerSecond: 0
   });
 
-  session.tick(0);
+  session.tick(2);
 
   assert.equal(session.state.playerMp, 1);
 });

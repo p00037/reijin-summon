@@ -71,7 +71,7 @@ export function tryExecuteSummon(state: BattleState, config: BattleConfig, team:
     attackIntervalSeconds: config.summonedUnitAttackIntervalSeconds,
     attackTimerSeconds: 0,
     leaderAttackIntervalSeconds: definition.leaderAttackIntervalSeconds,
-    leaderAttackTimerSeconds: 0,
+    leaderAttackTimerSeconds: definition.leaderAttackIntervalSeconds,
     moveSpeed: definition.moveSpeed,
     healthDecayPerSecond: config.summonedUnitHealthDecayPerSecond
   };
@@ -142,7 +142,10 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
       touchingSummonedUnits.length > 0 ||
       touchingElementals.length > 0;
     const normal = advanceAttackTimer(summoned.attackTimerSeconds, summoned.attackIntervalSeconds, deltaSeconds, touchingNormalTargets);
-    const leader = advanceAttackTimer(summoned.leaderAttackTimerSeconds, summoned.leaderAttackIntervalSeconds, deltaSeconds, touchingLeader);
+    // 召喚士への攻撃間隔は接触中だけ進め、移動時間を初撃の待機時間に含めない。
+    const leader = touchingLeader
+      ? advanceAttackTimer(summoned.leaderAttackTimerSeconds || summoned.leaderAttackIntervalSeconds, summoned.leaderAttackIntervalSeconds, deltaSeconds, true)
+      : { remaining: summoned.leaderAttackIntervalSeconds, count: 0 };
     summoned.attackTimerSeconds = normal.remaining;
     summoned.leaderAttackTimerSeconds = leader.remaining;
     if (normal.count > 0) {

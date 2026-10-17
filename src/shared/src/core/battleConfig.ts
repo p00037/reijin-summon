@@ -30,7 +30,7 @@ const statsByType: Record<UnitType, UnitStats> = {
     moveSpeed: 8.2 / 32,
     attackDamage: 36,
     attackRange: 3.5,
-    attackIntervalSeconds: 0.5,
+    attackIntervalSeconds: 0.7,
     elementalBuildSeconds: 6.7,
     elementalAttackMultiplier: 1
   }
