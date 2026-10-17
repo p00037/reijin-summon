@@ -1,4 +1,5 @@
 import { createDefaultBattleState } from "./battleState.js";
+import { getUnitAttackRange } from "./battleConfig.js";
 import type { BattleConfig, BattleState, TeamId, UnitState, Vec2 } from "./types.js";
 import { findCard } from "../deck/cardCatalog.js";
 import { validateDeck } from "../deck/deckModel.js";
@@ -38,7 +39,7 @@ export function createDeckBattleState(
       baseIntelligence: card.intelligence,
       abilityEffects: [],
       position: { ...position }, spawnPosition: { ...position }, destination: { ...position },
-      stats: { ...config.statsByType[card.unitType], level: card.level, revivalCost: card.cost, maxHp: card.maxHp, attackDamage: card.attackDamage },
+      stats: { ...config.statsByType[card.unitType], level: card.level, revivalCost: card.cost, maxHp: card.maxHp, attackDamage: card.attackDamage, attackRange: getUnitAttackRange(config, card.unitType, card.level) },
       currentHp: card.maxHp
     };
   });

@@ -103,13 +103,13 @@ test('集約する魔力は保持APに追従し、拡大射程で実際に攻撃
   unit.attackTimerSeconds = 0;
   unit.abilityAp = 1;
   assert.equal(effectiveAttackDamage(unit, state, config), 50);
-  assert.ok(Math.abs(effectiveAttackRange(unit, config) - 4.76) < 1e-9);
+  assert.ok(Math.abs(effectiveAttackRange(unit, config) - 4.185) < 1e-9);
   tickCombat(state, config, 0);
   assert.equal(state.units[1].currentHp, 490);
   state.rainRemainingSeconds = 1;
   assert.equal(tryUseAbility(state, config, unit.unitId, 0), true);
   assert.equal(effectiveAttackDamage(unit, state, config), 47);
-  assert.equal(effectiveAttackRange(unit, config), 3.5);
+  assert.equal(effectiveAttackRange(unit, config), 2.925);
 });
 test('シリカは死亡1回につき6.75ポイントだけ増加し、上限100%', () => {
   const { config, state, unit } = setup(['SC002']);

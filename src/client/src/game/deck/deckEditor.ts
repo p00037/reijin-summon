@@ -1,6 +1,6 @@
 import "./deckEditor.css";
 
-import { createDefaultBattleConfig } from "../core/battleConfig";
+import { createDefaultBattleConfig, getUnitAttackRange } from "../core/battleConfig";
 import { getSummonDefinition, summonCatalog, type SummonId } from "../core/summonCatalog";
 import type { UnitType } from "../core/types";
 import { cardCatalog, findCard, standardDeckCardIds, type CardDefinition } from "./cardCatalog";
@@ -152,7 +152,7 @@ function cardDetail(card: CardDefinition): string {
       <p class="deck-editor__reference-note">INT差はダメージアビリティの威力と妨害の効果時間に影響します。</p>
       <dl class="deck-editor__combat-stats">
         <div><dt>移動速度</dt><dd>${stats.moveSpeed.toFixed(3)}</dd></div>
-        <div><dt>攻撃射程</dt><dd>${stats.attackRange}</dd></div>
+        <div><dt>攻撃射程</dt><dd>${getUnitAttackRange(battleConfig, card.unitType, card.level)}</dd></div>
         <div><dt>攻撃間隔</dt><dd>${stats.attackIntervalSeconds}秒</dd></div>
         <div><dt>生成時間</dt><dd>${stats.elementalBuildSeconds}秒</dd></div>
         <div><dt>復活MP</dt><dd>${card.cost}</dd></div>
