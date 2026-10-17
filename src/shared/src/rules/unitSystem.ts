@@ -21,6 +21,7 @@ import { areCollisionCirclesTouching } from "./collisionGeometry.js";
 import { damageSummonedUnit, damageUnit } from "./combatDamage.js";
 import { getSummonBeam, isCircleInBeam } from "./summonGeometry.js";
 import { createDefaultBattleConfig } from '../core/battleConfig.js';
+import { getSummonDefinition } from '../core/summonCatalog.js';
 import { healUnit } from './skillEffects.js';
 import { triggerDefeatSkills } from './skillSystem.js';
 import { potentialPull } from './summonPotential.js';
@@ -188,8 +189,9 @@ export function tickUnitHealing(
     }
 
     const isStopped = distanceSq(unit.position, unit.destination) <= Number.EPSILON;
-    const restEndsStopped = elapsed?.restEndsStopped ?? (unit.unitType === "Melee" && isStopped);
-    const restSeconds = elapsed?.restSeconds ?? (restEndsStopped ? deltaSeconds : 0);
+    const canRest = unit.unitType === "Melee" && !isUnitInCombat(state, config, unit);
+    const restEndsStopped = canRest && (elapsed?.restEndsStopped ?? isStopped);
+    const restSeconds = canRest ? (elapsed?.restSeconds ?? (restEndsStopped ? deltaSeconds : 0)) : 0;
     if (restSeconds > 0) {
       const { count, remainder } = elapsedIntervals(
         unit.restHealingElapsedSeconds + restSeconds,
@@ -270,6 +272,23 @@ function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitSta
         areCollisionCirclesTouching(config, unit.position, "Unit", candidate.position, "Point")
     )
   );
+}
+
+function isUnitInCombat(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
+  const hasGlobalAttack = state.summonedUnits.some(summoned =>
+    summoned.team !== unit.team && summoned.currentHp > 0 && getSummonDefinition(summoned.summonId).attackStyle === "global"
+  );
+  if (hasEnemyContact(state, config, unit) || isInEnemyBeam(state, config, unit) || hasGlobalAttack || findAttackTarget(state, config, unit)) {
+    return true;
+  }
+  // 射撃の間隔中も、実際にこのユニットを狙える敵がいれば戦闘中とする。
+  return state.units.some(enemy => {
+    if (enemy.team === unit.team || enemy.mode !== "Active" || !isUnitAlive(enemy) || !canAttack(state, config, enemy)) {
+      return false;
+    }
+    const target = findAttackTarget(state, config, enemy);
+    return target?.kind === "Unit" && target.target === unit;
+  });
 }
 
 function findAttackTarget(state: BattleState, config: BattleConfig, attacker: UnitState): AttackTarget | null {

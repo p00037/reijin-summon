@@ -755,7 +755,7 @@ test("通常ユニットは敵リーダーへの攻撃を1秒ごとに行う", (
   assert.equal(attacker.leaderAttackTimerSeconds, 1);
 });
 
-test("通常ユニットは敵召喚獣への攻撃後に通常対象用0.5秒タイマーを設定する", () => {
+test("マスターは敵召喚獣への攻撃後に通常対象用0.7秒タイマーを設定する", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const attacker = findUnit(state, "PlayerRanged");
@@ -792,7 +792,7 @@ test("通常ユニットは敵召喚獣への攻撃後に通常対象用0.5秒�
   tickCombat(state, config, 0);
 
   assert.equal(state.summonedUnits[0].currentHp, 1000 - attacker.stats.attackDamage);
-  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.equal(attacker.attackTimerSeconds, 0.7);
   assert.equal(attacker.leaderAttackTimerSeconds, 0);
 });
 
@@ -814,17 +814,17 @@ test("通常ユニットは通常ユニット用と敵リーダー用のタイ�
   }
 
   tickCombat(state, config, 0);
-  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.equal(attacker.attackTimerSeconds, 0.7);
   assert.equal(attacker.leaderAttackTimerSeconds, 0);
 
   enemy.position = { x: 10, y: 0 };
   tickCombat(state, config, 0);
-  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.equal(attacker.attackTimerSeconds, 0.7);
   assert.equal(attacker.leaderAttackTimerSeconds, 1);
 
   enemy.position = { x: 0.5, y: 0 };
   tickCombat(state, config, 0.5);
-  assert.equal(attacker.attackTimerSeconds, 0.5);
+  assert.ok(Math.abs(attacker.attackTimerSeconds - 0.2) < 1e-9);
   assert.equal(attacker.leaderAttackTimerSeconds, 0.5);
 
   enemy.position = { x: 10, y: 0 };

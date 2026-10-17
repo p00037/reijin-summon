@@ -179,8 +179,8 @@ test("接触攻撃の周期は更新の分割や端数に依存しない", () =>
     for (const step of steps) tickSummonedUnits(state, config, step);
     return findLeader(state, "Cpu").currentHp;
   };
-  assert.equal(hpAfter([6]), 6800);
-  assert.equal(hpAfter(Array.from({ length: 40 }, () => 0.15)), 6800);
+  assert.equal(hpAfter([6]), 7100);
+  assert.equal(hpAfter(Array.from({ length: 40 }, () => 0.15)), 7100);
 });
 
 test("レーザー内を移動するマスターは実体との接触なしに射撃しない", () => {

@@ -95,7 +95,7 @@ test('通常ATKの合算比率を召喚士への実ダメージに反映する',
   assert.equal(summon.attackDamage, 104);
   close(summon.leaderAttackDamage, 315.1515151515151);
   summon.position = { ...findLeader(state, 'Cpu').position };
-  tickSummonedUnits(state, config, 0);
+  tickSummonedUnits(state, config, 2);
   close(findLeader(state, 'Cpu').currentHp, 7684.848484848485);
 });
 

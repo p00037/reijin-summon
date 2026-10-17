@@ -25,11 +25,11 @@ test("完成済みエレメンタルが2つあれば召喚できる", () => {
   assert.equal(summoned.attackIntervalSeconds, 0.5);
   assert.equal(summoned.attackTimerSeconds, 0);
   assert.equal(summoned.leaderAttackIntervalSeconds, 2);
-  assert.equal(summoned.leaderAttackTimerSeconds, 0);
+  assert.equal(summoned.leaderAttackTimerSeconds, 2);
   assert.equal(summoned.healthDecayPerSecond, 120);
 });
 
-test("召喚ユニットは攻撃可能時に敵リーダーへ1回分のダメージを与える", () => {
+test("召喚ユニットは敵リーダー到着後に攻撃間隔を待って1回分のダメージを与える", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   state.summonedUnits.push({
@@ -57,8 +57,10 @@ test("召喚ユニットは攻撃可能時に敵リーダーへ1回分のダメ�
 
   tickSummonedUnits(state, config, 1);
 
+  assert.equal(findLeader(state, "Cpu").currentHp, 8000);
+  tickSummonedUnits(state, config, 1);
   assert.equal(findLeader(state, "Cpu").currentHp, 7865);
-  assert.equal(state.summonedUnits[0].currentHp, 90);
+  assert.equal(state.summonedUnits[0].currentHp, 80);
 });
 
 test("クールダウンは0未満にならない", () => {
@@ -192,7 +194,7 @@ test("召喚獣は通常対象へ0.5C、召喚士へ2Cごとに独立して攻�
   assert.equal(summoned.leaderAttackTimerSeconds, 2);
 });
 
-test("召喚獣の両攻撃タイマーは対象がなくても独立して0まで減少する", () => {
+test("召喚獣は通常対象不在で通常タイマーを減らし召喚士不在では待機時間をリセットする", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   findLeader(state, "Cpu").position = { x: 7, y: 0 };
@@ -205,11 +207,11 @@ test("召喚獣の両攻撃タイマーは対象がなくても独立して0ま�
 
   tickSummonedUnits(state, config, 0.5);
   assert.equal(summoned.attackTimerSeconds, 0);
-  assert.equal(summoned.leaderAttackTimerSeconds, 0.25);
+  assert.equal(summoned.leaderAttackTimerSeconds, 2);
 
   tickSummonedUnits(state, config, 1);
   assert.equal(summoned.attackTimerSeconds, 0);
-  assert.equal(summoned.leaderAttackTimerSeconds, 0);
+  assert.equal(summoned.leaderAttackTimerSeconds, 2);
 });
 
 test("召喚獣は1CでHPが120自然減少する", () => {
@@ -713,12 +715,12 @@ test("summoned units attack leaders at 0.9828 but not just outside the boundary"
   const leader = findLeader(state, "Cpu");
   leader.position = { x: 0.9828, y: 0 };
 
-  tickSummonedUnits(state, config, 0);
+  tickSummonedUnits(state, config, 2);
   const hpAtBoundary = leader.currentHp;
 
   summoned.leaderAttackTimerSeconds = 0;
   leader.position = { x: 0.9828 + 0.0001, y: 0 };
-  tickSummonedUnits(state, config, 0);
+  tickSummonedUnits(state, config, 2);
 
   assert.equal(hpAtBoundary, leader.maxHp - summoned.leaderAttackDamage);
   assert.equal(leader.currentHp, hpAtBoundary);
