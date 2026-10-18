@@ -1,0 +1,608 @@
+TAP version 13
+# Subtest: Meleeの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+not ok 1 - Meleeの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 8.3606
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1039 !== 1100
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1100
+  actual: 1039
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.start (node:internal/test_runner/test:833:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: Meleeの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+not ok 2 - Meleeの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 1.9829
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    878 !== 1000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1000
+  actual: 878
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Meleeの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+not ok 3 - Meleeの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.8328
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1727.125 !== 1750
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1750
+  actual: 1727.125
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: Meleeの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+not ok 4 - Meleeの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.5026
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    7984.75 !== 8000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 8000
+  actual: 7984.75
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: Speedの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+not ok 5 - Speedの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.7272
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1047 !== 1100
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1100
+  actual: 1047
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: Speedの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+not ok 6 - Speedの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.5554
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    947 !== 1000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1000
+  actual: 947
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: Speedの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+not ok 7 - Speedの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.7655
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1730.125 !== 1750
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1750
+  actual: 1730.125
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: Speedの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+not ok 8 - Speedの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.4228
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    7986.75 !== 8000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 8000
+  actual: 7986.75
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: raphaelの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+not ok 9 - raphaelの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 2.2622
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1001 !== 1100
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1100
+  actual: 1001
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: raphaelの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+not ok 10 - raphaelの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 1.4199
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    901 !== 1000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1000
+  actual: 901
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: raphaelの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+not ok 11 - raphaelの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.4668
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1712.875 !== 1750
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1750
+  actual: 1712.875
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: raphaelの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+not ok 12 - raphaelの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.4596
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    7700 !== 8000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 8000
+  actual: 7700
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: bahamutの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+not ok 13 - bahamutの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.3432
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1001 !== 1100
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1100
+  actual: 1001
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: bahamutの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+not ok 14 - bahamutの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.2716
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    901 !== 1000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1000
+  actual: 901
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: bahamutの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+not ok 15 - bahamutの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.3609
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1117.825 !== 1150
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1150
+  actual: 1117.825
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: bahamutの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+not ok 16 - bahamutの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.209
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    7700 !== 8000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 8000
+  actual: 7700
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: dullahanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+not ok 17 - dullahanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.1969
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1001 !== 1100
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1100
+  actual: 1001
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: dullahanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+not ok 18 - dullahanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.24
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    901 !== 1000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1000
+  actual: 901
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: dullahanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+not ok 19 - dullahanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.2357
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1962.875 !== 2000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2000
+  actual: 1962.875
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: dullahanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+not ok 20 - dullahanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.1894
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    7700 !== 8000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 8000
+  actual: 7700
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: leviathanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+not ok 21 - leviathanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.3856
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    895 !== 1000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1000
+  actual: 895
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: leviathanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+not ok 22 - leviathanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.2197
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    895 !== 1000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1000
+  actual: 895
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: leviathanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+not ok 23 - leviathanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.1996
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    3115.875 !== 3150
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 3150
+  actual: 3115.875
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:52:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: leviathanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+not ok 24 - leviathanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.289
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\meleeAttackRange.test.ts:1:588'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\meleeAttackRange.test.ts:54:14)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 0
+# fail 24
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 615.0951

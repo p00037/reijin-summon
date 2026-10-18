@@ -119,7 +119,7 @@ test('マスターが別の味方を狙っている場合はキーパーが停�
 test('召喚士を攻撃しているキーパーは停止回復しない', () => {
   const { config, state, keeper } = keeperFixture();
   state.units = [keeper];
-  findLeader(state, 'Cpu').position = { x: 1, y: 0 };
+  findLeader(state, 'Cpu').position = { x: 0.5, y: 0 };
   tickUnitHealing(state, config, 1.5);
   assert.equal(keeper.currentHp, 500);
 });
@@ -143,7 +143,7 @@ for (const summonId of ['raphael', 'jackpot', 'yggdrasil'] as const) {
     ];
     assert.equal(tryExecuteSummon(state, config, 'Cpu'), true);
     const summoned = state.summonedUnits[0];
-    if (summonId === 'raphael') summoned.position = { x: 1.6, y: 0 };
+    if (summonId === 'raphael') summoned.position = { x: 0.5, y: 0 };
     summoned.moveSpeed = 0;
     summoned.healthDecayPerSecond = 0;
     keeper.currentHp = 500;

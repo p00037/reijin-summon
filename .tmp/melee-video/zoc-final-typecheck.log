@@ -1,0 +1,20 @@
+
+> reijin-summon@0.1.0 typecheck
+> npm run build:shared && npm run typecheck -w src/server && npm run typecheck -w src/client
+
+
+> reijin-summon@0.1.0 build:shared
+> npm run build -w src/shared
+
+
+> @reijin-summon/shared@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @reijin-summon/server@0.1.0 typecheck
+> tsc -p tsconfig.json --noEmit
+
+
+> @reijin-summon/client@0.1.0 typecheck
+> tsc -p tsconfig.json --noEmit
+

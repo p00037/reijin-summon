@@ -1,6 +1,7 @@
 import type { BattleConfig, UnitStats, UnitType } from "./types.js";
 
 const unitCardWorldHeight = 2.25;
+export const meleeAttackRange = 0.63;
 
 function rangedAttackRange(cardHeight: number, level: number): number {
   // LV1はカード縦1枚分、以降はLVごとにLV1の7.5%ずつ加算する。
@@ -20,7 +21,7 @@ const statsByType: Record<UnitType, UnitStats> = {
     maxHp: 1100,
     moveSpeed: 8.2 / 40,
     attackDamage: 61,
-    attackRange: 1.25,
+    attackRange: meleeAttackRange,
     attackIntervalSeconds: 0.5,
     elementalBuildSeconds: 5.7,
     elementalAttackMultiplier: 2
@@ -31,7 +32,7 @@ const statsByType: Record<UnitType, UnitStats> = {
     maxHp: 1060,
     moveSpeed: 8.2 / 22,
     attackDamage: 53,
-    attackRange: 1,
+    attackRange: meleeAttackRange,
     attackIntervalSeconds: 0.5,
     elementalBuildSeconds: 7.2,
     elementalAttackMultiplier: 1
