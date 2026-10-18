@@ -4,10 +4,10 @@ import {activeOnline} from '../network/onlineSession';
 import {cardCatalog} from '../deck/cardCatalog';
 import '../ui/onlineLobby.css';
 import Phaser from "phaser";
-import { planCpuCommands } from "../ai/cpuPlanner";
+import { createCpuPlannerMemory, planCpuCommands } from "../ai/cpuPlanner";
+import { createCpuBattleState, getCpuOpponent, type CpuOpponentId } from "../ai/cpuDeck";
 import { findLeader, isUnitAlive } from "../core/battleState";
 import { createDefaultBattleConfig } from "../core/battleConfig";
-import { createDeckBattleState } from "../core/deckBattleState";
 import { getSummonDefinition, isSummonId, summonCatalog, type SummonId } from "../core/summonCatalog";
 import { SummonEffects, summonCardFor } from "../render/summonPresentation";
 import { summonUnavailableReason } from "../rules/summonSystem";
@@ -105,7 +105,7 @@ const elementalSpriteDisplaySize = 15;
 
 export class BattleScene extends Phaser.Scene {
   private playerCardIds: string[] = [...standardDeckCardIds];
-  private cpuCardIds: string[] = [...standardDeckCardIds];
+  private cpuOpponentId: CpuOpponentId = "deck1";
   private playerSummonId: SummonId = "raphael";
   private summonEffects!: SummonEffects;
   private summonNameLabels = new Map<number, Phaser.GameObjects.Text>();
@@ -138,6 +138,7 @@ export class BattleScene extends Phaser.Scene {
   private defeatedUnitLabels = new Map<PlayerUnitId, Phaser.GameObjects.Text>();
   private moveMarkers = new Map<PlayerUnitId, Vec2>();
   private cpuPlanTimerSeconds = 0;
+  private cpuMemory = createCpuPlannerMemory();
   private lastAbilityEventId = 0;
   private lastSkillEventId = 0;
   private lastSummonPotentialEventId = 0;
@@ -147,16 +148,15 @@ export class BattleScene extends Phaser.Scene {
     super("BattleScene");
   }
 
-  init(data: { playerCardIds?: string[]; cpuCardIds?: string[]; playerSummonId?: SummonId } = {}): void {
+  init(data: { playerCardIds?: string[]; playerSummonId?: SummonId; cpuOpponentId?: CpuOpponentId } = {}): void {
     const player = data.playerCardIds ?? this.playerCardIds;
-    const cpu = data.cpuCardIds ?? this.cpuCardIds;
     this.playerCardIds = [...(validateDeck(player).valid ? player : standardDeckCardIds)];
-    this.cpuCardIds = [...(validateDeck(cpu).valid ? cpu : standardDeckCardIds)];
     this.playerSummonId = isSummonId(data.playerSummonId) ? data.playerSummonId : "raphael";
+    this.cpuOpponentId = getCpuOpponent(data.cpuOpponentId ?? this.cpuOpponentId).id;
   }
 
   preload(): void {
-    for (const id of new Set(activeOnline ? cardCatalog.map(c=>c.id) : [...this.playerCardIds, ...this.cpuCardIds])) {
+    for (const id of new Set(activeOnline ? cardCatalog.map(c=>c.id) : [...this.playerCardIds, ...getCpuOpponent(this.cpuOpponentId).cardIds])) {
       const card = findCard(id)!;
       const key = `card-${id}`;
       if (!this.textures.exists(key)) this.load.image(key, card.imagePath);
@@ -178,7 +178,7 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     const config = createDefaultBattleConfig();
-    this.session = activeOnline ?? new GameSession(config, createDeckBattleState(config, this.playerCardIds, this.cpuCardIds, this.playerSummonId));
+    this.session = activeOnline ?? new GameSession(config, createCpuBattleState(config, this.playerCardIds, this.playerSummonId, this.cpuOpponentId));
     this.lastAbilityEventId = this.session.state.nextAbilityEventId - 1;
     this.lastSkillEventId = this.session.state.nextSkillEventId - 1;
     this.lastSummonPotentialEventId = this.session.state.nextSummonPotentialEventId - 1;
@@ -205,6 +205,7 @@ export class BattleScene extends Phaser.Scene {
     this.defeatedUnitLabels = new Map();
     this.moveMarkers = new Map();
     this.cpuPlanTimerSeconds = 0;
+    this.cpuMemory = createCpuPlannerMemory();
     this.cameras.main
       .setOrigin(0, 0)
       .setZoom(browserSizeCanvas.renderScale)
@@ -296,7 +297,7 @@ export class BattleScene extends Phaser.Scene {
       this.cpuPlanTimerSeconds += deltaSeconds;
       if (this.cpuPlanTimerSeconds >= 1) {
         this.cpuPlanTimerSeconds = 0;
-        for (const command of planCpuCommands(this.session.state, this.session.config)) {
+        for (const command of planCpuCommands(this.session.state, this.session.config, this.cpuMemory)) {
           this.session.applyCommand(command);
         }
       }
@@ -313,7 +314,7 @@ export class BattleScene extends Phaser.Scene {
 
   private restartBattle(): void {
     if(activeOnline){activeOnline.rematch();return;}
-    this.scene.restart({ playerCardIds: [...this.playerCardIds], cpuCardIds: [...this.cpuCardIds], playerSummonId: this.playerSummonId });
+    this.scene.restart({ playerCardIds: [...this.playerCardIds], playerSummonId: this.playerSummonId, cpuOpponentId: this.cpuOpponentId });
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {

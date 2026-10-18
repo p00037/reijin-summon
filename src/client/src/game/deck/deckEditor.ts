@@ -1,4 +1,5 @@
 import "./deckEditor.css";
+import { cpuOpponents, getCpuOpponent, type CpuOpponentId } from "../ai/cpuDeck";
 
 import { createDefaultBattleConfig, getUnitAttackRange } from "../core/battleConfig";
 import { getSummonDefinition, summonCatalog, type SummonId } from "../core/summonCatalog";
@@ -19,6 +20,7 @@ type EditorSession = {
   notice: string | null;
   noticeKind: "info" | "error";
   storageLoadError: string | null;
+  cpuOpponentId: CpuOpponentId;
 };
 
 const typePresentation: Record<UnitType, { label: string }> = {
@@ -71,7 +73,8 @@ function initialSession(): EditorSession {
     selectedCardId: selected.cardIds.find((id) => findCard(id) !== undefined) ?? cardCatalog[0].id,
     notice: loaded.error ?? loaded.notice ?? null,
     noticeKind: loaded.error ? "error" : "info",
-    storageLoadError: loaded.error
+    storageLoadError: loaded.error,
+    cpuOpponentId: "deck1"
   };
 }
 
@@ -166,7 +169,8 @@ function cardDetail(card: CardDefinition): string {
 /** デッキ編成画面をマウントし、破棄用関数を返す。 */
 export function mountDeckEditor(
   parent: HTMLElement,
-  onStart: (cardIds: string[], summonId: SummonId) => void
+  onStart: (cardIds: string[], summonId: SummonId, cpuOpponentId: CpuOpponentId) => void,
+  editorOptions: { cpuSelection?: boolean } = {}
 ): () => void {
   const session = editorSession ??= initialSession();
   const root = document.createElement("section");
@@ -197,6 +201,16 @@ export function mountDeckEditor(
     const selected = findCard(session.selectedCardId) ?? cardCatalog[0];
     const dirty = isDirty(session, draft);
     const selectedSummon = getSummonDefinition(draft.summonId);
+    const opponent = getCpuOpponent(session.cpuOpponentId);
+    const cpuSelection = editorOptions.cpuSelection === false ? "" : `
+      <section class="deck-editor__cpu-selection" aria-labelledby="cpu-opponent-title">
+        <label id="cpu-opponent-title" for="cpu-opponent">対戦CPU</label>
+        <select id="cpu-opponent" data-action="select-cpu">${cpuOpponents.map(candidate =>
+          `<option value="${candidate.id}"${candidate.id === opponent.id ? " selected" : ""}>${escapeHtml(candidate.name)}</option>`).join("")}</select>
+        <strong>召喚獣：${opponent.summonId === "random" ? "ランダム（対戦ごとに6種類から抽選）" : escapeHtml(getSummonDefinition(opponent.summonId).name)}</strong>
+        <p>${escapeHtml(opponent.description)}</p>
+        <details><summary>CPUの編成（4枚・コスト10）</summary><ul>${opponent.cardIds.map(id => `<li>${escapeHtml(findCard(id)!.name)}</li>`).join("")}</ul></details>
+      </section>`;
     const customization = getDeckSummonCustomization(draft.cardIds);
     const customizedSummon = getCustomizedSummonDefinition(draft.summonId, customization);
     const selectedIds = new Set(draft.cardIds);
@@ -260,6 +274,7 @@ export function mountDeckEditor(
         </aside>
         <section class="deck-editor__formation" data-scroll-panel="formation" aria-labelledby="deck-formation-title">
           <div class="deck-editor__section-heading"><div><p>02 / YOUR CREW</p><h2 id="deck-formation-title">編成中</h2></div><strong>${draft.cardIds.length}<small>/ 5枚</small></strong></div>
+          ${cpuSelection}
           <label class="deck-editor__name">デッキ名<input data-action="name" maxlength="40" value="${escapeHtml(draft.name)}" autocomplete="off"></label>
           <ol class="deck-editor__slots">${slots}</ol>
           <section class="deck-editor__summon-selection" aria-labelledby="deck-summon-title">
@@ -443,7 +458,7 @@ export function mountDeckEditor(
         saveDraft(true);
         break;
       case "start":
-        if (validateDeck(draft.cardIds).valid) onStart([...draft.cardIds], draft.summonId);
+        if (validateDeck(draft.cardIds).valid) onStart([...draft.cardIds], draft.summonId, session.cpuOpponentId);
         break;
       case "go-detail":
         root.querySelector<HTMLElement>(".deck-editor__detail")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -474,6 +489,11 @@ export function mountDeckEditor(
 
   root.addEventListener("change", (event) => {
     const select = event.target as HTMLSelectElement;
+    if (select.dataset.action === "select-cpu") {
+      session.cpuOpponentId = getCpuOpponent(select.value).id;
+      render();
+      return;
+    }
     if (select.dataset.action !== "select-deck") return;
     session.selectedDeckId = select.value;
     const next = currentDraft(session).cardIds.find((id) => findCard(id) !== undefined);

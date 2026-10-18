@@ -149,11 +149,18 @@
 .deck-editor__summon-detail { margin-top: 8px; padding: 9px 10px; display: grid; gap: 3px; border-left: 2px solid var(--gold); background: rgba(9, 56, 70, .75); }
 .deck-editor__summon-detail strong { color: var(--gold); font-size: .82rem; }
 .deck-editor__summon-detail span, .deck-editor__summon-detail p { color: var(--muted); font: .65rem/1.5 system-ui, sans-serif; }
+.deck-editor__cpu-selection { grid-area: opponent; display: grid; gap: 7px; min-width: 0; margin-bottom: 14px; padding: 12px; border: 1px solid var(--line); border-left: 2px solid var(--aqua); background: rgba(9, 56, 70, .6); font: .75rem/1.5 system-ui, sans-serif; }
+.deck-editor__cpu-selection label { color: var(--aqua); font-weight: 700; }
+.deck-editor__cpu-selection select { min-width: 0; width: 100%; }
+.deck-editor__cpu-selection strong { color: var(--gold); font-size: .75rem; }
+.deck-editor__cpu-selection p, .deck-editor__cpu-selection details { color: var(--muted); }
+.deck-editor__cpu-selection summary { cursor: pointer; }
+.deck-editor__cpu-selection ul { margin: 5px 0 0; padding-left: 18px; }
 
 @media (max-width: 1200px) {
   .deck-editor { overflow-y: auto; }
   .deck-editor__main { flex: 0 0 auto; min-height: auto; grid-template-columns: minmax(390px, 1.2fr) minmax(300px, .8fr); grid-template-rows: minmax(340px, 1fr) auto; padding: 16px 22px; }
-  .deck-editor__formation { grid-column: 1 / -1; max-height: 360px; padding: 12px; display: grid; grid-template-columns: 1fr minmax(220px, .8fr) 130px; grid-template-areas: "heading name cost" "slots slots slots" "summon summon summon" "validation actions actions"; gap: 8px 14px; overflow-y: auto; }
+  .deck-editor__formation { grid-column: 1 / -1; max-height: 360px; padding: 12px; display: grid; grid-template-columns: 1fr minmax(220px, .8fr) 130px; grid-template-areas: "heading name cost" "opponent opponent opponent" "slots slots slots" "summon summon summon" "validation actions actions"; gap: 8px 14px; overflow-y: auto; }
   .deck-editor__formation .deck-editor__section-heading { grid-area: heading; min-height: 42px; margin: 0; padding: 0 0 6px; }
   .deck-editor__formation .deck-editor__name { grid-area: name; margin: 0; align-self: center; }
   .deck-editor__formation .deck-editor__name input { min-height: 38px; }
