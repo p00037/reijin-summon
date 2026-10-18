@@ -45,8 +45,8 @@ test("攻撃範囲内の敵リーダーへ直接ダメージを与える", () =>
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
-  unit.position = { x: 0, y: 3 };
-  unit.destination = { x: 0, y: 3 };
+  unit.position = { x: 0, y: 3.6 };
+  unit.destination = { x: 0, y: 3.6 };
   unit.attackTimerSeconds = 0;
   for (const enemy of state.units.filter((candidate) => candidate.team === "Cpu")) {
     enemy.currentHp = 0;
@@ -532,14 +532,14 @@ test("movement is slowed near a live enemy elemental", () => {
   assert.equal(Number(unit.position.x.toFixed(2)), -4.93);
 });
 
-test("movement is slowed at the Unit-to-Unit collision-circle boundary", () => {
+test("movement is slowed at the Unit-to-Unit ZOC boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
   const enemy = findUnit(state, "CpuMelee");
   unit.position = { x: 0, y: 0 };
   unit.destination = { x: 3, y: 0 };
-  enemy.position = { x: 1.512, y: 0 };
+  enemy.position = { x: 0.63, y: 0 };
   for (const candidate of state.units.filter(
     (value) => value.team === "Cpu" && value.unitId !== enemy.unitId
   )) {
@@ -555,7 +555,7 @@ test("movement is slowed at the Unit-to-Unit collision-circle boundary", () => {
   );
 });
 
-test("movement is slowed at the Unit-to-SummonedUnit collision-circle boundary", () => {
+test("movement is slowed at the Unit-to-SummonedUnit ZOC boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
@@ -574,8 +574,8 @@ test("movement is slowed at the Unit-to-SummonedUnit collision-circle boundary",
 
     specialAttackTimerSeconds: 0,
     team: "Cpu",
-    position: { x: 1.7388, y: 0 },
-    destination: { x: 1.7388, y: 0 },
+    position: { x: 0.63, y: 0 },
+    destination: { x: 0.63, y: 0 },
     maxHp: 100,
     currentHp: 100,
     attackDamage: 0,
@@ -596,7 +596,7 @@ test("movement is slowed at the Unit-to-SummonedUnit collision-circle boundary",
   );
 });
 
-test("movement is not slowed just beyond the Unit-to-Point collision-circle boundary", () => {
+test("movement is not slowed just beyond the Unit-to-Point ZOC boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
@@ -609,7 +609,7 @@ test("movement is not slowed just beyond the Unit-to-Point collision-circle boun
   state.elementals.push({
     elementalId: "Elemental1",
     team: "Cpu",
-    position: { x: 0.756 + 0.0001, y: 0 },
+    position: { x: 0.63 + 0.0001, y: 0 },
     maxHp: 100,
     currentHp: 100,
     isComplete: true
@@ -623,7 +623,7 @@ test("movement is not slowed just beyond the Unit-to-Point collision-circle boun
   );
 });
 
-test("movement is slowed at the Unit-to-Point collision-circle boundary", () => {
+test("movement is slowed at the Unit-to-Point ZOC boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const unit = findUnit(state, "PlayerMelee");
@@ -636,7 +636,7 @@ test("movement is slowed at the Unit-to-Point collision-circle boundary", () => 
   state.elementals.push({
     elementalId: "Elemental1",
     team: "Cpu",
-    position: { x: 0.756, y: 0 },
+    position: { x: 0.63, y: 0 },
     maxHp: 100,
     currentHp: 100,
     isComplete: true
@@ -689,8 +689,8 @@ test("attack timer gates combat damage", () => {
   attacker.position = { x: 0, y: 0 };
   attacker.destination = { x: 0, y: 0 };
   attacker.attackTimerSeconds = 0.5;
-  enemy.position = { x: 1, y: 0 };
-  enemy.destination = { x: 1, y: 0 };
+  enemy.position = { x: 0.5, y: 0 };
+  enemy.destination = { x: 0.5, y: 0 };
 
   tickCombat(state, config, 0.25);
 
@@ -708,7 +708,7 @@ test("通常ユニットは通常ユニットへの攻撃を0.5秒ごとに行�
   const enemy = findUnit(state, "CpuMelee");
   attacker.position = { x: 0, y: 0 };
   attacker.destination = { ...attacker.position };
-  enemy.position = { x: 1, y: 0 };
+  enemy.position = { x: 0.5, y: 0 };
   enemy.destination = { ...enemy.position };
   for (const ally of state.units.filter((unit) => unit.team === "Player" && unit.unitId !== attacker.unitId)) {
     ally.attackTimerSeconds = 10;

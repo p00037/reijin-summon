@@ -17,7 +17,7 @@ import {
   resetUnitAbilityState
 } from "./abilitySystem.js";
 import { effectiveMoveSpeed } from './abilityEffects.js';
-import { areCollisionCirclesTouching } from "./collisionGeometry.js";
+import { isWithinZocRange } from "./collisionGeometry.js";
 import { damageSummonedUnit, damageUnit } from "./combatDamage.js";
 import { getSummonBeam, isCircleInBeam } from "./summonGeometry.js";
 import { createDefaultBattleConfig } from '../core/battleConfig.js';
@@ -78,7 +78,7 @@ export function tickMovement(
     const activeStartSeconds = Math.min(deltaSeconds, Math.max(0, activityStartSecondsByUnit.get(unit.unitId) ?? 0));
     const activeSeconds = Math.max(0, deltaSeconds - activeStartSeconds);
     const initialPosition = { ...unit.position };
-    const contactMultiplier = hasEnemyContact(state, config, unit) || isInEnemyBeam(state, config, unit)
+    const contactMultiplier = hasEnemyContact(state, unit) || isInEnemyBeam(state, config, unit)
       ? config.contactSlowMultiplier : 1;
     const pull = potentialPull(state, unit);
     const destination = pull?.destination ?? unit.destination;
@@ -154,7 +154,7 @@ function canAttack(state: BattleState, config: BattleConfig, unit: UnitState): b
     return true;
   }
   const isStopped = distanceSq(unit.position, unit.destination) <= Number.EPSILON;
-  return isStopped || hasEnemyContact(state, config, unit);
+  return isStopped || hasEnemyContact(state, unit);
 }
 
 export function tickUnitHealing(
@@ -249,7 +249,7 @@ function isInEnemyBeam(state: BattleState, config: BattleConfig, unit: UnitState
   );
 }
 
-function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitState): boolean {
+function hasEnemyContact(state: BattleState, unit: UnitState): boolean {
   const enemyTeam = oppositeTeam(unit.team);
   return (
     state.units.some(
@@ -257,19 +257,19 @@ function hasEnemyContact(state: BattleState, config: BattleConfig, unit: UnitSta
         candidate.team === enemyTeam &&
         candidate.unitId !== unit.unitId &&
         isUnitAlive(candidate) &&
-        areCollisionCirclesTouching(config, unit.position, "Unit", candidate.position, "Unit")
+        isWithinZocRange(unit.position, candidate.position)
     ) ||
     state.summonedUnits.some(
       (candidate) =>
         candidate.team === enemyTeam &&
         candidate.currentHp > 0 &&
-        areCollisionCirclesTouching(config, unit.position, "Unit", candidate.position, "SummonedUnit")
+        isWithinZocRange(unit.position, candidate.position)
     ) ||
     state.elementals.some(
       (candidate) =>
         candidate.team === enemyTeam &&
         candidate.currentHp > 0 &&
-        areCollisionCirclesTouching(config, unit.position, "Unit", candidate.position, "Point")
+        isWithinZocRange(unit.position, candidate.position)
     )
   );
 }
@@ -278,7 +278,7 @@ function isUnitInCombat(state: BattleState, config: BattleConfig, unit: UnitStat
   const hasGlobalAttack = state.summonedUnits.some(summoned =>
     summoned.team !== unit.team && summoned.currentHp > 0 && getSummonDefinition(summoned.summonId).attackStyle === "global"
   );
-  if (hasEnemyContact(state, config, unit) || isInEnemyBeam(state, config, unit) || hasGlobalAttack || findAttackTarget(state, config, unit)) {
+  if (hasEnemyContact(state, unit) || isInEnemyBeam(state, config, unit) || hasGlobalAttack || findAttackTarget(state, config, unit)) {
     return true;
   }
   // 射撃の間隔中も、実際にこのユニットを狙える敵がいれば戦闘中とする。

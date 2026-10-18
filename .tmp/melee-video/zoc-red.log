@@ -1,0 +1,190 @@
+TAP version 13
+# Subtest: Unit対UnitのZOCは中心間0.63で減速する
+ok 1 - Unit対UnitのZOCは中心間0.63で減速する
+  ---
+  duration_ms: 3.6324
+  ...
+# Subtest: Unit対UnitのZOCは中心間0.630001で減速しない
+not ok 2 - Unit対UnitのZOCは中心間0.630001で減速しない
+  ---
+  duration_ms: 19.8574
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\zocRange.test.ts:1:463'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      state.summonedUnits.push({ ...summon, team: 'Cpu', summonedUnitId: 2, position, moveSpeed: 0 })
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\zocRange.test.ts:44:16)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Unit対SummonedUnitのZOCは中心間0.63で減速する
+ok 3 - Unit対SummonedUnitのZOCは中心間0.63で減速する
+  ---
+  duration_ms: 0.336
+  ...
+# Subtest: Unit対SummonedUnitのZOCは中心間0.630001で減速しない
+not ok 4 - Unit対SummonedUnitのZOCは中心間0.630001で減速しない
+  ---
+  duration_ms: 0.4194
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\zocRange.test.ts:1:463'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      state.summonedUnits.push({ ...summon, team: 'Cpu', summonedUnitId: 2, position, moveSpeed: 0 })
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\zocRange.test.ts:44:16)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: Unit対ElementalのZOCは中心間0.63で減速する
+ok 5 - Unit対ElementalのZOCは中心間0.63で減速する
+  ---
+  duration_ms: 0.2742
+  ...
+# Subtest: Unit対ElementalのZOCは中心間0.630001で減速しない
+not ok 6 - Unit対ElementalのZOCは中心間0.630001で減速しない
+  ---
+  duration_ms: 0.2847
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\zocRange.test.ts:1:463'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      state.summonedUnits.push({ ...summon, team: 'Cpu', summonedUnitId: 2, position, moveSpeed: 0 })
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\zocRange.test.ts:44:16)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: SummonedUnit対UnitのZOCは中心間0.63で減速する
+ok 7 - SummonedUnit対UnitのZOCは中心間0.63で減速する
+  ---
+  duration_ms: 0.8046
+  ...
+# Subtest: SummonedUnit対UnitのZOCは中心間0.630001で減速しない
+not ok 8 - SummonedUnit対UnitのZOCは中心間0.630001で減速しない
+  ---
+  duration_ms: 0.3249
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\zocRange.test.ts:1:463'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      state.summonedUnits.push({ ...summon, team: 'Cpu', summonedUnitId: 2, position, moveSpeed: 0 })
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\zocRange.test.ts:44:16)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: SummonedUnit対SummonedUnitのZOCは中心間0.63で減速する
+ok 9 - SummonedUnit対SummonedUnitのZOCは中心間0.63で減速する
+  ---
+  duration_ms: 0.4335
+  ...
+# Subtest: SummonedUnit対SummonedUnitのZOCは中心間0.630001で減速しない
+not ok 10 - SummonedUnit対SummonedUnitのZOCは中心間0.630001で減速しない
+  ---
+  duration_ms: 0.6515
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\zocRange.test.ts:1:463'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      state.summonedUnits.push({ ...summon, team: 'Cpu', summonedUnitId: 2, position, moveSpeed: 0 })
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\zocRange.test.ts:44:16)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+# Subtest: SummonedUnit対ElementalのZOCは中心間0.63で減速する
+ok 11 - SummonedUnit対ElementalのZOCは中心間0.63で減速する
+  ---
+  duration_ms: 0.2456
+  ...
+# Subtest: SummonedUnit対ElementalのZOCは中心間0.630001で減速しない
+not ok 12 - SummonedUnit対ElementalのZOCは中心間0.630001で減速しない
+  ---
+  duration_ms: 0.2296
+  location: 'C:\\10.Github\\reijin-summon\\src\\shared\\src\\rules\\zocRange.test.ts:1:463'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      state.summonedUnits.push({ ...summon, team: 'Cpu', summonedUnitId: 2, position, moveSpeed: 0 })
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\shared\src\rules\zocRange.test.ts:44:16)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:934:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:633:18)
+    Test.postRun (node:internal/test_runner/test:1045:19)
+    Test.run (node:internal/test_runner/test:973:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 6
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 480.671

@@ -1,8 +1,9 @@
 import { findLeader, getSummonGauge, isUnitAlive, oppositeTeam, setSummonGauge } from "../core/battleState.js";
 import type { BattleConfig, BattleState, ElementalState, SummonedUnitState, TeamId, UnitState } from "../core/types.js";
-import { moveTowards } from "../core/vector.js";
+import { distanceSq, moveTowards } from "../core/vector.js";
+import { meleeAttackRange } from "../core/battleConfig.js";
 import { calculateSummonArea, calculateSummonCentroid } from "./areaCalculator.js";
-import { areCollisionCirclesTouching } from "./collisionGeometry.js";
+import { isWithinZocRange } from "./collisionGeometry.js";
 import { completedElementalsForTeam } from "./elementalSystem.js";
 import { getSummonDefinition } from "../core/summonCatalog.js";
 import { getCustomizedSummonDefinition } from '../deck/summonCustomization.js';
@@ -127,38 +128,34 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     if (definition.attackStyle !== "melee") continue;
     const enemyLeader = findLeader(state, oppositeTeam(summoned.team));
     summoned.destination = { ...enemyLeader.position };
-    const touchingLeader = areCollisionCirclesTouching(
-      config,
-      summoned.position,
-      "SummonedUnit",
-      enemyLeader.position,
-      "Point"
-    );
-    const touchingUnits = enemyUnitsInContact(state, config, summoned);
-    const touchingSummonedUnits = enemySummonedUnitsInContact(state, config, summoned);
-    const touchingElementals = enemyElementalsInContact(state, config, summoned);
-    const touchingNormalTargets =
-      touchingUnits.length > 0 ||
-      touchingSummonedUnits.length > 0 ||
-      touchingElementals.length > 0;
-    const normal = advanceAttackTimer(summoned.attackTimerSeconds, summoned.attackIntervalSeconds, deltaSeconds, touchingNormalTargets);
-    // 召喚士への攻撃間隔は接触中だけ進め、移動時間を初撃の待機時間に含めない。
-    const leader = touchingLeader
+    const inAttackRange = (target: { position: SummonedUnitState['position'] }) =>
+      distanceSq(summoned.position, target.position) <= meleeAttackRange * meleeAttackRange;
+    const leaderInRange = inAttackRange(enemyLeader);
+    const touchingUnits = enemyUnitsInContact(state, summoned);
+    const touchingSummonedUnits = enemySummonedUnitsInContact(state, summoned);
+    const touchingElementals = enemyElementalsInContact(state, summoned);
+    const attackUnits = touchingUnits.filter(inAttackRange);
+    const attackSummonedUnits = touchingSummonedUnits.filter(inAttackRange);
+    const attackElementals = touchingElementals.filter(inAttackRange);
+    const hasAttackTargets = attackUnits.length > 0 || attackSummonedUnits.length > 0 || attackElementals.length > 0;
+    const normal = advanceAttackTimer(summoned.attackTimerSeconds, summoned.attackIntervalSeconds, deltaSeconds, hasAttackTargets);
+    // 召喚士への攻撃間隔は射程内だけ進め、移動時間を初撃の待機時間に含めない。
+    const leader = leaderInRange
       ? advanceAttackTimer(summoned.leaderAttackTimerSeconds || summoned.leaderAttackIntervalSeconds, summoned.leaderAttackIntervalSeconds, deltaSeconds, true)
       : { remaining: summoned.leaderAttackIntervalSeconds, count: 0 };
     summoned.attackTimerSeconds = normal.remaining;
     summoned.leaderAttackTimerSeconds = leader.remaining;
     if (normal.count > 0) {
-      for (const target of touchingUnits) {
+      for (const target of attackUnits) {
         damageUnit(target, summoned.attackDamage * normal.count, 'summon', state);
       }
-      for (const target of touchingSummonedUnits) {
+      for (const target of attackSummonedUnits) {
         damageSummonedUnit(target, summoned.attackDamage * normal.count);
       }
-      for (const target of touchingElementals) {
+      for (const target of attackElementals) {
         target.currentHp = Math.max(0, target.currentHp - summoned.attackDamage * normal.count);
       }
-      state.recentSummonAttackEvents.push({ summonId: summoned.summonId, team: summoned.team, kind: "strike", origin: { ...summoned.position }, targets: [...touchingUnits, ...touchingSummonedUnits, ...touchingElementals].map(target => ({ ...target.position })) });
+      state.recentSummonAttackEvents.push({ summonId: summoned.summonId, team: summoned.team, kind: "strike", origin: { ...summoned.position }, targets: [...attackUnits, ...attackSummonedUnits, ...attackElementals].map(target => ({ ...target.position })) });
     }
 
     if (leader.count > 0) {
@@ -166,7 +163,7 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
       state.recentSummonAttackEvents.push({ summonId: summoned.summonId, team: summoned.team, kind: "strike", origin: { ...summoned.position }, targets: [{ ...enemyLeader.position }] });
     }
 
-    if (!touchingLeader) {
+    if (!leaderInRange) {
       const speedMultiplier =
         touchingUnits.length > 0 ||
         touchingSummonedUnits.length > 0 ||
@@ -190,25 +187,18 @@ function advanceAttackTimer(remaining: number, interval: number, delta: number, 
   return { remaining: next + count * interval, count };
 }
 
-function enemyUnitsInContact(state: BattleState, config: BattleConfig, summoned: SummonedUnitState): UnitState[] {
+function enemyUnitsInContact(state: BattleState, summoned: SummonedUnitState): UnitState[] {
   const enemyTeam = oppositeTeam(summoned.team);
   return state.units.filter(
     (unit) =>
       unit.team === enemyTeam &&
       isUnitAlive(unit) &&
-      areCollisionCirclesTouching(
-        config,
-        summoned.position,
-        "SummonedUnit",
-        unit.position,
-        "Unit"
-      )
+      isWithinZocRange(summoned.position, unit.position)
   );
 }
 
 function enemyElementalsInContact(
   state: BattleState,
-  config: BattleConfig,
   summoned: SummonedUnitState
 ): ElementalState[] {
   const enemyTeam = oppositeTeam(summoned.team);
@@ -217,19 +207,12 @@ function enemyElementalsInContact(
       elemental.team === enemyTeam &&
       elemental.isComplete &&
       elemental.currentHp > 0 &&
-      areCollisionCirclesTouching(
-        config,
-        summoned.position,
-        "SummonedUnit",
-        elemental.position,
-        "Point"
-      )
+      isWithinZocRange(summoned.position, elemental.position)
   );
 }
 
 function enemySummonedUnitsInContact(
   state: BattleState,
-  config: BattleConfig,
   summoned: SummonedUnitState
 ): SummonedUnitState[] {
   const enemyTeam = oppositeTeam(summoned.team);
@@ -238,12 +221,6 @@ function enemySummonedUnitsInContact(
       candidate.team === enemyTeam &&
       candidate.summonedUnitId !== summoned.summonedUnitId &&
       candidate.currentHp > 0 &&
-      areCollisionCirclesTouching(
-        config,
-        summoned.position,
-        "SummonedUnit",
-        candidate.position,
-        "SummonedUnit"
-      )
+      isWithinZocRange(summoned.position, candidate.position)
   );
 }

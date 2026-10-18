@@ -1,0 +1,2965 @@
+
+> reijin-summon@0.1.0 test
+> npm run build:shared && npm test -w src/shared && npm test -w src/client && npm test -w src/server
+
+
+> reijin-summon@0.1.0 build:shared
+> npm run build -w src/shared
+
+
+> @reijin-summon/shared@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @reijin-summon/shared@0.1.0 test
+> node --import tsx --test "src/**/*.test.ts"
+
+TAP version 13
+# Subtest: 両者の選択した召喚獣と対称な配置を採用する
+ok 1 - 両者の選択した召喚獣と対称な配置を採用する
+  ---
+  duration_ms: 12.2445
+  ...
+# Subtest: 未知IDと不正座標の操作は状態を変えない
+ok 2 - 未知IDと不正座標の操作は状態を変えない
+  ---
+  duration_ms: 2.2599
+  ...
+# Subtest: PlayerのLV1マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 3 - PlayerのLV1マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 18.5724
+  ...
+# Subtest: CpuのLV1マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 4 - CpuのLV1マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 2.3586
+  ...
+# Subtest: PlayerのLV2マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 5 - PlayerのLV2マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 1.828
+  ...
+# Subtest: CpuのLV2マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 6 - CpuのLV2マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 1.564
+  ...
+# Subtest: PlayerのLV3マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 7 - PlayerのLV3マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 1.7409
+  ...
+# Subtest: CpuのLV3マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 8 - CpuのLV3マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 1.9181
+  ...
+# Subtest: PlayerのLV4マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 9 - PlayerのLV4マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 2.6414
+  ...
+# Subtest: CpuのLV4マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 10 - CpuのLV4マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 0.516
+  ...
+# Subtest: PlayerのLV5マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 11 - PlayerのLV5マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 1.1077
+  ...
+# Subtest: CpuのLV5マスターは指定射程の境界まで攻撃し、境界外には届かない
+ok 12 - CpuのLV5マスターは指定射程の境界まで攻撃し、境界外には届かない
+  ---
+  duration_ms: 1.3034
+  ...
+# Subtest: カード縦寸法を変更すると両陣営のLV別射程も追従する
+ok 13 - カード縦寸法を変更すると両陣営のLV別射程も追従する
+  ---
+  duration_ms: 31.2416
+  ...
+# Subtest: オンライン対戦も両陣営のカードLVに応じた射程を使用する
+ok 14 - オンライン対戦も両陣営のカードLVに応じた射程を使用する
+  ---
+  duration_ms: 0.7095
+  ...
+# Subtest: 既定のLV3マスターにもLV別射程を適用する
+ok 15 - 既定のLV3マスターにもLV別射程を適用する
+  ---
+  duration_ms: 0.4915
+  ...
+# Subtest: キーパーとシーカーの射程はカードLVによらず維持する
+ok 16 - キーパーとシーカーの射程はカードLVによらず維持する
+  ---
+  duration_ms: 0.4967
+  ...
+# Subtest: 全20枚の定義は承認済みAPで、未知カードとレッドムーンに代替能力はない
+ok 17 - 全20枚の定義は承認済みAPで、未知カードとレッドムーンに代替能力はない
+  ---
+  duration_ms: 5.5343
+  ...
+# Subtest: 初期状態は晴れ・効果なし、デッキのINTと国籍を設定し効果配列を共有しない
+ok 18 - 初期状態は晴れ・効果なし、デッキのINTと国籍を設定し効果配列を共有しない
+  ---
+  duration_ms: 5.8682
+  ...
+# Subtest: 通常攻撃にはローズクォーツ防御が適用される
+ok 19 - 通常攻撃にはローズクォーツ防御が適用される
+  ---
+  duration_ms: 6.5774
+  ...
+# Subtest: 防御軽減は召喚獣攻撃に適用しダメージアビリティには適用しない
+ok 20 - 防御軽減は召喚獣攻撃に適用しダメージアビリティには適用しない
+  ---
+  duration_ms: 0.7061
+  ...
+# Subtest: ATK0の通常攻撃はユニット・エレメント・召喚獣・召喚士へダメージ0
+ok 21 - ATK0の通常攻撃はユニット・エレメント・召喚獣・召喚士へダメージ0
+  ---
+  duration_ms: 5.9513
+  ...
+# Subtest: 大津波による撃破は直ちに死亡処理しAPと効果を消す
+ok 22 - 大津波による撃破は直ちに死亡処理しAPと効果を消す
+  ---
+  duration_ms: 3.1872
+  ...
+# Subtest: 長いtickでも細分化したtickと効果・移動・APが一致する
+ok 23 - 長いtickでも細分化したtickと効果・移動・APが一致する
+  ---
+  duration_ms: 11.9237
+  ...
+# Subtest: SC003の発動イベントは付与先全基のIDと発動時位置を保持する
+ok 24 - SC003の発動イベントは付与先全基のIDと発動時位置を保持する
+  ---
+  duration_ms: 10.0557
+  ...
+# Subtest: SC014の発動イベントは付与先全基のIDと発動時位置を保持する
+ok 25 - SC014の発動イベントは付与先全基のIDと発動時位置を保持する
+  ---
+  duration_ms: 1.8563
+  ...
+# Subtest: SC019の発動イベントは付与先全基のIDと発動時位置を保持する
+ok 26 - SC019の発動イベントは付与先全基のIDと発動時位置を保持する
+  ---
+  duration_ms: 0.6292
+  ...
+# Subtest: 速度オーラは固定加算・非重複、異種付与は併存しシャコ貝は基数加算
+ok 27 - 速度オーラは固定加算・非重複、異種付与は併存しシャコ貝は基数加算
+  ---
+  duration_ms: 2.4361
+  ...
+# Subtest: 召喚中の周期は持ち越さず、グーはAPを保持する
+ok 28 - 召喚中の周期は持ち越さず、グーはAPを保持する
+  ---
+  duration_ms: 7.7204
+  ...
+# Subtest: 破壊後に同じIDを再建しても付与と周期は継承しない
+ok 29 - 破壊後に同じIDを再建しても付与と周期は継承しない
+  ---
+  duration_ms: 2.6444
+  ...
+# Subtest: アウインは初回20秒・再付与で周期を維持し複数基が独立加算
+ok 30 - アウインは初回20秒・再付与で周期を維持し複数基が独立加算
+  ---
+  duration_ms: 1.3502
+  ...
+# Subtest: 未完成・敵国エレメントは付与対象外、Setupと終了後は時間停止
+ok 31 - 未完成・敵国エレメントは付与対象外、Setupと終了後は時間停止
+  ---
+  duration_ms: 6.9323
+  ...
+# Subtest: S/F/L/Cはカード別寸法を持ち前方円は向きへ追従する
+ok 32 - S/F/L/Cはカード別寸法を持ち前方円は向きへ追従する
+  ---
+  duration_ms: 3.3655
+  ...
+# Subtest: 大津波の中央線は発動者の味方側、中央線上の敵も対象に含む
+ok 33 - 大津波の中央線は発動者の味方側、中央線上の敵も対象に含む
+  ---
+  duration_ms: 2.7382
+  ...
+# Subtest: 未知カード・対象外の死亡ユニット・敵エレメントは選択しない
+ok 34 - 未知カード・対象外の死亡ユニット・敵エレメントは選択しない
+  ---
+  duration_ms: 0.8522
+  ...
+# Subtest: カードごとの必要APで蓄積が止まり、アビリティなしは蓄積しない
+ok 35 - カードごとの必要APで蓄積が止まり、アビリティなしは蓄積しない
+  ---
+  duration_ms: 6.4523
+  ...
+# Subtest: シリカは対象INT差で時間だけを補正し攻撃力を14下げる
+ok 36 - シリカは対象INT差で時間だけを補正し攻撃力を14下げる
+  ---
+  duration_ms: 3.2321
+  ...
+# Subtest: 大津波は同INTで415、差3で539.5、防御効果とは独立
+ok 37 - 大津波は同INTで415、差3で539.5、防御効果とは独立
+  ---
+  duration_ms: 0.8393
+  ...
+# Subtest: 雨限定効果は晴れでAPを消費せず、雨は再使用で100秒
+ok 38 - 雨限定効果は晴れでAPを消費せず、雨は再使用で100秒
+  ---
+  duration_ms: 0.491
+  ...
+# Subtest: 解除は時間制強化と弱体を消し、効果のない対象でもAPを消費
+ok 39 - 解除は時間制強化と弱体を消し、効果のない対象でもAPを消費
+  ---
+  duration_ms: 3.7314
+  ...
+# Subtest: ザンダーの失敗は前回吸収を維持し、再使用は累積しない
+ok 40 - ザンダーの失敗は前回吸収を維持し、再使用は累積しない
+  ---
+  duration_ms: 1.3798
+  ...
+# Subtest: グーは召喚ゲージを30%回復し満タンで消費しない
+ok 41 - グーは召喚ゲージを30%回復し満タンで消費しない
+  ---
+  duration_ms: 0.6633
+  ...
+# Subtest: SC005は指定倍率で減速し期限後に解除する
+ok 42 - SC005は指定倍率で減速し期限後に解除する
+  ---
+  duration_ms: 1.0227
+  ...
+# Subtest: SC008は指定倍率で減速し期限後に解除する
+ok 43 - SC008は指定倍率で減速し期限後に解除する
+  ---
+  duration_ms: 0.9441
+  ...
+# Subtest: SC011は指定倍率で減速し期限後に解除する
+ok 44 - SC011は指定倍率で減速し期限後に解除する
+  ---
+  duration_ms: 1.4442
+  ...
+# Subtest: SC020は指定倍率で減速し期限後に解除する
+ok 45 - SC020は指定倍率で減速し期限後に解除する
+  ---
+  duration_ms: 0.4909
+  ...
+# Subtest: SC006は味方の速度を10秒間1.5倍にし、死亡しても他者への効果を維持
+ok 46 - SC006は味方の速度を10秒間1.5倍にし、死亡しても他者への効果を維持
+  ---
+  duration_ms: 2.1711
+  ...
+# Subtest: SC013は味方の速度を10秒間1.5倍にし、死亡しても他者への効果を維持
+ok 47 - SC013は味方の速度を10秒間1.5倍にし、死亡しても他者への効果を維持
+  ---
+  duration_ms: 0.3768
+  ...
+# Subtest: レッドアイは雨で同国味方だけを強化し、晴れても13秒の効果は継続
+ok 48 - レッドアイは雨で同国味方だけを強化し、晴れても13秒の効果は継続
+  ---
+  duration_ms: 0.736
+  ...
+# Subtest: ローレライは雨の時だけ全域の敵効果を解除、味方は維持
+ok 49 - ローレライは雨の時だけ全域の敵効果を解除、味方は維持
+  ---
+  duration_ms: 0.6599
+  ...
+# Subtest: ステラのINT上昇は個別期限で累積し、次のダメージに反映
+ok 50 - ステラのINT上昇は個別期限で累積し、次のダメージに反映
+  ---
+  duration_ms: 0.5679
+  ...
+# Subtest: ティアーズの抽選は敵・自身を含み、プレビューは乱数を消費しない
+ok 51 - ティアーズの抽選は敵・自身を含み、プレビューは乱数を消費しない
+  ---
+  duration_ms: 0.8842
+  ...
+# Subtest: 同じ弱体は再使用で更新、異種ATK効果は加算し下限0
+ok 52 - 同じ弱体は再使用で更新、異種ATK効果は加算し下限0
+  ---
+  duration_ms: 0.4673
+  ...
+# Subtest: INT補正は1差10％、下限10％
+ok 53 - INT補正は1差10％、下限10％
+  ---
+  duration_ms: 0.334
+  ...
+# Subtest: 異なる減速倍率は乗算し、吸収の片側死亡は他方を解除しない
+ok 54 - 異なる減速倍率は乗算し、吸収の片側死亡は他方を解除しない
+  ---
+  duration_ms: 0.5503
+  ...
+# Subtest: SC001の不屈は100秒で通常攻撃を軽減する
+ok 55 - SC001の不屈は100秒で通常攻撃を軽減する
+  ---
+  duration_ms: 7.3488
+  ...
+# Subtest: SC012の不屈は100秒で通常攻撃を軽減する
+ok 56 - SC012の不屈は100秒で通常攻撃を軽減する
+  ---
+  duration_ms: 0.9089
+  ...
+# Subtest: SC014の不屈は100秒で通常攻撃を軽減する
+ok 57 - SC014の不屈は100秒で通常攻撃を軽減する
+  ---
+  duration_ms: 0.5368
+  ...
+# Subtest: 不屈は召喚攻撃と既存防御に乗算し、アビリティは軽減しない
+ok 58 - 不屈は召喚攻撃と既存防御に乗算し、アビリティは軽減しない
+  ---
+  duration_ms: 1.2087
+  ...
+# Subtest: 底力は召喚士HPの各境界で段階加算し、50%以下だけ加速する
+ok 59 - 底力は召喚士HPの各境界で段階加算し、50%以下だけ加速する
+  ---
+  duration_ms: 2.2421
+  ...
+# Subtest: 狂戦士は敵半面だけ有効で中央線と後攻視点に対応する
+ok 60 - 狂戦士は敵半面だけ有効で中央線と後攻視点に対応する
+  ---
+  duration_ms: 0.9074
+  ...
+# Subtest: 士気旺盛は200秒を含み、時間制弱体と合算する
+ok 61 - 士気旺盛は200秒を含み、時間制弱体と合算する
+  ---
+  duration_ms: 0.831
+  ...
+# Subtest: 逆境はHP20%で有効になり、回復すると解除する
+ok 62 - 逆境はHP20%で有効になり、回復すると解除する
+  ---
+  duration_ms: 0.6091
+  ...
+# Subtest: 追撃は敵召喚士HP30%で有効になる
+ok 63 - 追撃は敵召喚士HP30%で有効になる
+  ---
+  duration_ms: 1.271
+  ...
+# Subtest: 雨の強化はATKと実際の移動に反映し、晴れると終了する
+ok 64 - 雨の強化はATKと実際の移動に反映し、晴れると終了する
+  ---
+  duration_ms: 17.7218
+  ...
+# Subtest: 集約する魔力は保持APに追従し、拡大射程で実際に攻撃する
+ok 65 - 集約する魔力は保持APに追従し、拡大射程で実際に攻撃する
+  ---
+  duration_ms: 3.0767
+  ...
+# Subtest: シリカは死亡1回につき6.75ポイントだけ増加し、上限100%
+ok 66 - シリカは死亡1回につき6.75ポイントだけ増加し、上限100%
+  ---
+  duration_ms: 4.5587
+  ...
+# Subtest: 召喚中の精霊の願いを持ち越さない
+ok 67 - 召喚中の精霊の願いを持ち越さない
+  ---
+  duration_ms: 5.1477
+  ...
+# Subtest: クリンは死亡前APを渡し、自然回復の進捗は保持する
+ok 68 - クリンは死亡前APを渡し、自然回復の進捗は保持する
+  ---
+  duration_ms: 0.6405
+  ...
+# Subtest: セレは自身のレベル×200回復し、ザンダーには4/3倍する
+ok 69 - セレは自身のレベル×200回復し、ザンダーには4/3倍する
+  ---
+  duration_ms: 0.7014
+  ...
+# Subtest: 全てを飲み込む力は回復エリアと待機回復へ反映する
+ok 70 - 全てを飲み込む力は回復エリアと待機回復へ反映する
+  ---
+  duration_ms: 0.558
+  ...
+# Subtest: SC013は50%未満の抽選でレベル分MP回復、50%で失敗する
+ok 71 - SC013は50%未満の抽選でレベル分MP回復、50%で失敗する
+  ---
+  duration_ms: 0.7145
+  ...
+# Subtest: SC020は50%未満の抽選でレベル分MP回復、50%で失敗する
+ok 72 - SC020は50%未満の抽選でレベル分MP回復、50%で失敗する
+  ---
+  duration_ms: 0.6005
+  ...
+# Subtest: 撤退のMP回復は上限まで、途中進捗も正しく処理する
+ok 73 - 撤退のMP回復は上限まで、途中進捗も正しく処理する
+  ---
+  duration_ms: 0.9349
+  ...
+# Subtest: SC008は最後の攻撃者だけ50%でAP1回復する
+ok 74 - SC008は最後の攻撃者だけ50%でAP1回復する
+  ---
+  duration_ms: 0.9625
+  ...
+# Subtest: SC011は最後の攻撃者だけ50%でAP1回復する
+ok 75 - SC011は最後の攻撃者だけ50%でAP1回復する
+  ---
+  duration_ms: 0.6796
+  ...
+# Subtest: 士気高揚はエレメンタル破壊で発動しない
+ok 76 - 士気高揚はエレメンタル破壊で発動しない
+  ---
+  duration_ms: 0.7375
+  ...
+# Subtest: ステラは30%未満でその場に全HP復活し、AP・建築・効果をリセットする
+ok 77 - ステラは30%未満でその場に全HP復活し、AP・建築・効果をリセットする
+  ---
+  duration_ms: 2.296
+  ...
+# Subtest: 同時死亡した味方に癒しを渡さず、死亡したカードを生き返らせない
+ok 78 - 同時死亡した味方に癒しを渡さず、死亡したカードを生き返らせない
+  ---
+  duration_ms: 0.4925
+  ...
+# Subtest: ダメージアビリティと召喚獣の撃破からも死亡スキルが発動する
+ok 79 - ダメージアビリティと召喚獣の撃破からも死亡スキルが発動する
+  ---
+  duration_ms: 0.827
+  ...
+# Subtest: 試合終了後は死亡スキルを発動しない
+ok 80 - 試合終了後は死亡スキルを発動しない
+  ---
+  duration_ms: 0.4206
+  ...
+# Subtest: APの受渡しは上限で止まり、能力なしの味方も抽選対象に含む
+ok 81 - APの受渡しは上限で止まり、能力なしの味方も抽選対象に含む
+  ---
+  duration_ms: 18.4597
+  ...
+# Subtest: 死亡前APを次の更新より先に保存し、AP0の撤退では抽選しない
+ok 82 - 死亡前APを次の更新より先に保存し、AP0の撤退では抽選しない
+  ---
+  duration_ms: 0.9441
+  ...
+# Subtest: 癒しはHP満タンの味方も抽選に含み、上限までの実回復量を通知する
+ok 83 - 癒しはHP満タンの味方も抽選に含み、上限までの実回復量を通知する
+  ---
+  duration_ms: 0.6148
+  ...
+# Subtest: 複数の攻撃者のうち致死攻撃者だけAPを獲得し、後続攻撃で上書きしない
+ok 84 - 複数の攻撃者のうち致死攻撃者だけAPを獲得し、後続攻撃で上書きしない
+  ---
+  duration_ms: 0.5629
+  ...
+# Subtest: 士気高揚はAP上限までで、ステラが復活しても撃破を記録する
+ok 85 - 士気高揚はAP上限までで、ステラが復活しても撃破を記録する
+  ---
+  duration_ms: 0.4991
+  ...
+# Subtest: 両陣営の撤退スキルはサーバー用に注入された同じ抽選を使う
+ok 86 - 両陣営の撤退スキルはサーバー用に注入された同じ抽選を使う
+  ---
+  duration_ms: 0.5373
+  ...
+# Subtest: アビリティの実行コマンドからダメージ死亡のスキルを確定する
+ok 87 - アビリティの実行コマンドからダメージ死亡のスキルを確定する
+  ---
+  duration_ms: 0.8001
+  ...
+# Subtest: 召喚コマンドの全体攻撃による死亡と防御軽減を確定する
+ok 88 - 召喚コマンドの全体攻撃による死亡と防御軽減を確定する
+  ---
+  duration_ms: 0.9792
+  ...
+# Subtest: ステラの成功後の死亡も抽選し、同時死亡の癒し対象にはしない
+ok 89 - ステラの成功後の死亡も抽選し、同時死亡の癒し対象にはしない
+  ---
+  duration_ms: 0.5459
+  ...
+# Subtest: raphaelは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+ok 90 - raphaelは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+  ---
+  duration_ms: 10.74
+  ...
+# Subtest: bahamutは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+ok 91 - bahamutは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+  ---
+  duration_ms: 1.3397
+  ...
+# Subtest: dullahanは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+ok 92 - dullahanは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+  ---
+  duration_ms: 2.046
+  ...
+# Subtest: leviathanは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+ok 93 - leviathanは移動時間にかかわらず召喚士到着後に攻撃間隔を待つ
+  ---
+  duration_ms: 1.0516
+  ...
+# Subtest: マスターは通常対象に0.7秒間隔で遠距離攻撃する
+ok 94 - マスターは通常対象に0.7秒間隔で遠距離攻撃する
+  ---
+  duration_ms: 13.0324
+  ...
+# Subtest: キーパーは近接戦闘中に停止回復せず回復タイマーをリセットする
+ok 95 - キーパーは近接戦闘中に停止回復せず回復タイマーをリセットする
+  ---
+  duration_ms: 2.5907
+  ...
+# Subtest: キーパーはマスターの射程内で攻撃対象になっている間は停止回復しない
+ok 96 - キーパーはマスターの射程内で攻撃対象になっている間は停止回復しない
+  ---
+  duration_ms: 0.7085
+  ...
+# Subtest: 実際の戦闘更新でも遠距離攻撃中のキーパーは停止回復しない
+ok 97 - 実際の戦闘更新でも遠距離攻撃中のキーパーは停止回復しない
+  ---
+  duration_ms: 18.5309
+  ...
+# Subtest: 射程内でも移動中で攻撃できないマスターはキーパーの停止回復を妨げない
+ok 98 - 射程内でも移動中で攻撃できないマスターはキーパーの停止回復を妨げない
+  ---
+  duration_ms: 1.2146
+  ...
+# Subtest: マスターが別の味方を狙っている場合はキーパーが停止回復できる
+ok 99 - マスターが別の味方を狙っている場合はキーパーが停止回復できる
+  ---
+  duration_ms: 1.7059
+  ...
+# Subtest: 召喚士を攻撃しているキーパーは停止回復しない
+ok 100 - 召喚士を攻撃しているキーパーは停止回復しない
+  ---
+  duration_ms: 0.6344
+  ...
+# Subtest: 戦闘中のキーパーでも召喚士の回復エリアでは回復する
+ok 101 - 戦闘中のキーパーでも召喚士の回復エリアでは回復する
+  ---
+  duration_ms: 0.678
+  ...
+# Subtest: raphaelの攻撃を受けるキーパーは停止回復しない
+ok 102 - raphaelの攻撃を受けるキーパーは停止回復しない
+  ---
+  duration_ms: 10.6326
+  ...
+# Subtest: jackpotの攻撃を受けるキーパーは停止回復しない
+ok 103 - jackpotの攻撃を受けるキーパーは停止回復しない
+  ---
+  duration_ms: 5.8178
+  ...
+# Subtest: yggdrasilの攻撃を受けるキーパーは停止回復しない
+ok 104 - yggdrasilの攻撃を受けるキーパーは停止回復しない
+  ---
+  duration_ms: 5.1584
+  ...
+# Subtest: Meleeの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+ok 105 - Meleeの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 11.7254
+  ...
+# Subtest: Meleeの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+ok 106 - Meleeの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 1.7721
+  ...
+# Subtest: Meleeの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+ok 107 - Meleeの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 1.2282
+  ...
+# Subtest: Meleeの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+ok 108 - Meleeの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.7251
+  ...
+# Subtest: Speedの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+ok 109 - Speedの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.8318
+  ...
+# Subtest: Speedの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+ok 110 - Speedの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 1.2546
+  ...
+# Subtest: Speedの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+ok 111 - Speedの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.7454
+  ...
+# Subtest: Speedの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+ok 112 - Speedの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 2.059
+  ...
+# Subtest: raphaelの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+ok 113 - raphaelの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 4.3532
+  ...
+# Subtest: raphaelの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+ok 114 - raphaelの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 1.6264
+  ...
+# Subtest: raphaelの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+ok 115 - raphaelの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 1.0974
+  ...
+# Subtest: raphaelの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+ok 116 - raphaelの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.6212
+  ...
+# Subtest: bahamutの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+ok 117 - bahamutの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.4118
+  ...
+# Subtest: bahamutの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+ok 118 - bahamutの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.3092
+  ...
+# Subtest: bahamutの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+ok 119 - bahamutの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.321
+  ...
+# Subtest: bahamutの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+ok 120 - bahamutの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.2816
+  ...
+# Subtest: dullahanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+ok 121 - dullahanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.3762
+  ...
+# Subtest: dullahanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+ok 122 - dullahanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.254
+  ...
+# Subtest: dullahanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+ok 123 - dullahanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.2296
+  ...
+# Subtest: dullahanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+ok 124 - dullahanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.1945
+  ...
+# Subtest: leviathanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+ok 125 - leviathanの近接攻撃はUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.7909
+  ...
+# Subtest: leviathanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+ok 126 - leviathanの近接攻撃はElementalの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.382
+  ...
+# Subtest: leviathanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+ok 127 - leviathanの近接攻撃はSummonedUnitの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.3203
+  ...
+# Subtest: leviathanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+ok 128 - leviathanの近接攻撃はLeaderの中心間0.63まで届き、境界外には届かない
+  ---
+  duration_ms: 0.3133
+  ...
+# Subtest: 近接召喚獣は旧接触距離で停止せず、召喚士への射程0.63まで進む
+ok 129 - 近接召喚獣は旧接触距離で停止せず、召喚士への射程0.63まで進む
+  ---
+  duration_ms: 2.1234
+  ...
+# Subtest: 20枚の効果種類に従い、ATKはレベル+1・DEFは指定コスト・HPは500を召喚へ反映する
+ok 130 - 20枚の効果種類に従い、ATKはレベル+1・DEFは指定コスト・HPは500を召喚へ反映する
+  ---
+  duration_ms: 16.3264
+  ...
+# Subtest: 両陣営の編成を別々に集計し、死亡・国籍変更と再召喚で補正を変えない
+ok 131 - 両陣営の編成を別々に集計し、死亡・国籍変更と再召喚で補正を変えない
+  ---
+  duration_ms: 0.9015
+  ...
+# Subtest: jackpotもHP補正を1倍で受け、面積0で500HPの召喚と自然消耗ができる
+ok 132 - jackpotもHP補正を1倍で受け、面積0で500HPの召喚と自然消耗ができる
+  ---
+  duration_ms: 1.764
+  ...
+# Subtest: yggdrasilもHP補正を1倍で受け、面積0で500HPの召喚と自然消耗ができる
+ok 133 - yggdrasilもHP補正を1倍で受け、面積0で500HPの召喚と自然消耗ができる
+  ---
+  duration_ms: 1.3861
+  ...
+# Subtest: DEFを合算して被ダメージ率5%で止め、自然HP消耗には適用しない
+ok 134 - DEFを合算して被ダメージ率5%で止め、自然HP消耗には適用しない
+  ---
+  duration_ms: 3.0274
+  ...
+# Subtest: 通常ATKの合算比率を召喚士への実ダメージに反映する
+ok 135 - 通常ATKの合算比率を召喚士への実ダメージに反映する
+  ---
+  duration_ms: 0.7545
+  ...
+# Subtest: ユグドラシルのATKを1倍で加算し、初回エレメンタル攻撃と周期攻撃も強化する
+ok 136 - ユグドラシルのATKを1倍で加算し、初回エレメンタル攻撃と周期攻撃も強化する
+  ---
+  duration_ms: 1.5259
+  ...
+# Subtest: ジャックポットの初回・周期レーザーは敵味方へ同じATK補正を使う
+ok 137 - ジャックポットの初回・周期レーザーは敵味方へ同じATK補正を使う
+  ---
+  duration_ms: 1.2513
+  ...
+# Subtest: リヴァイアサンの波動比率は潜在ATKを含めず、期限後もカスタマイズを維持する
+ok 138 - リヴァイアサンの波動比率は潜在ATKを含めず、期限後もカスタマイズを維持する
+  ---
+  duration_ms: 1.8158
+  ...
+# Subtest: ATKカスタマイズはジャックポットの固定潜在ダメージ600を増やさない
+ok 139 - ATKカスタマイズはジャックポットの固定潜在ダメージ600を増やさない
+  ---
+  duration_ms: 1.9688
+  ...
+# Subtest: Playerの潜在発動は召喚時HP30%以下の境界で判定する（HP2401）
+ok 140 - Playerの潜在発動は召喚時HP30%以下の境界で判定する（HP2401）
+  ---
+  duration_ms: 9.0309
+  ...
+# Subtest: Playerの潜在発動は召喚時HP30%以下の境界で判定する（HP2400）
+ok 141 - Playerの潜在発動は召喚時HP30%以下の境界で判定する（HP2400）
+  ---
+  duration_ms: 15.5529
+  ...
+# Subtest: Playerの潜在発動は召喚時HP30%以下の境界で判定する（HP2399）
+ok 142 - Playerの潜在発動は召喚時HP30%以下の境界で判定する（HP2399）
+  ---
+  duration_ms: 1.0798
+  ...
+# Subtest: Cpuの潜在発動は召喚時HP30%以下の境界で判定する（HP2401）
+ok 143 - Cpuの潜在発動は召喚時HP30%以下の境界で判定する（HP2401）
+  ---
+  duration_ms: 3.0849
+  ...
+# Subtest: Cpuの潜在発動は召喚時HP30%以下の境界で判定する（HP2400）
+ok 144 - Cpuの潜在発動は召喚時HP30%以下の境界で判定する（HP2400）
+  ---
+  duration_ms: 1.2065
+  ...
+# Subtest: Cpuの潜在発動は召喚時HP30%以下の境界で判定する（HP2399）
+ok 145 - Cpuの潜在発動は召喚時HP30%以下の境界で判定する（HP2399）
+  ---
+  duration_ms: 1.6192
+  ...
+# Subtest: 召喚失敗では回復・MP・潜在イベントを発生させない
+ok 146 - 召喚失敗では回復・MP・潜在イベントを発生させない
+  ---
+  duration_ms: 0.6172
+  ...
+# Subtest: ラファエルは回復上限を守り、味方だけをHP60%・最大AP半分で無料復活する
+ok 147 - ラファエルは回復上限を守り、味方だけをHP60%・最大AP半分で無料復活する
+  ---
+  duration_ms: 2.8005
+  ...
+# Subtest: 通常復活後1秒は潜在回復の対象外となり、期限後は対象になる
+ok 148 - 通常復活後1秒は潜在回復の対象外となり、期限後は対象になる
+  ---
+  duration_ms: 3.3122
+  ...
+# Subtest: ジャックポットは防御を無視して生存敵へ600ダメージとAPリセットを行う
+ok 149 - ジャックポットは防御を無視して生存敵へ600ダメージとAPリセットを行う
+  ---
+  duration_ms: 2.7181
+  ...
+# Subtest: ジャックポットの潜在ダメージは敵召喚獣にも届き、召喚士は通常の初撃だけ受ける
+ok 150 - ジャックポットの潜在ダメージは敵召喚獣にも届き、召喚士は通常の初撃だけ受ける
+  ---
+  duration_ms: 1.2021
+  ...
+# Subtest: ユグドラシルは味方APを最大化しMPを3回復するが、死者と復活直後には付与しない
+ok 151 - ユグドラシルは味方APを最大化しMPを3回復するが、死者と復活直後には付与しない
+  ---
+  duration_ms: 1.9175
+  ...
+# Subtest: ユグドラシルのMP加速は召喚中だけ有効で、攻撃時減速は解除できる
+ok 152 - ユグドラシルのMP加速は召喚中だけ有効で、攻撃時減速は解除できる
+  ---
+  duration_ms: 4.3687
+  ...
+# Subtest: ユグドラシルの後続攻撃は召喚後に復活した敵へ潜在減速を付与しない
+ok 153 - ユグドラシルの後続攻撃は召喚後に復活した敵へ潜在減速を付与しない
+  ---
+  duration_ms: 1.7477
+  ...
+# Subtest: リヴァイアサンは発動時の味方と自身を20秒強化し敵へ追加ダメージを与える
+ok 154 - リヴァイアサンは発動時の味方と自身を20秒強化し敵へ追加ダメージを与える
+  ---
+  duration_ms: 2.236
+  ...
+# Subtest: バハムートはATKを40増やし敵の移動指示より引き寄せを優先する
+ok 155 - バハムートはATKを40増やし敵の移動指示より引き寄せを優先する
+  ---
+  duration_ms: 5.6138
+  ...
+# Subtest: バハムートの引き寄せはエレメンタル生成を中断せず、解除後は元の移動指示に戻る
+ok 156 - バハムートの引き寄せはエレメンタル生成を中断せず、解除後は元の移動指示に戻る
+  ---
+  duration_ms: 1.2613
+  ...
+# Subtest: デュラハンは敵ATKを17秒下げ、味方を満タン・AP0で無料復活する
+ok 157 - デュラハンは敵ATKを17秒下げ、味方を満タン・AP0で無料復活する
+  ---
+  duration_ms: 0.8703
+  ...
+# Subtest: 潜在ダメージによる死亡スキル・MP・勝敗を召喚コマンド内で確定する
+ok 158 - 潜在ダメージによる死亡スキル・MP・勝敗を召喚コマンド内で確定する
+  ---
+  duration_ms: 2.3946
+  ...
+# Subtest: 発動条件は毎回の召喚時に評価し、HP低下だけでは活動中の召喚獣に後付けしない
+ok 159 - 発動条件は毎回の召喚時に評価し、HP低下だけでは活動中の召喚獣に後付けしない
+  ---
+  duration_ms: 0.7617
+  ...
+# Subtest: 潜在で復活した味方を同じ発動の回復対象へ重ねて加えない
+ok 160 - 潜在で復活した味方を同じ発動の回復対象へ重ねて加えない
+  ---
+  duration_ms: 0.5172
+  ...
+# Subtest: 召喚時にいた敵でも一度戦闘不能になった後の復活には潜在減速を再付与しない
+ok 161 - 召喚時にいた敵でも一度戦闘不能になった後の復活には潜在減速を再付与しない
+  ---
+  duration_ms: 1.0893
+  ...
+# Subtest: 生成中にバハムートが移動して消滅しても最後の位置を引き寄せ先に保つ
+ok 162 - 生成中にバハムートが移動して消滅しても最後の位置を引き寄せ先に保つ
+  ---
+  duration_ms: 0.9937
+  ...
+1..162
+# tests 162
+# suites 0
+# pass 162
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4045.7015
+
+> @reijin-summon/client@0.1.0 test
+> node --import tsx --test "src/**/*.test.ts"
+
+TAP version 13
+# Subtest: CPU戦は指定の4枚・コスト10とリヴァイアサンに固定する
+ok 1 - CPU戦は指定の4枚・コスト10とリヴァイアサンに固定する
+  ---
+  duration_ms: 11.5689
+  ...
+# Subtest: 再戦用に編成・召喚獣・HP・APを新しく生成する
+ok 2 - 再戦用に編成・召喚獣・HP・APを新しく生成する
+  ---
+  duration_ms: 2.8416
+  ...
+# Subtest: オンライン対戦では双方が選んだカードと召喚獣を使う
+ok 3 - オンライン対戦では双方が選んだカードと召喚獣を使う
+  ---
+  duration_ms: 0.7026
+  ...
+# Subtest: デッキ2を選ぶとダライアス・レッドアイ・クリン・ローズとユグドラシルになる
+ok 4 - デッキ2を選ぶとダライアス・レッドアイ・クリン・ローズとユグドラシルになる
+  ---
+  duration_ms: 1.3108
+  ...
+# Subtest: デッキ3は指定4枚で、対戦ごとに6種類を抽選し試合中は固定する
+ok 5 - デッキ3は指定4枚で、対戦ごとに6種類を抽選し試合中は固定する
+  ---
+  duration_ms: 2.4492
+  ...
+# Subtest: 実戦ルールで陣地拡張からアビリティ・召喚・敵召喚士への攻撃まで進行する
+ok 6 - 実戦ルールで陣地拡張からアビリティ・召喚・敵召喚士への攻撃まで進行する
+  ---
+  duration_ms: 2081.193
+  ...
+# Subtest: アウインは複数基へ付与し、周辺の陣形で実際にゲージを回復する
+ok 7 - アウインは複数基へ付与し、周辺の陣形で実際にゲージを回復する
+  ---
+  duration_ms: 698.9807
+  ...
+# Subtest: 同じエレメンタルへの再付与でアウインとスペサルティンのAPを浪費しない
+ok 8 - 同じエレメンタルへの再付与でアウインとスペサルティンのAPを浪費しない
+  ---
+  duration_ms: 2.6816
+  ...
+# Subtest: スペサルティンはエレメンタルへ加速を付与する
+ok 9 - スペサルティンはエレメンタルへ加速を付与する
+  ---
+  duration_ms: 3.007
+  ...
+# Subtest: チェルミは撤退する前衛の方向を向いて加速する
+ok 10 - チェルミは撤退する前衛の方向を向いて加速する
+  ---
+  duration_ms: 12.7468
+  ...
+# Subtest: 後衛2体は敵の射程内で停止して射撃する
+ok 11 - 後衛2体は敵の射程内で停止して射撃する
+  ---
+  duration_ms: 7.1056
+  ...
+# Subtest: 前衛は射撃陣形に近づいた同じ敵を迎撃する
+ok 12 - 前衛は射撃陣形に近づいた同じ敵を迎撃する
+  ---
+  duration_ms: 1.2251
+  ...
+# Subtest: 前衛も撤退後は70%まで回復を続け、移動指示で回復を中断しない
+ok 13 - 前衛も撤退後は70%まで回復を続け、移動指示で回復を中断しない
+  ---
+  duration_ms: 1.7864
+  ...
+# Subtest: 活動中のユグドラシルは射撃陣形の近くで守る
+ok 14 - 活動中のユグドラシルは射撃陣形の近くで守る
+  ---
+  duration_ms: 6.1136
+  ...
+# Subtest: ジャックポットは味方を経路から退避させてから召喚する
+ok 15 - ジャックポットは味方を経路から退避させてから召喚する
+  ---
+  duration_ms: 236.0444
+  ...
+# Subtest: アビリティのないレッドムーンには使用指示を出さない
+ok 16 - アビリティのないレッドムーンには使用指示を出さない
+  ---
+  duration_ms: 1.9302
+  ...
+# Subtest: 前衛は外周を生成中も1体を射手の護衛に残す
+ok 17 - 前衛は外周を生成中も1体を射手の護衛に残す
+  ---
+  duration_ms: 596.7282
+  ...
+# Subtest: 後衛は敵召喚獣にも停止射撃し、接近されたら退避する
+ok 18 - 後衛は敵召喚獣にも停止射撃し、接近されたら退避する
+  ---
+  duration_ms: 17.7089
+  ...
+# Subtest: 進軍型の召喚獣には前衛と後衛が追従する
+ok 19 - 進軍型の召喚獣には前衛と後衛が追従する
+  ---
+  duration_ms: 3.0649
+  ...
+# Subtest: 瀕死時の復活型召喚ではMPを使わず仲間を復活させる
+ok 20 - 瀕死時の復活型召喚ではMPを使わず仲間を復活させる
+  ---
+  duration_ms: 3.2043
+  ...
+# Subtest: ジャックポットの初撃で勝てる場合は狭い陣地でも召喚する
+ok 21 - ジャックポットの初撃で勝てる場合は狭い陣地でも召喚する
+  ---
+  duration_ms: 1.2976
+  ...
+# Subtest: レーザーを横切る移動を避け、退避先も回復範囲内に収める
+ok 22 - レーザーを横切る移動を避け、退避先も回復範囲内に収める
+  ---
+  duration_ms: 0.9013
+  ...
+# Subtest: レーザーの中からの撤退では、まず最短距離で横へ抜ける
+ok 23 - レーザーの中からの撤退では、まず最短距離で横へ抜ける
+  ---
+  duration_ms: 0.385
+  ...
+# Subtest: 安全な立て直しではアウイン、緊急防衛では前衛を優先して復活する
+ok 24 - 安全な立て直しではアウイン、緊急防衛では前衛を優先して復活する
+  ---
+  duration_ms: 0.8038
+  ...
+# Subtest: 全6種類で通常APから生成・強化・召喚が進み、試合が終了する
+ok 25 - 全6種類で通常APから生成・強化・召喚が進み、試合が終了する
+  ---
+  duration_ms: 7227.2598
+  ...
+# Subtest: 配置中と試合終了後にはCPUを操作しない
+ok 26 - 配置中と試合終了後にはCPUを操作しない
+  ---
+  duration_ms: 8.7594
+  ...
+# Subtest: グーのゲージ回復から同じ判断内でリヴァイアサンを召喚する
+ok 27 - グーのゲージ回復から同じ判断内でリヴァイアサンを召喚する
+  ---
+  duration_ms: 11.0275
+  ...
+# Subtest: 召喚中と満タン時にグーのAPを無駄にしない
+ok 28 - 召喚中と満タン時にグーのAPを無駄にしない
+  ---
+  duration_ms: 3.8792
+  ...
+# Subtest: 陣地が小さい序盤は召喚を待ち、召喚士が危険なら切り返す
+ok 29 - 陣地が小さい序盤は召喚を待ち、召喚士が危険なら切り返す
+  ---
+  duration_ms: 3.3917
+  ...
+# Subtest: HP35%で撤退し、50%では継続、70%まで回復すると戦線へ戻る
+ok 30 - HP35%で撤退し、50%では継続、70%まで回復すると戦線へ戻る
+  ---
+  duration_ms: 2.1987
+  ...
+# Subtest: 回復中の移動指示を繰り返さず実際にHPを回復できる
+ok 31 - 回復中の移動指示を繰り返さず実際にHPを回復できる
+  ---
+  duration_ms: 128.3091
+  ...
+# Subtest: 生成中に敵が迫ったら建築を中断して戦闘へ切り替える
+ok 32 - 生成中に敵が迫ったら建築を中断して戦闘へ切り替える
+  ---
+  duration_ms: 1.2389
+  ...
+# Subtest: ジャックポットのレーザー上では建築を中断して線の外へ移動する
+ok 33 - ジャックポットのレーザー上では建築を中断して線の外へ移動する
+  ---
+  duration_ms: 3.3445
+  ...
+# Subtest: レッドアイとタイガーアイが近くの同じ敵へ向かう
+ok 34 - レッドアイとタイガーアイが近くの同じ敵へ向かう
+  ---
+  duration_ms: 1.6502
+  ...
+# Subtest: 敵召喚獣が召喚士へ迫ったら騎兵で迎撃し、陣地が小さくても召喚する
+ok 35 - 敵召喚獣が召喚士へ迫ったら騎兵で迎撃し、陣地が小さくても召喚する
+  ---
+  duration_ms: 2.0838
+  ...
+# Subtest: ローズクォーツは初期3基の後に側面の前方へ陣地を広げる
+ok 36 - ローズクォーツは初期3基の後に側面の前方へ陣地を広げる
+  ---
+  duration_ms: 0.96
+  ...
+# Subtest: タイガーアイは敵の方向へ向けて減速を使用する
+ok 37 - タイガーアイは敵の方向へ向けて減速を使用する
+  ---
+  duration_ms: 2.1563
+  ...
+# Subtest: レッドアイは晴天ではAPを保持し、雨なら移動する味方を加速する
+ok 38 - レッドアイは晴天ではAPを保持し、雨なら移動する味方を加速する
+  ---
+  duration_ms: 1.3163
+  ...
+# Subtest: ローズクォーツはエレメンタルがある移動時に自己強化する
+ok 39 - ローズクォーツはエレメンタルがある移動時に自己強化する
+  ---
+  duration_ms: 8.7846
+  ...
+# Subtest: 召喚準備では死亡順よりグーの復活を優先する
+ok 40 - 召喚準備では死亡順よりグーの復活を優先する
+  ---
+  duration_ms: 1.2468
+  ...
+# Subtest: 完成済みと生成中を含めて上限を超える生成指示を出さない
+ok 41 - 完成済みと生成中を含めて上限を超える生成指示を出さない
+  ---
+  duration_ms: 0.6367
+  ...
+# Subtest: 時間を進めると広い陣地を作り、生成だけで停滞しない
+ok 42 - 時間を進めると広い陣地を作り、生成だけで停滞しない
+  ---
+  duration_ms: 966.3754
+  ...
+# Subtest: クリンの雨からレッドアイの加速、大津波まで同じ判断内で連携する
+ok 43 - クリンの雨からレッドアイの加速、大津波まで同じ判断内で連携する
+  ---
+  duration_ms: 15.6571
+  ...
+# Subtest: 雨が十分残る間はクリンのAPを保持し、終了直前に更新する
+ok 44 - 雨が十分残る間はクリンのAPを保持し、終了直前に更新する
+  ---
+  duration_ms: 3.8156
+  ...
+# Subtest: 雨のAP不足時にはレッドアイのAPを保持する
+ok 45 - 雨のAP不足時にはレッドアイのAPを保持する
+  ---
+  duration_ms: 1.7777
+  ...
+# Subtest: 大津波は健康な敵1体に温存し、撃破できる1体には使う
+ok 46 - 大津波は健康な敵1体に温存し、撃破できる1体には使う
+  ---
+  duration_ms: 2.7432
+  ...
+# Subtest: 大津波が届く敵の多い半面へダライアスを移動させる
+ok 47 - 大津波が届く敵の多い半面へダライアスを移動させる
+  ---
+  duration_ms: 1.6921
+  ...
+# Subtest: 現在の半面に2体いても、狙う半面の3体へ移動するまでは大津波を温存する
+ok 48 - 現在の半面に2体いても、狙う半面の3体へ移動するまでは大津波を温存する
+  ---
+  duration_ms: 2.9753
+  ...
+# Subtest: クリンは射程内で停止して実際に射撃する
+ok 49 - クリンは射程内で停止して実際に射撃する
+  ---
+  duration_ms: 13.2565
+  ...
+# Subtest: クリンは敵に接近されたら後方へ離れる
+ok 50 - クリンは敵に接近されたら後方へ離れる
+  ---
+  duration_ms: 1.1485
+  ...
+# Subtest: クリンは敵召喚獣にも停止射撃し、接近されたら退避する
+ok 51 - クリンは敵召喚獣にも停止射撃し、接近されたら退避する
+  ---
+  duration_ms: 9.9926
+  ...
+# Subtest: ユグドラシルは密集した陣地では待機し、広い陣地なら召喚する
+ok 52 - ユグドラシルは密集した陣地では待機し、広い陣地なら召喚する
+  ---
+  duration_ms: 5.2778
+  ...
+# Subtest: 潜在能力を使う危機では小さい陣地でもユグドラシルを召喚する
+ok 53 - 潜在能力を使う危機では小さい陣地でもユグドラシルを召喚する
+  ---
+  duration_ms: 1.1976
+  ...
+# Subtest: 敵バハムートが召喚位置にいる間はユグドラシルの活動時間を過大評価しない
+ok 54 - 敵バハムートが召喚位置にいる間はユグドラシルの活動時間を過大評価しない
+  ---
+  duration_ms: 1.6999
+  ...
+# Subtest: 敵ジャックポットのレーザーは経路に応じてユグドラシルの活動時間へ反映する
+ok 55 - 敵ジャックポットのレーザーは経路に応じてユグドラシルの活動時間へ反映する
+  ---
+  duration_ms: 7.7031
+  ...
+# Subtest: ユグドラシル活動中は前衛を本体の近くに残す
+ok 56 - ユグドラシル活動中は前衛を本体の近くに残す
+  ---
+  duration_ms: 1.2061
+  ...
+# Subtest: 雨のない立て直しではクリンを先に復活させる
+ok 57 - 雨のない立て直しではクリンを先に復活させる
+  ---
+  duration_ms: 0.8884
+  ...
+# Subtest: 通常のAP回復と初期配置から雨・大津波・ユグドラシルまで進行する
+ok 58 - 通常のAP回復と初期配置から雨・大津波・ユグドラシルまで進行する
+  ---
+  duration_ms: 1313.5157
+  ...
+# Subtest: calculates the render scale from the browser viewport
+ok 59 - calculates the render scale from the browser viewport
+  ---
+  duration_ms: 2.3115
+  ...
+# Subtest: clamps browser viewports smaller than the logical viewport to one
+ok 60 - clamps browser viewports smaller than the logical viewport to one
+  ---
+  duration_ms: 0.3855
+  ...
+# Subtest: uses a render scale of one for invalid browser viewport dimensions
+ok 61 - uses a render scale of one for invalid browser viewport dimensions
+  ---
+  duration_ms: 0.4965
+  ...
+# Subtest: calculates rounded physical canvas dimensions
+ok 62 - calculates rounded physical canvas dimensions
+  ---
+  duration_ms: 5.7323
+  ...
+# Subtest: converts physical pointer coordinates to logical canvas coordinates
+ok 63 - converts physical pointer coordinates to logical canvas coordinates
+  ---
+  duration_ms: 0.7629
+  ...
+# Subtest: adds the browser-size render scale to text styles
+ok 64 - adds the browser-size render scale to text styles
+  ---
+  duration_ms: 1.3328
+  ...
+# Subtest: 既定状態は上下のリーダーと横一列に並ぶ各3体の通常ユニットを持つ
+ok 65 - 既定状態は上下のリーダーと横一列に並ぶ各3体の通常ユニットを持つ
+  ---
+  duration_ms: 6.1616
+  ...
+# Subtest: 既定設定と既定状態は可変のステータス参照を共有しない
+ok 66 - 既定設定と既定状態は可変のステータス参照を共有しない
+  ---
+  duration_ms: 1.0017
+  ...
+# Subtest: 初期状態のMPはすべてゼロで、全ユニットのLVとCOSTは3である
+ok 67 - 初期状態のMPはすべてゼロで、全ユニットのLVとCOSTは3である
+  ---
+  duration_ms: 0.8047
+  ...
+# Subtest: チーム別MPアクセサーは対象チームの状態だけを更新する
+ok 68 - チーム別MPアクセサーは対象チームの状態だけを更新する
+  ---
+  duration_ms: 0.7227
+  ...
+# Subtest: 同兵種の別カードと敵味方の同じカードを独立して生成する
+ok 69 - 同兵種の別カードと敵味方の同じカードを独立して生成する
+  ---
+  duration_ms: 7.0329
+  ...
+# Subtest: 1体から5体まで配置領域と間隔を満たし戦闘を開始できる
+ok 70 - 1体から5体まで配置領域と間隔を満たし戦闘を開始できる
+  ---
+  duration_ms: 3996.2099
+  ...
+# Subtest: カードのコストに応じたMPで復活し再戦用の状態へダメージが漏れない
+ok 71 - カードのコストに応じたMPで復活し再戦用の状態へダメージが漏れない
+  ---
+  duration_ms: 1.5748
+  ...
+# Subtest: 不正な編成を戦闘の入口で拒否する
+ok 72 - 不正な編成を戦闘の入口で拒否する
+  ---
+  duration_ms: 2.0676
+  ...
+# Subtest: 選択した召喚獣とCPU抽選結果を戦闘中の状態へ固定する
+ok 73 - 選択した召喚獣とCPU抽選結果を戦闘中の状態へ固定する
+  ---
+  duration_ms: 0.5067
+  ...
+# Subtest: 召喚獣を省略した場合はプレイヤーをラファエルにする
+ok 74 - 召喚獣を省略した場合はプレイヤーをラファエルにする
+  ---
+  duration_ms: 0.3827
+  ...
+# Subtest: 召喚獣6種類を一意なIDと専用画像で定義する
+ok 75 - 召喚獣6種類を一意なIDと専用画像で定義する
+  ---
+  duration_ms: 5.7014
+  ...
+# Subtest: 召喚獣IDを未知値から判別する
+ok 76 - 召喚獣IDを未知値から判別する
+  ---
+  duration_ms: 0.401
+  ...
+# Subtest: CPU抽選は乱数区間を6種類へ均等に割り当てる
+ok 77 - CPU抽選は乱数区間を6種類へ均等に割り当てる
+  ---
+  duration_ms: 0.4878
+  ...
+# Subtest: SC001〜SC020をWiki記載のカード情報で提供する
+ok 78 - SC001〜SC020をWiki記載のカード情報で提供する
+  ---
+  duration_ms: 9.8839
+  ...
+# Subtest: 空デッキを出撃不可にする
+ok 79 - 空デッキを出撃不可にする
+  ---
+  duration_ms: 5.7953
+  ...
+# Subtest: 6枚のデッキを出撃不可にする
+ok 80 - 6枚のデッキを出撃不可にする
+  ---
+  duration_ms: 0.4946
+  ...
+# Subtest: 同一カードを重複させたデッキを出撃不可にする
+ok 81 - 同一カードを重複させたデッキを出撃不可にする
+  ---
+  duration_ms: 0.4074
+  ...
+# Subtest: 不明なカードIDを保持したデッキを出撃不可にする
+ok 82 - 不明なカードIDを保持したデッキを出撃不可にする
+  ---
+  duration_ms: 5.862
+  ...
+# Subtest: 合計コストが10を超えるデッキを出撃不可にする
+ok 83 - 合計コストが10を超えるデッキを出撃不可にする
+  ---
+  duration_ms: 0.8147
+  ...
+# Subtest: 同兵種5枚でも重複なし・合計コスト10以下なら出撃可能にする
+ok 84 - 同兵種5枚でも重複なし・合計コスト10以下なら出撃可能にする
+  ---
+  duration_ms: 1.9886
+  ...
+# Subtest: 保存がない場合は標準デッキを選択した初期ライブラリを返す
+ok 85 - 保存がない場合は標準デッキを選択した初期ライブラリを返す
+  ---
+  duration_ms: 4.2904
+  ...
+# Subtest: 複数デッキを保存して順序ごと復元する
+ok 86 - 複数デッキを保存して順序ごと復元する
+  ---
+  duration_ms: 1.5175
+  ...
+# Subtest: version 1をカード・名前・選択状態を保ってラファエルへ移行する
+ok 87 - version 1をカード・名前・選択状態を保ってラファエルへ移行する
+  ---
+  duration_ms: 0.5895
+  ...
+# Subtest: version 2の不明な召喚獣IDだけをラファエルへ補完して通知する
+ok 88 - version 2の不明な召喚獣IDだけをラファエルへ補完して通知する
+  ---
+  duration_ms: 0.6874
+  ...
+# Subtest: 破損JSONは起動を妨げず初期ライブラリと原因を返す
+ok 89 - 破損JSONは起動を妨げず初期ライブラリと原因を返す
+  ---
+  duration_ms: 0.5113
+  ...
+# Subtest: 構造が不正な保存値は起動を妨げず初期ライブラリと原因を返す
+ok 90 - 構造が不正な保存値は起動を妨げず初期ライブラリと原因を返す
+  ---
+  duration_ms: 0.388
+  ...
+# Subtest: 保存先が例外を投げてもクラッシュせず失敗を報告する
+ok 91 - 保存先が例外を投げてもクラッシュせず失敗を報告する
+  ---
+  duration_ms: 0.4825
+  ...
+# Subtest: 不正なライブラリは保存先を上書きせず失敗を報告する
+ok 92 - 不正なライブラリは保存先を上書きせず失敗を報告する
+  ---
+  duration_ms: 0.502
+  ...
+# Subtest: 空または重複したデッキIDは保存先を上書きせず拒否する
+ok 93 - 空または重複したデッキIDは保存先を上書きせず拒否する
+  ---
+  duration_ms: 1.0273
+  ...
+# Subtest: 選択中IDが保存済みデッキを参照しないライブラリを拒否する
+ok 94 - 選択中IDが保存済みデッキを参照しないライブラリを拒否する
+  ---
+  duration_ms: 1.2797
+  ...
+# Subtest: 読み込み時のセキュリティ例外を報告して初期ライブラリを返す
+ok 95 - 読み込み時のセキュリティ例外を報告して初期ライブラリを返す
+  ---
+  duration_ms: 0.5719
+  ...
+# Subtest: commits drag movement only for a valid release during the battle
+ok 96 - commits drag movement only for a valid release during the battle
+  ---
+  duration_ms: 2.8272
+  ...
+# Subtest: keeps a marker only while an active living unit has not arrived
+ok 97 - keeps a marker only while an active living unit has not arrived
+  ---
+  duration_ms: 0.7378
+  ...
+# Subtest: creates a player move command for a valid drag release
+ok 98 - creates a player move command for a valid drag release
+  ---
+  duration_ms: 2.14
+  ...
+# Subtest: creates a player initial placement command for a valid Setup drag release
+ok 99 - creates a player initial placement command for a valid Setup drag release
+  ---
+  duration_ms: 0.4598
+  ...
+# Subtest: does not create a command for a Countdown drag release
+ok 100 - does not create a command for a Countdown drag release
+  ---
+  duration_ms: 0.3487
+  ...
+# Subtest: sets and updates the dragged unit marker without mutating the prior markers
+ok 101 - sets and updates the dragged unit marker without mutating the prior markers
+  ---
+  duration_ms: 0.9649
+  ...
+# Subtest: invalid drag release clears dragging without issuing a command or changing markers
+ok 102 - invalid drag release clears dragging without issuing a command or changing markers
+  ---
+  duration_ms: 0.505
+  ...
+# Subtest: assigns different living units to independent pointers
+ok 103 - assigns different living units to independent pointers
+  ---
+  duration_ms: 0.5246
+  ...
+# Subtest: does not assign one unit to multiple pointers
+ok 104 - does not assign one unit to multiple pointers
+  ---
+  duration_ms: 0.8572
+  ...
+# Subtest: clears only the specified pointer drag
+ok 105 - clears only the specified pointer drag
+  ---
+  duration_ms: 1.2011
+  ...
+# Subtest: revival clears every stale pointer for its unit before later releases
+ok 106 - revival clears every stale pointer for its unit before later releases
+  ---
+  duration_ms: 1.005
+  ...
+# Subtest: releases pointers in any order for their assigned units
+ok 107 - releases pointers in any order for their assigned units
+  ---
+  duration_ms: 0.4698
+  ...
+# Subtest: invalid release clears only its pointer
+ok 108 - invalid release clears only its pointer
+  ---
+  duration_ms: 5.6195
+  ...
+# Subtest: 撤退カードをMP充足状態で回復エリアへ置くとReviveUnitを生成する
+ok 109 - 撤退カードをMP充足状態で回復エリアへ置くとReviveUnitを生成する
+  ---
+  duration_ms: 4.0866
+  ...
+# Subtest: 無効な復活ドロップはコマンドを生成しない: {"targetDefeated":false}
+ok 110 - 無効な復活ドロップはコマンドを生成しない: {"targetDefeated":false}
+  ---
+  duration_ms: 0.4395
+  ...
+# Subtest: 無効な復活ドロップはコマンドを生成しない: {"enoughMp":false}
+ok 111 - 無効な復活ドロップはコマンドを生成しない: {"enoughMp":false}
+  ---
+  duration_ms: 0.3655
+  ...
+# Subtest: 無効な復活ドロップはコマンドを生成しない: {"insideBattlefield":false}
+ok 112 - 無効な復活ドロップはコマンドを生成しない: {"insideBattlefield":false}
+  ---
+  duration_ms: 0.4403
+  ...
+# Subtest: 無効な復活ドロップはコマンドを生成しない: {"insideHealingArea":false}
+ok 113 - 無効な復活ドロップはコマンドを生成しない: {"insideHealingArea":false}
+  ---
+  duration_ms: 0.562
+  ...
+# Subtest: 無効な復活ドロップはコマンドを生成しない: {"phase":"Countdown"}
+ok 114 - 無効な復活ドロップはコマンドを生成しない: {"phase":"Countdown"}
+  ---
+  duration_ms: 0.2571
+  ...
+# Subtest: 潜在の対象・発動位置・引き寄せ元を後攻視点へ変換する
+ok 115 - 潜在の対象・発動位置・引き寄せ元を後攻視点へ変換する
+  ---
+  duration_ms: 7.5853
+  ...
+# Subtest: 後攻視点の召喚では自分の編成補正だけを採用する
+ok 116 - 後攻視点の召喚では自分の編成補正だけを採用する
+  ---
+  duration_ms: 5.8948
+  ...
+# Subtest: 死亡スキルの発動位置と回復対象を後攻視点へ変換し、カードと回復量を保つ
+ok 117 - 死亡スキルの発動位置と回復対象を後攻視点へ変換し、カードと回復量を保つ
+  ---
+  duration_ms: 1.7188
+  ...
+# Subtest: 後攻視点はエンチャント実対象のIDを維持し発動時位置を反転する
+ok 118 - 後攻視点はエンチャント実対象のIDを維持し発動時位置を反転する
+  ---
+  duration_ms: 1.3887
+  ...
+# Subtest: 後攻視点は効果の発動元と実対象を反転し、効果IDと連番を保持
+ok 119 - 後攻視点は効果の発動元と実対象を反転し、効果IDと連番を保持
+  ---
+  duration_ms: 1.6695
+  ...
+# Subtest: 後参加者の画面座標と入力が対称になる
+ok 120 - 後参加者の画面座標と入力が対称になる
+  ---
+  duration_ms: 1.432
+  ...
+# Subtest: 通常攻撃は一度だけ描画し、次のフレームに残さない
+ok 121 - 通常攻撃は一度だけ描画し、次のフレームに残さない
+  ---
+  duration_ms: 4.2262
+  ...
+# Subtest: タブ切替・フォーカス喪失・画面回転で入力を破棄し、終了後は解除する
+ok 122 - タブ切替・フォーカス喪失・画面回転で入力を破棄し、終了後は解除する
+  ---
+  duration_ms: 1.1759
+  ...
+# Subtest: 対戦中も退出でき、編成は準備中に変更し、終了30秒前に警告する
+ok 123 - 対戦中も退出でき、編成は準備中に変更し、終了30秒前に警告する
+  ---
+  duration_ms: 0.9279
+  ...
+# Subtest: 退出したセッションを次のCPU戦や新規対戦に残さない
+ok 124 - 退出したセッションを次のCPU戦や新規対戦に残さない
+  ---
+  duration_ms: 3.734
+  ...
+# Subtest: 接続中に戻った場合、遅れて成功した部屋からも退出する
+ok 125 - 接続中に戻った場合、遅れて成功した部屋からも退出する
+  ---
+  duration_ms: 4.248
+  ...
+# Subtest: 再接続と別の試合の開始時に古いスキル通知を破棄する
+ok 126 - 再接続と別の試合の開始時に古いスキル通知を破棄する
+  ---
+  duration_ms: 4.1708
+  ...
+# Subtest: 最新状態の受信前は復帰前の操作を送らず、古い攻撃演出も破棄する
+ok 127 - 最新状態の受信前は復帰前の操作を送らず、古い攻撃演出も破棄する
+  ---
+  duration_ms: 2.2192
+  ...
+# Subtest: 保存機能が使えなくても同じタブの切断から復帰する
+ok 128 - 保存機能が使えなくても同じタブの切断から復帰する
+  ---
+  duration_ms: 1.9597
+  ...
+# Subtest: エンチャントは発動元でなく付与された全エレメントの位置を強調する
+ok 129 - エンチャントは発動元でなく付与された全エレメントの位置を強調する
+  ---
+  duration_ms: 4.645
+  ...
+# Subtest: ユニット対象と対象なしの天候発動も強調表示できる
+ok 130 - ユニット対象と対象なしの天候発動も強調表示できる
+  ---
+  duration_ms: 0.5596
+  ...
+# Subtest: 重複スナップショットは再生せず、新しい対戦で連番を初期化する
+ok 131 - 重複スナップショットは再生せず、新しい対戦で連番を初期化する
+  ---
+  duration_ms: 0.6671
+  ...
+# Subtest: 未選択・AP不足・能力なし・戦闘不能・試合終了では予告を表示しない
+ok 132 - 未選択・AP不足・能力なし・戦闘不能・試合終了では予告を表示しない
+  ---
+  duration_ms: 468.0057
+  ...
+# Subtest: 抽選前は候補全員を表示し、抽選イベントは生成しない
+ok 133 - 抽選前は候補全員を表示し、抽選イベントは生成しない
+  ---
+  duration_ms: 38.3064
+  ...
+# Subtest: 大津波は半面、雨の全体強化は戦場全域を表示
+ok 134 - 大津波は半面、雨の全体強化は戦場全域を表示
+  ---
+  duration_ms: 29.0683
+  ...
+# Subtest: アビリティ対象表示のCircleは選択円と区別できる二重円にする
+ok 135 - アビリティ対象表示のCircleは選択円と区別できる二重円にする
+  ---
+  duration_ms: 28.3574
+  ...
+# Subtest: アビリティ対象表示のLockOnは四隅の短いL字線にする
+ok 136 - アビリティ対象表示のLockOnは四隅の短いL字線にする
+  ---
+  duration_ms: 35.2263
+  ...
+# Subtest: アビリティ対象表示オーバーレイはHPより前面で戦場クリップを要求する
+ok 137 - アビリティ対象表示オーバーレイはHPより前面で戦場クリップを要求する
+  ---
+  duration_ms: 12.1333
+  ...
+# Subtest: 画面右移動から得たカード回転角はキーパー範囲をworld +X側に表示する
+ok 138 - 画面右移動から得たカード回転角はキーパー範囲をworld +X側に表示する
+  ---
+  duration_ms: 6.9063
+  ...
+# Subtest: CPU cards start upside down
+ok 139 - CPU cards start upside down
+  ---
+  duration_ms: 4.0198
+  ...
+# Subtest: player revival faces upward without changing CPU orientation
+ok 140 - player revival faces upward without changing CPU orientation
+  ---
+  duration_ms: 1.7562
+  ...
+# Subtest: movement faces direction and stops retain the last rotation
+ok 141 - movement faces direction and stops retain the last rotation
+  ---
+  duration_ms: 0.5293
+  ...
+# Subtest: unit cards use ten percent field width and twenty-five percent field height
+ok 142 - unit cards use ten percent field width and twenty-five percent field height
+  ---
+  duration_ms: 5.3441
+  ...
+# Subtest: summoned card is 1.3 times the unit card size
+ok 143 - summoned card is 1.3 times the unit card size
+  ---
+  duration_ms: 0.4087
+  ...
+# Subtest: card image textures retain their static mappings
+ok 144 - card image textures retain their static mappings
+  ---
+  duration_ms: 4.3555
+  ...
+# Subtest: card image keeps its aspect ratio and aligns to the inner bottom edge
+ok 145 - card image keeps its aspect ratio and aligns to the inner bottom edge
+  ---
+  duration_ms: 0.8711
+  ...
+# Subtest: card image offsets follow card rotation
+ok 146 - card image offsets follow card rotation
+  ---
+  duration_ms: 0.9044
+  ...
+# Subtest: unit card image uses the five pixel top offset
+ok 147 - unit card image uses the five pixel top offset
+  ---
+  duration_ms: 26.8177
+  ...
+# Subtest: card borders distinguish player and CPU teams
+ok 148 - card borders distinguish player and CPU teams
+  ---
+  duration_ms: 0.635
+  ...
+# Subtest: card borders leave unused inner space transparent
+ok 149 - card borders leave unused inner space transparent
+  ---
+  duration_ms: 0.3635
+  ...
+# Subtest: card border geometry keeps rendered outer size within presentation
+ok 150 - card border geometry keeps rendered outer size within presentation
+  ---
+  duration_ms: 1.0311
+  ...
+# Subtest: card border is behind cards and status overlay is in front
+ok 151 - card border is behind cards and status overlay is in front
+  ---
+  duration_ms: 1.1438
+  ...
+# Subtest: 回復エリアは指定半径と薄緑半透明の描画値を返す
+ok 152 - 回復エリアは指定半径と薄緑半透明の描画値を返す
+  ---
+  duration_ms: 3.4722
+  ...
+# Subtest: battlefield HP bar presentation exposes a layout calculator
+ok 153 - battlefield HP bar presentation exposes a layout calculator
+  ---
+  duration_ms: 60.2051
+  ...
+# Subtest: unit card HP bar occupies the inner bottom strip
+ok 154 - unit card HP bar occupies the inner bottom strip
+  ---
+  duration_ms: 60.2882
+  ...
+# Subtest: unit card HP bar rotates with the card
+ok 155 - unit card HP bar rotates with the card
+  ---
+  duration_ms: 45.0341
+  ...
+# Subtest: unit card HP fill ratio is clamped
+ok 156 - unit card HP fill ratio is clamped
+  ---
+  duration_ms: 34.3421
+  ...
+# Subtest: other battlefield bars keep their positions
+ok 157 - other battlefield bars keep their positions
+  ---
+  duration_ms: 0.6234
+  ...
+# Subtest: leader has no battlefield HP bar
+ok 158 - leader has no battlefield HP bar
+  ---
+  duration_ms: 0.3123
+  ...
+# Subtest: 遠距離のマスター攻撃は画像と500ms Tweenを各1回生成し同じ弾丸を渡す
+ok 159 - 遠距離のマスター攻撃は画像と500ms Tweenを各1回生成し同じ弾丸を渡す
+  ---
+  duration_ms: 5.494
+  ...
+# Subtest: 非Ranged攻撃は画面座標のLineだけを1回描画する
+ok 160 - 非Ranged攻撃は画面座標のLineだけを1回描画する
+  ---
+  duration_ms: 0.8976
+  ...
+# Subtest: 距離判定にはworld座標を使いscreen座標は描画位置だけに使う
+ok 161 - 距離判定にはworld座標を使いscreen座標は描画位置だけに使う
+  ---
+  duration_ms: 0.8572
+  ...
+# Subtest: Tween完了時に同じ弾丸を1回破棄する
+ok 162 - Tween完了時に同じ弾丸を1回破棄する
+  ---
+  duration_ms: 0.6426
+  ...
+# Subtest: 短距離のマスター攻撃はworld座標で判定して線・画像・Tweenを生成しない
+ok 163 - 短距離のマスター攻撃はworld座標で判定して線・画像・Tweenを生成しない
+  ---
+  duration_ms: 2.7365
+  ...
+# Subtest: マスターの遠距離攻撃は距離1.0以下ならエフェクトを表示しない
+ok 164 - マスターの遠距離攻撃は距離1.0以下ならエフェクトを表示しない
+  ---
+  duration_ms: 0.6998
+  ...
+# Subtest: マスターの遠距離攻撃は距離1.0を超えると500msの弾丸を返す
+ok 165 - マスターの遠距離攻撃は距離1.0を超えると500msの弾丸を返す
+  ---
+  duration_ms: 0.7563
+  ...
+# Subtest: マスター以外の攻撃は距離によらず既存の直線表示を返す
+ok 166 - マスター以外の攻撃は距離によらず既存の直線表示を返す
+  ---
+  duration_ms: 1.1041
+  ...
+# Subtest: 弾丸表示は攻撃方向に合わせて回転する
+ok 167 - 弾丸表示は攻撃方向に合わせて回転する
+  ---
+  duration_ms: 1.2833
+  ...
+# Subtest: 攻撃元と対象が同一点でも有限な回転値を返す
+ok 168 - 攻撃元と対象が同一点でも有限な回転値を返す
+  ---
+  duration_ms: 1.1828
+  ...
+# Subtest: 弾丸表示は指定された画像アセットを使用する
+ok 169 - 弾丸表示は指定された画像アセットを使用する
+  ---
+  duration_ms: 0.4889
+  ...
+# Subtest: スキル通知は実際の回復量とゲージの百分率を表示し、復活を区別する
+ok 170 - スキル通知は実際の回復量とゲージの百分率を表示し、復活を区別する
+  ---
+  duration_ms: 3.7033
+  ...
+# Subtest: 重複した同期状態ではスキル通知を再生しない
+ok 171 - 重複した同期状態ではスキル通知を再生しない
+  ---
+  duration_ms: 2.4522
+  ...
+# Subtest: 召喚獣カードは選択された種類の専用画像を使い、既存の表示寸法を保つ
+ok 172 - 召喚獣カードは選択された種類の専用画像を使い、既存の表示寸法を保つ
+  ---
+  duration_ms: 2.0702
+  ...
+# Subtest: attack power is shown as a number at the top center of the card
+ok 173 - attack power is shown as a number at the top center of the card
+  ---
+  duration_ms: 95.3866
+  ...
+# Subtest: attack power position and text rotation follow the card
+ok 174 - attack power position and text rotation follow the card
+  ---
+  duration_ms: 8.0247
+  ...
+# Subtest: 無効な復活はカード状態を保持し、有効な復活はリセットして次の移動で向きを更新する
+ok 175 - 無効な復活はカード状態を保持し、有効な復活はリセットして次の移動で向きを更新する
+  ---
+  duration_ms: 4.1404
+  ...
+# Subtest: unit selection circle converts the unit collision radius to screen pixels
+ok 176 - unit selection circle converts the unit collision radius to screen pixels
+  ---
+  duration_ms: 109.7779
+  ...
+# Subtest: unit selection circle scales with the rendered battlefield width
+ok 177 - unit selection circle scales with the rendered battlefield width
+  ---
+  duration_ms: 4.407
+  ...
+# Subtest: クライアントもカード別APと共通の発動処理を使用する
+ok 178 - クライアントもカード別APと共通の発動処理を使用する
+  ---
+  duration_ms: 6.1258
+  ...
+# Subtest: CPUも手動コマンドで同じ効果を使用する
+ok 179 - CPUも手動コマンドで同じ効果を使用する
+  ---
+  duration_ms: 0.6519
+  ...
+# Subtest: 不正入力と対象なしでは状態変更せず、プレビューは乱数を消費しない
+ok 180 - 不正入力と対象なしでは状態変更せず、プレビューは乱数を消費しない
+  ---
+  duration_ms: 3.851
+  ...
+# Subtest: リセットはAP・回復進捗・時間制効果を消す
+ok 181 - リセットはAP・回復進捗・時間制効果を消す
+  ---
+  duration_ms: 0.616
+  ...
+# Subtest: 三角形の召喚領域を計算する
+ok 182 - 三角形の召喚領域を計算する
+  ---
+  duration_ms: 3.1702
+  ...
+# Subtest: 内側の点は凸包面積に影響しない
+ok 183 - 内側の点は凸包面積に影響しない
+  ---
+  duration_ms: 0.5118
+  ...
+# Subtest: 3点未満なら面積は0
+ok 184 - 3点未満なら面積は0
+  ---
+  duration_ms: 0.5878
+  ...
+# Subtest: calculates the area centroid of a triangle
+ok 185 - calculates the area centroid of a triangle
+  ---
+  duration_ms: 2.4806
+  ...
+# Subtest: calculates the area centroid of a concave polygon in arbitrary order
+ok 186 - calculates the area centroid of a concave polygon in arbitrary order
+  ---
+  duration_ms: 0.5475
+  ...
+# Subtest: uses the fallback for polygons with fewer than three points or zero area
+ok 187 - uses the fallback for polygons with fewer than three points or zero area
+  ---
+  duration_ms: 0.6846
+  ...
+# Subtest: orders unique points counter-clockwise from the lower-left point
+ok 188 - orders unique points counter-clockwise from the lower-left point
+  ---
+  duration_ms: 0.5611
+  ...
+# Subtest: does not mutate the points passed to orderPolygonPoints
+ok 189 - does not mutate the points passed to orderPolygonPoints
+  ---
+  duration_ms: 1.1539
+  ...
+# Subtest: does not mutate the points or fallback passed to calculateSummonCentroid
+ok 190 - does not mutate the points or fallback passed to calculateSummonCentroid
+  ---
+  duration_ms: 1.2013
+  ...
+# Subtest: カード接触半径はカード横幅の1.2倍を直径にする
+ok 191 - カード接触半径はカード横幅の1.2倍を直径にする
+  ---
+  duration_ms: 2.587
+  ...
+# Subtest: 接触半径と円形接触判定は全組み合わせで境界と対称性を満たす
+ok 192 - 接触半径と円形接触判定は全組み合わせで境界と対称性を満たす
+  ---
+  duration_ms: 0.7898
+  ...
+# Subtest: alive elementals from either team block placement within or on the placement radius
+ok 193 - alive elementals from either team block placement within or on the placement radius
+  ---
+  duration_ms: 4.9897
+  ...
+# Subtest: alive elementals outside the placement radius allow placement
+ok 194 - alive elementals outside the placement radius allow placement
+  ---
+  duration_ms: 0.5699
+  ...
+# Subtest: destroyed elementals do not block placement
+ok 195 - destroyed elementals do not block placement
+  ---
+  duration_ms: 0.806
+  ...
+# Subtest: another living unit building an elemental reserves its position
+ok 196 - another living unit building an elemental reserves its position
+  ---
+  duration_ms: 0.6973
+  ...
+# Subtest: active units can begin elemental builds
+ok 197 - active units can begin elemental builds
+  ---
+  duration_ms: 0.4384
+  ...
+# Subtest: unit types begin elemental builds with their own durations and completed elementals use the configured HP
+ok 198 - unit types begin elemental builds with their own durations and completed elementals use the configured HP
+  ---
+  duration_ms: 0.914
+  ...
+# Subtest: completed builds create an elemental at the unit position
+ok 199 - completed builds create an elemental at the unit position
+  ---
+  duration_ms: 1.9241
+  ...
+# Subtest: non-active or dead units cannot begin elemental builds
+ok 200 - non-active or dead units cannot begin elemental builds
+  ---
+  duration_ms: 0.5723
+  ...
+# Subtest: elemental cap includes pending builds
+ok 201 - elemental cap includes pending builds
+  ---
+  duration_ms: 1.1288
+  ...
+# Subtest: multiple pending builds receive sequential elemental ids
+ok 202 - multiple pending builds receive sequential elemental ids
+  ---
+  duration_ms: 1.0328
+  ...
+# Subtest: both teams can build six elementals without exhausting shared ids
+ok 203 - both teams can build six elementals without exhausting shared ids
+  ---
+  duration_ms: 1.1694
+  ...
+# Subtest: destroyed elementals are excluded from completed queries and removed
+ok 204 - destroyed elementals are excluded from completed queries and removed
+  ---
+  duration_ms: 0.5546
+  ...
+# Subtest: destroyed elemental ids can be reused for new builds
+ok 205 - destroyed elemental ids can be reused for new builds
+  ---
+  duration_ms: 0.322
+  ...
+# Subtest: completed elemental positions are copied from units
+ok 206 - completed elemental positions are copied from units
+  ---
+  duration_ms: 0.3642
+  ...
+# Subtest: partial ticks do not complete builds until enough time accumulates
+ok 207 - partial ticks do not complete builds until enough time accumulates
+  ---
+  duration_ms: 0.3039
+  ...
+# Subtest: UseAbilityはSetupとCountdownでは無視される
+ok 208 - UseAbilityはSetupとCountdownでは無視される
+  ---
+  duration_ms: 4.9419
+  ...
+# Subtest: UseAbilityはInProgressのPlayerユニットで発動する
+ok 209 - UseAbilityはInProgressのPlayerユニットで発動する
+  ---
+  duration_ms: 2.646
+  ...
+# Subtest: UseAbilityはCPU指定の壊れたコマンドを無視する
+ok 210 - UseAbilityはCPU指定の壊れたコマンドを無視する
+  ---
+  duration_ms: 0.5514
+  ...
+# Subtest: UseAbilityのため戦闘中のtick 20秒でアビリティAPが1増える
+ok 211 - UseAbilityのため戦闘中のtick 20秒でアビリティAPが1増える
+  ---
+  duration_ms: 388.2141
+  ...
+# Subtest: 戦闘中にMP自然回復が進む
+ok 212 - 戦闘中にMP自然回復が進む
+  ---
+  duration_ms: 94.848
+  ...
+# Subtest: ReviveUnitコマンドの成功時だけMPを一度消費する
+ok 213 - ReviveUnitコマンドの成功時だけMPを一度消費する
+  ---
+  duration_ms: 1.1338
+  ...
+# Subtest: 通常ユニットがリーダーへ与えた実ダメージ800でMP1回復する
+ok 214 - 通常ユニットがリーダーへ与えた実ダメージ800でMP1回復する
+  ---
+  duration_ms: 1.4024
+  ...
+# Subtest: 召喚獣がリーダーへ与えた実ダメージ800でMP1回復する
+ok 215 - 召喚獣がリーダーへ与えた実ダメージ800でMP1回復する
+  ---
+  duration_ms: 51.1918
+  ...
+# Subtest: Setup中は初期配置だけを受け付けて戦闘時間を進めない
+ok 216 - Setup中は初期配置だけを受け付けて戦闘時間を進めない
+  ---
+  duration_ms: 20.623
+  ...
+# Subtest: StartBattleは5秒のカウントダウン後に戦闘を開始する
+ok 217 - StartBattleは5秒のカウントダウン後に戦闘を開始する
+  ---
+  duration_ms: 9.5382
+  ...
+# Subtest: CPUを指定した壊れた初期配置コマンドはSetup状態を変更しない
+ok 218 - CPUを指定した壊れた初期配置コマンドはSetup状態を変更しない
+  ---
+  duration_ms: 1.9526
+  ...
+# Subtest: CPUを指定した壊れた戦闘開始コマンドはSetup状態を変更しない
+ok 219 - CPUを指定した壊れた戦闘開始コマンドはSetup状態を変更しない
+  ---
+  duration_ms: 0.9504
+  ...
+# Subtest: Countdown中の重複開始と初期配置を拒否する
+ok 220 - Countdown中の重複開始と初期配置を拒否する
+  ---
+  duration_ms: 0.4273
+  ...
+# Subtest: CPUリーダーHPが0になるとPlayerWinになる
+ok 221 - CPUリーダーHPが0になるとPlayerWinになる
+  ---
+  duration_ms: 0.4591
+  ...
+# Subtest: 終了判定を発生させたRanged攻撃イベントは次tickで破棄される
+ok 222 - 終了判定を発生させたRanged攻撃イベントは次tickで破棄される
+  ---
+  duration_ms: 2.3676
+  ...
+# Subtest: moving into the leader healing area only counts time after entry
+ok 223 - moving into the leader healing area only counts time after entry
+  ---
+  duration_ms: 47.3235
+  ...
+# Subtest: stopped keeper in the leader healing area receives both periodic heals
+ok 224 - stopped keeper in the leader healing area receives both periodic heals
+  ---
+  duration_ms: 20.6958
+  ...
+# Subtest: moving keeper only counts rest time after reaching its destination
+ok 225 - moving keeper only counts rest time after reaching its destination
+  ---
+  duration_ms: 45.1009
+  ...
+# Subtest: keeper completing an elemental build only counts rest time after completion
+ok 226 - keeper completing an elemental build only counts rest time after completion
+  ---
+  duration_ms: 58.6012
+  ...
+# Subtest: 時間切れ時はリーダーHPの高い側が勝つ
+ok 227 - 時間切れ時はリーダーHPの高い側が勝つ
+  ---
+  duration_ms: 1.471
+  ...
+# Subtest: 戦闘中に撃破されたユニットに撤退順を記録する
+ok 228 - 戦闘中に撃破されたユニットに撤退順を記録する
+  ---
+  duration_ms: 11.2505
+  ...
+# Subtest: BeginElementalBuildはコマンドのteamと実ユニットteamが違う場合は無視する
+ok 229 - BeginElementalBuildはコマンドのteamと実ユニットteamが違う場合は無視する
+  ---
+  duration_ms: 0.4511
+  ...
+# Subtest: UseAbilityは同国エレメントに速度エンチャントを付与する
+ok 230 - UseAbilityは同国エレメントに速度エンチャントを付与する
+  ---
+  duration_ms: 1.297
+  ...
+# Subtest: UseAbilityは非有限の向きが指定された不正コマンドを無視する
+ok 231 - UseAbilityは非有限の向きが指定された不正コマンドを無視する
+  ---
+  duration_ms: 1.0115
+  ...
+# Subtest: プレイヤーユニットを許可範囲へ配置して現在位置と復帰位置と移動先を更新する
+ok 232 - プレイヤーユニットを許可範囲へ配置して現在位置と復帰位置と移動先を更新する
+  ---
+  duration_ms: 4.9588
+  ...
+# Subtest: 戦場外と敵陣側と中央境界線より上への配置を拒否する
+ok 233 - 戦場外と敵陣側と中央境界線より上への配置を拒否する
+  ---
+  duration_ms: 0.9806
+  ...
+# Subtest: 他のプレイヤーユニットと最小中心間隔未満になる配置を拒否する
+ok 234 - 他のプレイヤーユニットと最小中心間隔未満になる配置を拒否する
+  ---
+  duration_ms: 0.4715
+  ...
+# Subtest: CPUユニットの配置を拒否する
+ok 235 - CPUユニットの配置を拒否する
+  ---
+  duration_ms: 0.436
+  ...
+# Subtest: 死亡したプレイヤーユニットの配置を拒否して全位置情報を変更しない
+ok 236 - 死亡したプレイヤーユニットの配置を拒否して全位置情報を変更しない
+  ---
+  duration_ms: 1.1251
+  ...
+# Subtest: 存在しないユニットIDを配置して状態を変更しない
+ok 237 - 存在しないユニットIDを配置して状態を変更しない
+  ---
+  duration_ms: 0.7477
+  ...
+# Subtest: defeated level 0 restores 1 MP in 25 seconds
+ok 238 - defeated level 0 restores 1 MP in 25 seconds
+  ---
+  duration_ms: 6.0004
+  ...
+# Subtest: defeated level 1 restores 1 MP in 24 seconds
+ok 239 - defeated level 1 restores 1 MP in 24 seconds
+  ---
+  duration_ms: 1.9492
+  ...
+# Subtest: defeated level 2 restores 1 MP in 21 seconds
+ok 240 - defeated level 2 restores 1 MP in 21 seconds
+  ---
+  duration_ms: 0.428
+  ...
+# Subtest: defeated level 3 restores 1 MP in 19 seconds
+ok 241 - defeated level 3 restores 1 MP in 19 seconds
+  ---
+  duration_ms: 0.2576
+  ...
+# Subtest: defeated level 4 restores 1 MP in 16 seconds
+ok 242 - defeated level 4 restores 1 MP in 16 seconds
+  ---
+  duration_ms: 0.2252
+  ...
+# Subtest: defeated level 5 restores 1 MP in 13 seconds
+ok 243 - defeated level 5 restores 1 MP in 13 seconds
+  ---
+  duration_ms: 0.5375
+  ...
+# Subtest: defeated level 6 restores 1 MP in 9 seconds
+ok 244 - defeated level 6 restores 1 MP in 9 seconds
+  ---
+  duration_ms: 0.5723
+  ...
+# Subtest: defeated level 7 restores 1 MP in 5 seconds
+ok 245 - defeated level 7 restores 1 MP in 5 seconds
+  ---
+  duration_ms: 2.978
+  ...
+# Subtest: defeated level 8 restores 1 MP in 4 seconds
+ok 246 - defeated level 8 restores 1 MP in 4 seconds
+  ---
+  duration_ms: 1.9023
+  ...
+# Subtest: defeated level 9 restores 1 MP in 3 seconds
+ok 247 - defeated level 9 restores 1 MP in 3 seconds
+  ---
+  duration_ms: 0.9708
+  ...
+# Subtest: defeated level 10 restores 1 MP in 3 seconds
+ok 248 - defeated level 10 restores 1 MP in 3 seconds
+  ---
+  duration_ms: 0.4765
+  ...
+# Subtest: defeated level total includes only defeated units on the requested team
+ok 249 - defeated level total includes only defeated units on the requested team
+  ---
+  duration_ms: 3.8746
+  ...
+# Subtest: natural recovery keeps normalized progress when the defeated level changes
+ok 250 - natural recovery keeps normalized progress when the defeated level changes
+  ---
+  duration_ms: 1.6345
+  ...
+# Subtest: natural recovery restores multiple MP and keeps fractional progress for a large tick
+ok 251 - natural recovery restores multiple MP and keeps fractional progress for a large tick
+  ---
+  duration_ms: 0.6971
+  ...
+# Subtest: natural recovery ignores a negative delta without discarding existing progress
+ok 252 - natural recovery ignores a negative delta without discarding existing progress
+  ---
+  duration_ms: 0.4891
+  ...
+# Subtest: natural recovery resets progress after reaching maximum MP
+ok 253 - natural recovery resets progress after reaching maximum MP
+  ---
+  duration_ms: 0.4682
+  ...
+# Subtest: natural recovery reaching maximum MP resets existing leader damage progress
+ok 254 - natural recovery reaching maximum MP resets existing leader damage progress
+  ---
+  duration_ms: 0.389
+  ...
+# Subtest: leader damage equal to 10 percent of maximum HP restores 1 MP
+ok 255 - leader damage equal to 10 percent of maximum HP restores 1 MP
+  ---
+  duration_ms: 0.6883
+  ...
+# Subtest: leader damage recovery does not exceed maximum MP
+ok 256 - leader damage recovery does not exceed maximum MP
+  ---
+  duration_ms: 0.4357
+  ...
+# Subtest: leader damage reaching maximum MP discards natural recovery progress after revival
+ok 257 - leader damage reaching maximum MP discards natural recovery progress after revival
+  ---
+  duration_ms: 1.1289
+  ...
+# Subtest: leader damage crossing multiple thresholds restores the matching amount of MP
+ok 258 - leader damage crossing multiple thresholds restores the matching amount of MP
+  ---
+  duration_ms: 0.4369
+  ...
+# Subtest: MP3を消費して回復エリア内へ全HP復活しアビリティ状態をリセットする
+ok 259 - MP3を消費して回復エリア内へ全HP復活しアビリティ状態をリセットする
+  ---
+  duration_ms: 2.4804
+  ...
+# Subtest: MP不足ではMPを消費しない
+ok 260 - MP不足ではMPを消費しない
+  ---
+  duration_ms: 0.4856
+  ...
+# Subtest: 回復エリア外ではMPを消費しない
+ok 261 - 回復エリア外ではMPを消費しない
+  ---
+  duration_ms: 0.3585
+  ...
+# Subtest: 生存中のユニットは復活できない
+ok 262 - 生存中のユニットは復活できない
+  ---
+  duration_ms: 0.2926
+  ...
+# Subtest: 別チームのユニットは復活できない
+ok 263 - 別チームのユニットは復活できない
+  ---
+  duration_ms: 0.3365
+  ...
+# Subtest: 戦場外では復活できない
+ok 264 - 戦場外では復活できない
+  ---
+  duration_ms: 0.3793
+  ...
+# Subtest: 戦場境界では復活できる
+ok 265 - 戦場境界では復活できる
+  ---
+  duration_ms: 0.3221
+  ...
+# Subtest: 回復半径ちょうどでは復活できる
+ok 266 - 回復半径ちょうどでは復活できる
+  ---
+  duration_ms: 0.247
+  ...
+# Subtest: Setup中と試合終了後は復活できない
+ok 267 - Setup中と試合終了後は復活できない
+  ---
+  duration_ms: 0.3918
+  ...
+# Subtest: レーザーは幅境界・丸い端点で円と交差し、延長線の遠方へ当たらない
+ok 268 - レーザーは幅境界・丸い端点で円と交差し、延長線の遠方へ当たらない
+  ---
+  duration_ms: 2.6707
+  ...
+# Subtest: 長さ0のレーザーも円として有限な判定になる
+ok 269 - 長さ0のレーザーも円として有限な判定になる
+  ---
+  duration_ms: 0.4091
+  ...
+# Subtest: 完成済みエレメンタルが2つあれば召喚できる
+ok 270 - 完成済みエレメンタルが2つあれば召喚できる
+  ---
+  duration_ms: 12.5498
+  ...
+# Subtest: 召喚ユニットは敵リーダー到着後に攻撃間隔を待って1回分のダメージを与える
+ok 271 - 召喚ユニットは敵リーダー到着後に攻撃間隔を待って1回分のダメージを与える
+  ---
+  duration_ms: 6.4541
+  ...
+# Subtest: クールダウンは0未満にならない
+ok 272 - クールダウンは0未満にならない
+  ---
+  duration_ms: 0.8676
+  ...
+# Subtest: 完成済みエレメンタルが不足していると召喚できない
+ok 273 - 完成済みエレメンタルが不足していると召喚できない
+  ---
+  duration_ms: 0.6629
+  ...
+# Subtest: クールダウン中は召喚できない
+ok 274 - クールダウン中は召喚できない
+  ---
+  duration_ms: 0.6369
+  ...
+# Subtest: 自リーダーが倒れていると召喚できない
+ok 275 - 自リーダーが倒れていると召喚できない
+  ---
+  duration_ms: 0.5074
+  ...
+# Subtest: このtickで消滅する召喚ユニットは接触ダメージを与えない
+ok 276 - このtickで消滅する召喚ユニットは接触ダメージを与えない
+  ---
+  duration_ms: 0.5186
+  ...
+# Subtest: 召喚獣HPは戦場面積の5%で近接ユニットと同じになる
+ok 277 - 召喚獣HPは戦場面積の5%で近接ユニットと同じになる
+  ---
+  duration_ms: 1.0074
+  ...
+# Subtest: 召喚獣は通常対象へ0.5C、召喚士へ2Cごとに独立して攻撃する
+ok 278 - 召喚獣は通常対象へ0.5C、召喚士へ2Cごとに独立して攻撃する
+  ---
+  duration_ms: 2.9946
+  ...
+# Subtest: 召喚獣は通常対象不在で通常タイマーを減らし召喚士不在では待機時間をリセットする
+ok 279 - 召喚獣は通常対象不在で通常タイマーを減らし召喚士不在では待機時間をリセットする
+  ---
+  duration_ms: 1.452
+  ...
+# Subtest: 召喚獣は1CでHPが120自然減少する
+ok 280 - 召喚獣は1CでHPが120自然減少する
+  ---
+  duration_ms: 1.1657
+  ...
+# Subtest: 召喚獣HPは戦場面積の100%で近接ユニットの20倍になる
+ok 281 - 召喚獣HPは戦場面積の100%で近接ユニットの20倍になる
+  ---
+  duration_ms: 0.6822
+  ...
+# Subtest: 召喚獣HPは召喚面積0%で基礎HPになる
+ok 282 - 召喚獣HPは召喚面積0%で基礎HPになる
+  ---
+  duration_ms: 0.5092
+  ...
+# Subtest: 2回の召喚は連番IDを割り当てる
+ok 283 - 2回の召喚は連番IDを割り当てる
+  ---
+  duration_ms: 0.8867
+  ...
+# Subtest: 召喚ユニットの重心位置と目的地はコピーになる
+ok 284 - 召喚ユニットの重心位置と目的地はコピーになる
+  ---
+  duration_ms: 0.6678
+  ...
+# Subtest: 非接触の召喚ユニットは敵リーダーへ移動する
+ok 285 - 非接触の召喚ユニットは敵リーダーへ移動する
+  ---
+  duration_ms: 0.6547
+  ...
+# Subtest: 召喚ユニットは接触した敵通常ユニットへ攻撃し、移動速度が低下する
+ok 286 - 召喚ユニットは接触した敵通常ユニットへ攻撃し、移動速度が低下する
+  ---
+  duration_ms: 1.0367
+  ...
+# Subtest: 召喚ユニット同士は接触中に互いへ攻撃し、移動速度が低下する
+ok 287 - 召喚ユニット同士は接触中に互いへ攻撃し、移動速度が低下する
+  ---
+  duration_ms: 0.6132
+  ...
+# Subtest: 6個のエレメントで召喚ゲージが45秒で満タンになる
+ok 288 - 6個のエレメントで召喚ゲージが45秒で満タンになる
+  ---
+  duration_ms: 0.4085
+  ...
+# Subtest: エレメントが0個なら召喚ゲージは増えない
+ok 289 - エレメントが0個なら召喚ゲージは増えない
+  ---
+  duration_ms: 0.2119
+  ...
+# Subtest: 自陣営の生存中召喚獣がいる間は召喚ゲージが増えない
+ok 290 - 自陣営の生存中召喚獣がいる間は召喚ゲージが増えない
+  ---
+  duration_ms: 1.8566
+  ...
+# Subtest: 相手陣営の召喚獣だけがいる場合は召喚ゲージが増える
+ok 291 - 相手陣営の召喚獣だけがいる場合は召喚ゲージが増える
+  ---
+  duration_ms: 0.3796
+  ...
+# Subtest: HPが0の自陣営召喚獣は召喚ゲージの増加を妨げない
+ok 292 - HPが0の自陣営召喚獣は召喚ゲージの増加を妨げない
+  ---
+  duration_ms: 0.3329
+  ...
+# Subtest: summoned units damage enemy elementals after their attack timer expires
+ok 293 - summoned units damage enemy elementals after their attack timer expires
+  ---
+  duration_ms: 0.4811
+  ...
+# Subtest: summoned units do not target friendly, incomplete, destroyed, or distant elementals
+ok 294 - summoned units do not target friendly, incomplete, destroyed, or distant elementals
+  ---
+  duration_ms: 0.4704
+  ...
+# Subtest: summoned units ignore destroyed elementals for attacking and contact slowdown
+ok 295 - summoned units ignore destroyed elementals for attacking and contact slowdown
+  ---
+  duration_ms: 0.479
+  ...
+# Subtest: summoned units damage enemy units and enemy elementals simultaneously while moving slowly
+ok 296 - summoned units damage enemy units and enemy elementals simultaneously while moving slowly
+  ---
+  duration_ms: 0.4657
+  ...
+# Subtest: summoned units slow down when only an enemy elemental is in contact
+ok 297 - summoned units slow down when only an enemy elemental is in contact
+  ---
+  duration_ms: 0.3387
+  ...
+# Subtest: player summon spawns at the centroid of its leader and completed elementals
+ok 298 - player summon spawns at the centroid of its leader and completed elementals
+  ---
+  duration_ms: 0.5361
+  ...
+# Subtest: CPU summon uses the centroid of its own territory
+ok 299 - CPU summon uses the centroid of its own territory
+  ---
+  duration_ms: 0.4206
+  ...
+# Subtest: summon without completed elementals spawns at its leader position
+ok 300 - summon without completed elementals spawns at its leader position
+  ---
+  duration_ms: 0.3667
+  ...
+# Subtest: summoned units damage enemy units at the 0.63 attack boundary
+ok 301 - summoned units damage enemy units at the 0.63 attack boundary
+  ---
+  duration_ms: 0.5531
+  ...
+# Subtest: summoned units damage each other at the 0.63 attack boundary
+ok 302 - summoned units damage each other at the 0.63 attack boundary
+  ---
+  duration_ms: 0.3548
+  ...
+# Subtest: summoned units attack leaders at 0.63 but not just outside the boundary
+ok 303 - summoned units attack leaders at 0.63 but not just outside the boundary
+  ---
+  duration_ms: 0.3323
+  ...
+# Subtest: summoned units attack elementals at 0.63 but not just outside the boundary
+ok 304 - summoned units attack elementals at 0.63 but not just outside the boundary
+  ---
+  duration_ms: 0.3225
+  ...
+# Subtest: 選んだ召喚獣のHPと移動・攻撃を生成し陣地加算を維持する
+ok 305 - 選んだ召喚獣のHPと移動・攻撃を生成し陣地加算を維持する
+  ---
+  duration_ms: 13.6243
+  ...
+# Subtest: 面積0の固定型はゲージを消費せず召喚を拒否する
+ok 306 - 面積0の固定型はゲージを消費せず召喚を拒否する
+  ---
+  duration_ms: 1.0697
+  ...
+# Subtest: 生存召喚獣がいる間は再召喚しない
+ok 307 - 生存召喚獣がいる間は再召喚しない
+  ---
+  duration_ms: 1.0502
+  ...
+# Subtest: 防御倍率をユニット攻撃に一度適用し自然消耗は減衰しない
+ok 308 - 防御倍率をユニット攻撃に一度適用し自然消耗は減衰しない
+  ---
+  duration_ms: 7.6383
+  ...
+# Subtest: ユグドラシルは初撃と1.5秒周期で全体を攻撃しエレメンタルは初撃だけ
+ok 309 - ユグドラシルは初撃と1.5秒周期で全体を攻撃しエレメンタルは初撃だけ
+  ---
+  duration_ms: 3.2215
+  ...
+# Subtest: リヴァイアサンの波動は初撃100と5秒ごとの20で味方と樽を除外する
+ok 310 - リヴァイアサンの波動は初撃100と5秒ごとの20で味方と樽を除外する
+  ---
+  duration_ms: 0.9157
+  ...
+# Subtest: レーザーは味方も巻き込み範囲外には当たらず初撃と継続が二重にならない
+ok 311 - レーザーは味方も巻き込み範囲外には当たらず初撃と継続が二重にならない
+  ---
+  duration_ms: 1.1591
+  ...
+# Subtest: レーザーは味方を減速せず遠い敵ユニットを減速させる
+ok 312 - レーザーは味方を減速せず遠い敵ユニットを減速させる
+  ---
+  duration_ms: 2.2663
+  ...
+# Subtest: 召喚時ダメージの戦闘不能とMP・勝敗をコマンド内で反映する
+ok 313 - 召喚時ダメージの戦闘不能とMP・勝敗をコマンド内で反映する
+  ---
+  duration_ms: 3.4931
+  ...
+# Subtest: 接触攻撃の周期は更新の分割や端数に依存しない
+ok 314 - 接触攻撃の周期は更新の分割や端数に依存しない
+  ---
+  duration_ms: 3.7269
+  ...
+# Subtest: レーザー内を移動するマスターは実体との接触なしに射撃しない
+ok 315 - レーザー内を移動するマスターは実体との接触なしに射撃しない
+  ---
+  duration_ms: 1.2011
+  ...
+# Subtest: 移動コマンドは生成中を解除し、目標を戦場内にクランプする
+ok 316 - 移動コマンドは生成中を解除し、目標を戦場内にクランプする
+  ---
+  duration_ms: 6.3113
+  ...
+# Subtest: ユニットは目標へ移動する
+ok 317 - ユニットは目標へ移動する
+  ---
+  duration_ms: 2.6087
+  ...
+# Subtest: 攻撃範囲内の敵リーダーへ直接ダメージを与える
+ok 318 - 攻撃範囲内の敵リーダーへ直接ダメージを与える
+  ---
+  duration_ms: 1.8609
+  ...
+# Subtest: 旧射程強化を撤去し基礎射程外では攻撃しない
+ok 319 - 旧射程強化を撤去し基礎射程外では攻撃しない
+  ---
+  duration_ms: 0.8947
+  ...
+# Subtest: 吸収の攻撃強化を通常攻撃のダメージへ反映する
+ok 320 - 吸収の攻撃強化を通常攻撃のダメージへ反映する
+  ---
+  duration_ms: 1.2908
+  ...
+# Subtest: 速度強化範囲内では移動距離が基礎の1.5倍になる
+ok 321 - 速度強化範囲内では移動距離が基礎の1.5倍になる
+  ---
+  duration_ms: 1.4404
+  ...
+# Subtest: 接敵中の速度強化は1.5倍と接敵減速を両方適用する
+ok 322 - 接敵中の速度強化は1.5倍と接敵減速を両方適用する
+  ---
+  duration_ms: 0.9136
+  ...
+# Subtest: HP0の通常ユニットの撤退順を記録して時間では復活しない
+ok 323 - HP0の通常ユニットの撤退順を記録して時間では復活しない
+  ---
+  duration_ms: 1.5947
+  ...
+# Subtest: 戦闘tickは撃破済みユニットを復活させない
+ok 324 - 戦闘tickは撃破済みユニットを復活させない
+  ---
+  duration_ms: 1.0612
+  ...
+# Subtest: 生成中ユニットの撃破は生成を解除して撤退順を記録する
+ok 325 - 生成中ユニットの撃破は生成を解除して撤退順を記録する
+  ---
+  duration_ms: 1.2142
+  ...
+# Subtest: 戦闘不能時にアビリティ状態をすべてリセットする
+ok 326 - 戦闘不能時にアビリティ状態をすべてリセットする
+  ---
+  duration_ms: 1.0165
+  ...
+# Subtest: combat chooses nearest target across all target kinds
+ok 327 - combat chooses nearest target across all target kinds
+  ---
+  duration_ms: 0.8626
+  ...
+# Subtest: keeper deals double damage to elementals but normal damage to units
+ok 328 - keeper deals double damage to elementals but normal damage to units
+  ---
+  duration_ms: 0.6174
+  ...
+# Subtest: units in the leader healing area recover 10% of maximum HP every two seconds
+ok 329 - units in the leader healing area recover 10% of maximum HP every two seconds
+  ---
+  duration_ms: 1.7691
+  ...
+# Subtest: leaving the leader healing area resets its periodic recovery timer
+ok 330 - leaving the leader healing area resets its periodic recovery timer
+  ---
+  duration_ms: 4.6021
+  ...
+# Subtest: a stopped keeper recovers 60 HP every 1.5 seconds
+ok 331 - a stopped keeper recovers 60 HP every 1.5 seconds
+  ---
+  duration_ms: 0.423
+  ...
+# Subtest: keeper rest healing and leader-area healing stack on their own intervals
+ok 332 - keeper rest healing and leader-area healing stack on their own intervals
+  ---
+  duration_ms: 0.5179
+  ...
+# Subtest: a move command resets the keeper's healing timers
+ok 333 - a move command resets the keeper's healing timers
+  ---
+  duration_ms: 0.5287
+  ...
+# Subtest: building units reset their healing timers and do not recover
+ok 334 - building units reset their healing timers and do not recover
+  ---
+  duration_ms: 0.3782
+  ...
+# Subtest: defeat resets healing timers
+ok 335 - defeat resets healing timers
+  ---
+  duration_ms: 0.4935
+  ...
+# Subtest: large healing ticks apply every completed interval without exceeding maximum HP
+ok 336 - large healing ticks apply every completed interval without exceeding maximum HP
+  ---
+  duration_ms: 0.4719
+  ...
+# Subtest: 移動中かつ非接敵のマスターは射程内の敵を攻撃しない
+ok 337 - 移動中かつ非接敵のマスターは射程内の敵を攻撃しない
+  ---
+  duration_ms: 0.5098
+  ...
+# Subtest: 移動中でも接敵中のマスターは射程内の敵を攻撃する
+ok 338 - 移動中でも接敵中のマスターは射程内の敵を攻撃する
+  ---
+  duration_ms: 0.5385
+  ...
+# Subtest: 移動中でも接敵中のマスターは距離0.5の敵召喚獣を攻撃する
+ok 339 - 移動中でも接敵中のマスターは距離0.5の敵召喚獣を攻撃する
+  ---
+  duration_ms: 0.8132
+  ...
+# Subtest: combat clears stale attack events before processing
+ok 340 - combat clears stale attack events before processing
+  ---
+  duration_ms: 0.4501
+  ...
+# Subtest: movement is slowed near a live enemy elemental
+ok 341 - movement is slowed near a live enemy elemental
+  ---
+  duration_ms: 0.697
+  ...
+# Subtest: movement is slowed at the Unit-to-Unit collision-circle boundary
+ok 342 - movement is slowed at the Unit-to-Unit collision-circle boundary
+  ---
+  duration_ms: 0.8366
+  ...
+# Subtest: movement is slowed at the Unit-to-SummonedUnit collision-circle boundary
+ok 343 - movement is slowed at the Unit-to-SummonedUnit collision-circle boundary
+  ---
+  duration_ms: 0.8792
+  ...
+# Subtest: movement is not slowed just beyond the Unit-to-Point collision-circle boundary
+ok 344 - movement is not slowed just beyond the Unit-to-Point collision-circle boundary
+  ---
+  duration_ms: 0.6316
+  ...
+# Subtest: movement is slowed at the Unit-to-Point collision-circle boundary
+ok 345 - movement is slowed at the Unit-to-Point collision-circle boundary
+  ---
+  duration_ms: 0.6537
+  ...
+# Subtest: allies and defeated enemies do not slow movement
+ok 346 - allies and defeated enemies do not slow movement
+  ---
+  duration_ms: 0.5367
+  ...
+# Subtest: attack timer gates combat damage
+ok 347 - attack timer gates combat damage
+  ---
+  duration_ms: 0.6875
+  ...
+# Subtest: 通常ユニットは通常ユニットへの攻撃を0.5秒ごとに行う
+ok 348 - 通常ユニットは通常ユニットへの攻撃を0.5秒ごとに行う
+  ---
+  duration_ms: 1.0399
+  ...
+# Subtest: 通常ユニットは敵リーダーへの攻撃を1秒ごとに行う
+ok 349 - 通常ユニットは敵リーダーへの攻撃を1秒ごとに行う
+  ---
+  duration_ms: 0.846
+  ...
+# Subtest: マスターは敵召喚獣への攻撃後に通常対象用0.7秒タイマーを設定する
+ok 350 - マスターは敵召喚獣への攻撃後に通常対象用0.7秒タイマーを設定する
+  ---
+  duration_ms: 0.6873
+  ...
+# Subtest: 通常ユニットは通常ユニット用と敵リーダー用のタイマーを独立して減らす
+ok 351 - 通常ユニットは通常ユニット用と敵リーダー用のタイマーを独立して減らす
+  ---
+  duration_ms: 1.7187
+  ...
+# Subtest: 通常ユニットは攻撃対象がなくても両方のタイマーを減らす
+ok 352 - 通常ユニットは攻撃対象がなくても両方のタイマーを減らす
+  ---
+  duration_ms: 0.4997
+  ...
+# Subtest: 潜在可能表示は双方のHP30%以下と戦闘中の条件を使う
+ok 353 - 潜在可能表示は双方のHP30%以下と戦闘中の条件を使う
+  ---
+  duration_ms: 6.2373
+  ...
+# Subtest: HP・残り時間・召喚ゲージを日本語へ整形する
+ok 354 - HP・残り時間・召喚ゲージを日本語へ整形する
+  ---
+  duration_ms: 2.4285
+  ...
+# Subtest: HP・時間・召喚ゲージを表示範囲へ制限する
+ok 355 - HP・時間・召喚ゲージを表示範囲へ制限する
+  ---
+  duration_ms: 0.8006
+  ...
+# Subtest: 味方MPを0から10の縦ゲージモデルへ整形する
+ok 356 - 味方MPを0から10の縦ゲージモデルへ整形する
+  ---
+  duration_ms: 1.1207
+  ...
+# Subtest: 味方MPを0から10の表示範囲へ制限する
+ok 357 - 味方MPを0から10の表示範囲へ制限する
+  ---
+  duration_ms: 1.1859
+  ...
+# Subtest: 勝敗を日本語へ変換して戦闘中は空文字にする
+ok 358 - 勝敗を日本語へ変換して戦闘中は空文字にする
+  ---
+  duration_ms: 0.6475
+  ...
+# Subtest: 有効な選択ユニットと既存召喚判定をボタン状態へ反映する
+ok 359 - 有効な選択ユニットと既存召喚判定をボタン状態へ反映する
+  ---
+  duration_ms: 0.988
+  ...
+# Subtest: 配置中は建築と召喚を無効にする
+ok 360 - 配置中は建築と召喚を無効にする
+  ---
+  duration_ms: 0.4216
+  ...
+# Subtest: Countdown disables controls and displays remaining seconds rounded up
+ok 361 - Countdown disables controls and displays remaining seconds rounded up
+  ---
+  duration_ms: 0.8808
+  ...
+# Subtest: Countdown prioritizes a completed result and disables both controls
+ok 362 - Countdown prioritizes a completed result and disables both controls
+  ---
+  duration_ms: 1.1753
+  ...
+# Subtest: InProgress restores build and summon availability
+ok 363 - InProgress restores build and summon availability
+  ---
+  duration_ms: 0.4164
+  ...
+# Subtest: 既存ボタンの画像キーにskillという曖昧な名前を使わない
+ok 364 - 既存ボタンの画像キーにskillという曖昧な名前を使わない
+  ---
+  duration_ms: 0.2422
+  ...
+# Subtest: 未選択時のAP表示は空状態でアビリティボタンを無効にする
+ok 365 - 未選択時のAP表示は空状態でアビリティボタンを無効にする
+  ---
+  duration_ms: 0.2711
+  ...
+# Subtest: AP表示は20秒単位の回復途中を加味する
+ok 366 - AP表示は20秒単位の回復途中を加味する
+  ---
+  duration_ms: 0.3318
+  ...
+# Subtest: 満タン時のAP表示を上限1にしてSceneの発動可否を反映する
+ok 367 - 満タン時のAP表示を上限1にしてSceneの発動可否を反映する
+  ---
+  duration_ms: 0.4841
+  ...
+# Subtest: 戦闘不能ユニットはSceneが許可してもアビリティボタンを無効にする
+ok 368 - 戦闘不能ユニットはSceneが許可してもアビリティボタンを無効にする
+  ---
+  duration_ms: 0.2658
+  ...
+# Subtest: HPが0のユニットはSceneが許可してもアビリティボタンを無効にする
+ok 369 - HPが0のユニットはSceneが許可してもアビリティボタンを無効にする
+  ---
+  duration_ms: 0.2507
+  ...
+# Subtest: 建築中もアビリティボタンを有効にするがエレメント作成は無効のままにする
+ok 370 - 建築中もアビリティボタンを有効にするがエレメント作成は無効のままにする
+  ---
+  duration_ms: 0.2532
+  ...
+# Subtest: キーパー対象の有無をScene判定からアビリティボタンへ反映する
+ok 371 - キーパー対象の有無をScene判定からアビリティボタンへ反映する
+  ---
+  duration_ms: 0.2597
+  ...
+# Subtest: Countdown中は発動条件を満たしてもアビリティボタンを無効にする
+ok 372 - Countdown中は発動条件を満たしてもアビリティボタンを無効にする
+  ---
+  duration_ms: 0.3145
+  ...
+# Subtest: 戦闘終了後は発動条件を満たしてもアビリティボタンを無効にする
+ok 373 - 戦闘終了後は発動条件を満たしてもアビリティボタンを無効にする
+  ---
+  duration_ms: 0.2766
+  ...
+# Subtest: 644x468内にabilityButtonを含むHUD・上詰めフィールド・待機場所を配置する
+ok 374 - 644x468内にabilityButtonを含むHUD・上詰めフィールド・待機場所を配置する
+  ---
+  duration_ms: 5.0457
+  ...
+# Subtest: 待機場所と左HUDと時間表示はHUD入力範囲で戦場は操作可能である
+ok 375 - 待機場所と左HUDと時間表示はHUD入力範囲で戦場は操作可能である
+  ---
+  duration_ms: 0.8575
+  ...
+# Subtest: 能力なしは無効と比率0、AP5の固有名・説明・雨を表示
+ok 376 - 能力なしは無効と比率0、AP5の固有名・説明・雨を表示
+  ---
+  duration_ms: 6.6719
+  ...
+# Subtest: スキルの条件成立と死亡・撃破時の発動条件を選択カードに合わせて表示する
+ok 377 - スキルの条件成立と死亡・撃破時の発動条件を選択カードに合わせて表示する
+  ---
+  duration_ms: 2.9447
+  ...
+# Subtest: 撤退ユニットが0枚なら空のレイアウトを返す
+ok 378 - 撤退ユニットが0枚なら空のレイアウトを返す
+  ---
+  duration_ms: 4.1251
+  ...
+# Subtest: 待機カードは利用可能な縦幅へ等比縮小される
+ok 379 - 待機カードは利用可能な縦幅へ等比縮小される
+  ---
+  duration_ms: 0.782
+  ...
+# Subtest: 3枚の待機カードは共通縮尺で待機場所の横幅へ収まる
+ok 380 - 3枚の待機カードは共通縮尺で待機場所の横幅へ収まる
+  ---
+  duration_ms: 0.6972
+  ...
+# Subtest: 待機カードは74pxの待機場所へ上端揃えで縮小される
+ok 381 - 待機カードは74pxの待機場所へ上端揃えで縮小される
+  ---
+  duration_ms: 0.9181
+  ...
+# Subtest: 待機カードは74pxの待機場所からはみ出さない
+ok 382 - 待機カードは74pxの待機場所からはみ出さない
+  ---
+  duration_ms: 0.6314
+  ...
+# Subtest: 待機カード表示モデル: 戦闘中かつMP充足
+ok 383 - 待機カード表示モデル: 戦闘中かつMP充足
+  ---
+  duration_ms: 0.846
+  ...
+# Subtest: 待機カード表示モデル: MP不足
+ok 384 - 待機カード表示モデル: MP不足
+  ---
+  duration_ms: 0.6002
+  ...
+# Subtest: 待機カード表示モデル: Setup中
+ok 385 - 待機カード表示モデル: Setup中
+  ---
+  duration_ms: 0.29
+  ...
+# Subtest: 待機カード表示モデル: Countdown中
+ok 386 - 待機カード表示モデル: Countdown中
+  ---
+  duration_ms: 0.7819
+  ...
+# Subtest: 待機カード表示モデル: 試合終了後
+ok 387 - 待機カード表示モデル: 試合終了後
+  ---
+  duration_ms: 0.9844
+  ...
+1..387
+# tests 387
+# suites 0
+# pass 387
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15894.2142
+
+> @reijin-summon/server@0.1.0 test
+> node --import tsx --test "tests/**/*.test.ts"
+
+TAP version 13
+# Subtest: エンチャントの全実対象を空配列から差分配信し全量配信でも保持する
+ok 1 - エンチャントの全実対象を空配列から差分配信し全量配信でも保持する
+  ---
+  duration_ms: 57.8964
+  ...
+# Subtest: 空の効果配列から付与・雨・エンチャント・イベント・期限削除を配信できる
+ok 2 - 空の効果配列から付与・雨・エンチャント・イベント・期限削除を配信できる
+  ---
+  duration_ms: 14.7701
+  ...
+# Subtest: オンライン両陣営は自分のアビリティを発動でき、抽選結果はサーバーの1対象だけ
+ok 3 - オンライン両陣営は自分のアビリティを発動でき、抽選結果はサーバーの1対象だけ
+  ---
+  duration_ms: 9.8926
+  ...
+# Subtest: 更新間隔の遅れを次回へ持ち越し、試合時間を遅らせない
+ok 4 - 更新間隔の遅れを次回へ持ち越し、試合時間を遅らせない
+  ---
+  duration_ms: 2.5123
+  ...
+# Subtest: 2人の実接続で秘匿・同期・復帰を検証
+not ok 5 - 2人の実接続で秘匿・同期・復帰を検証
+  ---
+  duration_ms: 4222.9619
+  location: 'C:\\10.Github\\reijin-summon\\src\\server\\tests\\integration.test.ts:1:477'
+  failureType: 'testCodeFailure'
+  error: |-
+    start: ServerError: connect EACCES 127.0.0.1:2678
+    undefined
+    
+           ___      _
+          / __\___ | |_   _ ___  ___ _   _ ___
+         / /  / _ \| | | | / __|/ _ \ | | / __|
+        / /__| (_) | | |_| \__ \  __/ |_| \__ \
+        \____/\___/|_|\__, |___/\___|\__,_|___/
+                      |___/
+    
+         · Multiplayer Framework for Node.js ·
+    
+    💖 Consider becoming a Sponsor on GitHub → https://github.com/sponsors/endel
+    🌟 Give us a star on GitHub → https://github.com/colyseus/colyseus
+    ☁️  Deploy and scale your project on Colyseus Cloud → https://cloud.colyseus.io
+    
+    
+    Colyseus server listening on http://localhost:2678
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\10.Github\reijin-summon\src\server\tests\integration.test.ts:57:15)
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async Test.run (node:internal/test_runner/test:935:9)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: 10席上限と二重解放
+ok 6 - 10席上限と二重解放
+  ---
+  duration_ms: 6.0232
+  ...
+# Subtest: 不正入力を拒否する
+ok 7 - 不正入力を拒否する
+  ---
+  duration_ms: 0.9373
+  ...
+# Subtest: 開始まで秘匿し双方の準備から試合を開始
+ok 8 - 開始まで秘匿し双方の準備から試合を開始
+  ---
+  duration_ms: 4.2896
+  ...
+# Subtest: 確定結果を切断で上書きしない
+ok 9 - 確定結果を切断で上書きしない
+  ---
+  duration_ms: 1.0095
+  ...
+# Subtest: 30秒の復帰猶予と双方不在
+ok 10 - 30秒の復帰猶予と双方不在
+  ---
+  duration_ms: 5.233
+  ...
+# Subtest: 公開時は許可した接続元だけを通し、IPごとに参加要求を制限する
+ok 11 - 公開時は許可した接続元だけを通し、IPごとに参加要求を制限する
+  ---
+  duration_ms: 1.3315
+  ...
+# Subtest: 準備解除と切断で開始を取り消し、編集ロックを解除する
+ok 12 - 準備解除と切断で開始を取り消し、編集ロックを解除する
+  ---
+  duration_ms: 0.8833
+  ...
+# Subtest: 古い試合と相手のユニットを操作できず、再戦は双方の同意が必要
+ok 13 - 古い試合と相手のユニットを操作できず、再戦は双方の同意が必要
+  ---
+  duration_ms: 1.8629
+  ...
+# Subtest: 受理済みの配置交換をプレビューと戦闘開始にそのまま反映する
+ok 14 - 受理済みの配置交換をプレビューと戦闘開始にそのまま反映する
+  ---
+  duration_ms: 5.6588
+  ...
+# Subtest: 公開用HTTP/WS接続元、PORT、サイズ、偽装IPの制限
+not ok 15 - 公開用HTTP/WS接続元、PORT、サイズ、偽装IPの制限
+  ---
+  duration_ms: 3975.2821
+  location: 'C:\\10.Github\\reijin-summon\\src\\server\\tests\\publicServer.test.ts:1:311'
+  failureType: 'testCodeFailure'
+  error: 'fetch failed'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    node:internal/deps/undici/undici:13484:13
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async TestContext.<anonymous> (C:\10.Github\reijin-summon\src\server\tests\publicServer.test.ts:7:62)
+    async Test.run (node:internal/test_runner/test:935:9)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: 本番で許可元未設定なら起動しない
+ok 16 - 本番で許可元未設定なら起動しない
+  ---
+  duration_ms: 1515.7227
+  ...
+# Subtest: 共有戦闘をNodeから読み込んで進行できる
+ok 17 - 共有戦闘をNodeから読み込んで進行できる
+  ---
+  duration_ms: 635.5422
+  ...
+# Subtest: サーバー終了は切断前に中断理由を通知する
+ok 18 - サーバー終了は切断前に中断理由を通知する
+  ---
+  duration_ms: 7.2681
+  ...
+# Subtest: 死亡スキルの回復量と対象を空配列から差分・全量で配信できる
+ok 19 - 死亡スキルの回復量と対象を空配列から差分・全量で配信できる
+  ---
+  duration_ms: 41.8163
+  ...
+# Subtest: Playerの準備データは相手の補正を編成変更・開始待ち・再戦前にも隠す
+ok 20 - Playerの準備データは相手の補正を編成変更・開始待ち・再戦前にも隠す
+  ---
+  duration_ms: 11.1586
+  ...
+# Subtest: Cpuの準備データは相手の補正を編成変更・開始待ち・再戦前にも隠す
+ok 21 - Cpuの準備データは相手の補正を編成変更・開始待ち・再戦前にも隠す
+  ---
+  duration_ms: 2.0895
+  ...
+# Subtest: 編成補正と特殊攻撃比率を初回・差分・復帰用全量で同期する
+ok 22 - 編成補正と特殊攻撃比率を初回・差分・復帰用全量で同期する
+  ---
+  duration_ms: 45.0091
+  ...
+# Subtest: 潜在の発動・引き寄せ・復活保護を全量と差分で同期する
+ok 23 - 潜在の発動・引き寄せ・復活保護を全量と差分で同期する
+  ---
+  duration_ms: 158.9576
+  ...
+# Subtest: ユグドラシルの発動時対象・MP・最大APを同期する
+ok 24 - ユグドラシルの発動時対象・MP・最大APを同期する
+  ---
+  duration_ms: 18.5495
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 22
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7470.2201
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path C:\10.Github\reijin-summon\src\server
+npm error workspace @reijin-summon/server@0.1.0
+npm error location C:\10.Github\reijin-summon\src\server
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c node --import tsx --test "tests/**/*.test.ts"

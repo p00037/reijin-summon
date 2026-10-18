@@ -1,5 +1,10 @@
 import type { BattleConfig, Vec2 } from "../core/types.js";
 import { distanceSq } from "../core/vector.js";
+import { meleeAttackRange } from "../core/battleConfig.js";
+
+export function isWithinZocRange(firstPosition: Vec2, secondPosition: Vec2): boolean {
+  return distanceSq(firstPosition, secondPosition) <= meleeAttackRange * meleeAttackRange;
+}
 
 export type CollisionBodyKind = "Unit" | "SummonedUnit" | "Point";
 

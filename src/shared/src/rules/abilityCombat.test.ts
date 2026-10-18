@@ -11,7 +11,7 @@ import { tryExecuteSummon } from './summonSystem.js';
 test('通常攻撃にはローズクォーツ防御が適用される',()=>{
   const config=createDefaultBattleConfig(),state=createDefaultBattleState(config);
   state.phase='InProgress'; const [attacker,,,target]=state.units;
-  state.units=[attacker,target]; attacker.position={x:0,y:0}; target.position={x:0,y:.8};
+  state.units=[attacker,target]; attacker.position={x:0,y:0}; target.position={x:0,y:.5};
   attacker.stats.attackDamage=100;
   target.cardId='SC007'; target.abilityAp=1;
   state.elementals=Array.from({length:6},(_,i)=>({elementalId:`Elemental${i+1}` as 'Elemental1',team:'Cpu',nation:target.nation,position:{x:4,y:4},maxHp:100,currentHp:100,isComplete:true,enchantments:[]}));
