@@ -126,9 +126,14 @@ export function tickCombat(state: BattleState, config: BattleConfig, deltaSecond
       target.kind === "Elemental"
         ? attackDamage * unit.stats.elementalAttackMultiplier
         : attackDamage;
+    const targetHpBefore = target.target.currentHp;
     applyDamage(target, damage, config, state, unit.unitId);
     state.recentAttackEvents.push({
       attackerUnitId: unit.unitId,
+      ...(target.kind === "Unit" ? {
+        targetUnitId: target.target.unitId,
+        targetDamage: Math.max(0, targetHpBefore - target.target.currentHp)
+      } : {}),
       origin: { ...unit.position },
       targetPosition: { ...target.position }
     });

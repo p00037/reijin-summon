@@ -212,6 +212,8 @@ export type SummonedUnitState = {
 
 export type AttackEvent = {
   attackerUnitId: UnitId;
+  targetUnitId?: UnitId;
+  targetDamage?: number;
   origin: Vec2;
   targetPosition: Vec2;
 };

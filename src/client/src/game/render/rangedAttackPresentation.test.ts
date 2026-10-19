@@ -69,6 +69,39 @@ function createTestAttackEventRenderer(
   return createAttackEventRenderer(dependencies);
 }
 
+test("着弾通知は射撃のTween完了時に一度だけ発火する", () => {
+  const tweens: TestTween[] = [];
+  let impacts = 0;
+  const projectile = createTestProjectile();
+  const renderer = createTestAttackEventRenderer({
+    drawLine: () => assert.fail("射撃で線を描かない"),
+    createImage: () => projectile,
+    addTween: tween => { tweens.push(tween); },
+    additiveBlendMode: "ADD"
+  });
+  drawAttackEvent("Ranged", { x: 0, y: 0 }, { x: 2, y: 0 },
+    { x: 100, y: 200 }, { x: 300, y: 200 }, renderer, () => { impacts++; });
+  assert.equal(impacts, 0, "発射時には命中演出を出さない");
+  tweens[0].onComplete();
+  assert.equal(impacts, 1);
+  assert.equal(projectile.destroyCount, 1);
+});
+
+test("近接攻撃と飛翔体のない短距離射撃は即座に着弾通知する", () => {
+  for (const unitType of ["Melee", "Ranged"] as const) {
+    let impacts = 0;
+    const renderer = createTestAttackEventRenderer({
+      drawLine: () => {},
+      createImage: () => assert.fail("飛翔体を生成しない"),
+      addTween: () => assert.fail("待機しない"),
+      additiveBlendMode: "ADD"
+    });
+    drawAttackEvent(unitType, { x: 0, y: 0 }, { x: .5, y: 0 },
+      { x: 100, y: 200 }, { x: 150, y: 200 }, renderer, () => { impacts++; });
+    assert.equal(impacts, 1, unitType);
+  }
+});
+
 test("遠距離のマスター攻撃は画像と500ms Tweenを各1回生成し同じ弾丸を渡す", () => {
   const projectiles: TestProjectile[] = [];
   const tweens: TestTween[] = [];

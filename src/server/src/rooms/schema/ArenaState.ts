@@ -11,7 +11,7 @@ const template = {
     units: base.units.map(u => ({ ...u, abilityEffects: [{ abilityId: '', sourceUnitId: '', sourceSummonedUnitId: -1, sourcePosition: { x: 0, y: 0 }, castId: 0, kind: '', amount: 0, remainingSeconds: 0 }], cardId: '', defeatedOrder: -1, pendingElementalId: '' })),
     elementals: [{ elementalId: '', team: 'Player', position: { x: 0, y: 0 }, maxHp: 0, currentHp: 0, isComplete: false, nation: '', enchantments: [{ kind: '', elapsedSeconds: 0 }] }],
     summonedUnits: [{ ...summon, customizationAttackRatio: 1 }],
-    recentAttackEvents: [{ attackerUnitId: '', origin: { x: 0, y: 0 }, targetPosition: { x: 0, y: 0 } }],
+    recentAttackEvents: [{ attackerUnitId: '', targetUnitId: '', targetDamage: 0, origin: { x: 0, y: 0 }, targetPosition: { x: 0, y: 0 } }],
     recentSummonAttackEvents: [{ summonId: '', team: 'Player', origin: { x: 0, y: 0 }, targets: [{ x: 0, y: 0 }], kind: '' }]
 };
 type Data = Record<string, any>;

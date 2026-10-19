@@ -36,7 +36,8 @@ type AttackEventRenderer<TProjectile> = {
   createProjectile: (presentation: RangedProjectilePresentation) => TProjectile;
   createProjectileTween: (
     projectile: TProjectile,
-    presentation: RangedProjectilePresentation
+    presentation: RangedProjectilePresentation,
+    onImpact?: () => void
   ) => void;
 };
 
@@ -90,14 +91,17 @@ export function createAttackEventRenderer<
       projectile.setBlendMode(dependencies.additiveBlendMode);
       return projectile;
     },
-    createProjectileTween: (projectile, presentation) => {
+    createProjectileTween: (projectile, presentation, onImpact) => {
       dependencies.addTween({
         targets: projectile,
         x: presentation.target.x,
         y: presentation.target.y,
         duration: presentation.durationMs,
         ease: "Linear",
-        onComplete: () => projectile.destroy()
+        onComplete: () => {
+          projectile.destroy();
+          onImpact?.();
+        }
       });
     }
   };
@@ -134,7 +138,8 @@ export function drawAttackEvent<TProjectile>(
   worldTarget: Vec2,
   origin: Vec2,
   target: Vec2,
-  renderer: AttackEventRenderer<TProjectile>
+  renderer: AttackEventRenderer<TProjectile>,
+  onImpact?: () => void
 ): void {
   const attackDistance = Math.sqrt(distanceSq(worldOrigin, worldTarget));
   const presentation = attackEffectPresentation(
@@ -145,13 +150,15 @@ export function drawAttackEvent<TProjectile>(
   );
 
   if (presentation.kind === "None") {
+    onImpact?.();
     return;
   }
   if (presentation.kind === "Line") {
     renderer.drawLine(presentation.origin, presentation.target);
+    onImpact?.();
     return;
   }
 
   const projectile = renderer.createProjectile(presentation);
-  renderer.createProjectileTween(projectile, presentation);
+  renderer.createProjectileTween(projectile, presentation, onImpact);
 }
