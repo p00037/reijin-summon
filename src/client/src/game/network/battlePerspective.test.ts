@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+test('通常攻撃の対象IDも後参加者の視点で入れ替える', () => {
+  const state = createDefaultBattleState(createDefaultBattleConfig());
+  state.recentAttackEvents = [{ attackerUnitId: 'CpuRanged', origin: { x: 0, y: 1 }, targetPosition: { x: 0, y: 0 }, targetUnitId: 'PlayerMelee' }];
+  const event = toLocalState(state, 'Cpu').recentAttackEvents[0];
+  assert.equal(event.targetUnitId, 'CpuMelee');
+  assert.equal(event.attackerUnitId, 'PlayerRanged');
+});
+
 test('潜在の対象・発動位置・引き寄せ元を後攻視点へ変換する', () => {
   const state = createDefaultBattleState(createDefaultBattleConfig());
   state.recentSummonPotentialEvents = [{ eventId: 1, summonedUnitId: 7, summonId: 'bahamut', team: 'Cpu', origin: { x: 2, y: 3 }, targets: [{ x: 4, y: -1 }] }];

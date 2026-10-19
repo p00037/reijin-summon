@@ -1,3 +1,6 @@
+import { HpTrail, hitFlashAlpha, otherHpLoss } from "../render/battleFeedback";
+import { ImpactEffects } from "../render/impactEffects";
+import { HealingEffects, type HealingSubject } from "../render/healingEffects";
 import {consumeAttackEvents,bindInputReset} from '../network/onlineInteraction';
 import {mountOnlineBattleStatus} from '../ui/onlineLobby';
 import {activeOnline} from '../network/onlineSession';
@@ -107,6 +110,16 @@ export class BattleScene extends Phaser.Scene {
   private playerCardIds: string[] = [...standardDeckCardIds];
   private cpuOpponentId: CpuOpponentId = "deck1";
   private playerSummonId: SummonId = "raphael";
+  private readonly hpTrails = new HpTrail();
+  private impactEffects!: ImpactEffects;
+  private healingEffects!: HealingEffects;
+  private readonly buildingUnits = new Map<string, string>();
+  private readonly buildPulses: { position: Vec2; at: number; color: number }[] = [];
+  private readonly lastUnitHp = new Map<string, number>();
+  private readonly flashAt = new Map<string, number>();
+  private readonly normalDamageByUnit = new Map<string, { amount: number; at: number }>();
+  private readonly unitLifeVersions = new Map<string, number>();
+  private hitFlashOverlay!: Phaser.GameObjects.Graphics;
   private summonEffects!: SummonEffects;
   private summonNameLabels = new Map<number, Phaser.GameObjects.Text>();
   private flow?: ReturnType<typeof mountBattleFlow>;
@@ -233,6 +246,16 @@ export class BattleScene extends Phaser.Scene {
         layout.field.height
       );
     const battlefieldMask = this.circleMaskShape.createGeometryMask();
+    this.hpTrails.clear();
+    this.buildingUnits.clear();
+    this.buildPulses.length = 0;
+    this.lastUnitHp.clear();
+    this.flashAt.clear();
+    this.normalDamageByUnit.clear();
+    this.unitLifeVersions.clear();
+    this.hitFlashOverlay = this.add.graphics().setDepth(cardImageDepth + .5).setMask(battlefieldMask);
+    this.impactEffects = new ImpactEffects(this.add.graphics().setDepth(18).setMask(battlefieldMask));
+    this.healingEffects = new HealingEffects(this.add.graphics().setDepth(battleStatusOverlayDepth + .5).setMask(battlefieldMask));
     this.summonEffects = new SummonEffects(this, point => this.worldToScreen(point), battlefieldMask);
     this.circleOverlay.setMask(battlefieldMask);
     if (abilityOverlayPresentation.clipToBattlefield) {
@@ -271,6 +294,14 @@ export class BattleScene extends Phaser.Scene {
       this.input.removeAllListeners();
       this.hud.destroy();
       this.summonEffects.destroy();
+      this.impactEffects.destroy();
+      this.healingEffects.destroy();
+      this.hpTrails.clear();
+      this.lastUnitHp.clear();
+      this.flashAt.clear();
+      this.normalDamageByUnit.clear();
+      this.unitLifeVersions.clear();
+      this.hitFlashOverlay.destroy();
     });
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.handlePointerDown(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.handlePointerMove(pointer));
@@ -609,13 +640,34 @@ export class BattleScene extends Phaser.Scene {
       revivalAreaRect(calculateBattleLayout(gameViewport.width, gameViewport.height)),
       defeatedUnitIds
     );
+    for (const [id, elementalId] of this.buildingUnits) {
+      const elemental = state.elementals.find(item => item.elementalId === elementalId && item.isComplete);
+      const unit = state.units.find(item => item.unitId === id);
+      if (unit?.pendingElementalId !== elementalId && elemental) {
+        this.buildPulses.push({ position: { ...elemental.position }, at: this.time.now, color: elemental.team === "Player" ? 0x7dd3fc : 0xfda4af });
+      }
+    }
+    this.buildingUnits.clear();
+    for (const unit of state.units) if (unit.mode === "BuildingElemental" && unit.pendingElementalId) this.buildingUnits.set(unit.unitId, unit.pendingElementalId);
+    for (let index = this.buildPulses.length - 1; index >= 0; index--) {
+      const pulse = this.buildPulses[index];
+      const t = (this.time.now - pulse.at) / 450;
+      if (t >= 1) { this.buildPulses.splice(index, 1); continue; }
+      const point = this.worldToScreen(pulse.position);
+      this.battlefieldOverlay.lineStyle(2, pulse.color, 1 - t);
+      this.battlefieldOverlay.strokeCircle(point.x, point.y, 20 + t * 30);
+    }
+    // Register normal attacks before HP changes so projectile hits do not flash at launch.
+    this.drawAttackEvents(state);
     this.drawUnits(state.units);
     this.drawAbilityTargeting();
     this.drawAbilityEvents();
     this.drawSkillEvents();
     this.drawSummonPotentialEvents();
-    this.drawAttackEvents(state);
     this.summonEffects.draw(state, this.session.config);
+    this.drawHitFlashes(state.units);
+    this.impactEffects.draw(this.time.now, point => this.worldToScreen(point));
+    this.drawHealingEffects(state);
     const facingRotation = this.selectedUnitFacingRotation();
     const canUseSelectedAbility = this.selectedUnitId !== null
       && canUseAbility(
@@ -745,7 +797,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateElementalSprite(elemental, screen);
       this.battlefieldOverlay.lineStyle(2, color, elemental.isComplete ? 0.85 : 0.45);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 13);
-      this.drawBattlefieldHpBar("Elemental", screen, elemental.currentHp / elemental.maxHp, color);
+      this.drawBattlefieldHpBar("Elemental", screen, elemental.currentHp / elemental.maxHp, color, `elemental:${elemental.elementalId}`);
     }
   }
 
@@ -757,7 +809,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateSummonedUnitImage(summoned, screen);
       this.battlefieldOverlay.lineStyle(2, color, 1);
       this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 30);
-      this.drawBattlefieldHpBar("SummonedUnit", screen, summoned.currentHp / summoned.maxHp, color);
+      this.drawBattlefieldHpBar("SummonedUnit", screen, summoned.currentHp / summoned.maxHp, color, `summon:${summoned.summonedUnitId}`);
     }
   }
 
@@ -903,6 +955,13 @@ export class BattleScene extends Phaser.Scene {
 
     for (const unit of units) {
       if (unit.mode === "Defeated") {
+        if ((this.lastUnitHp.get(unit.unitId) ?? 0) > 0) {
+          this.unitLifeVersions.set(unit.unitId, (this.unitLifeVersions.get(unit.unitId) ?? 0) + 1);
+        }
+        this.lastUnitHp.set(unit.unitId, 0);
+        this.normalDamageByUnit.delete(unit.unitId);
+        this.hpTrails.sample(unit.unitId, 0, this.time.now);
+        this.flashAt.delete(unit.unitId);
         if (isPlayerUnit(unit)) {
           const layout = this.defeatedUnitLayouts.find(
             (candidate) => candidate.unitId === unit.unitId
@@ -924,6 +983,17 @@ export class BattleScene extends Phaser.Scene {
       const alpha = (unit.potentialProtectionSeconds ?? 0) > 0 ? .55 + Math.abs(Math.sin(this.time.now / 80)) * .45 : 1;
 
       this.updateUnitImage(unit, screen, alpha);
+      const oldHp = this.lastUnitHp.get(unit.unitId);
+      const normalDamage = this.normalDamageByUnit.get(unit.unitId);
+      const recentNormalDamage = normalDamage && this.time.now - normalDamage.at < 1000 ? normalDamage.amount : 0;
+      // 通常攻撃分は着弾時に光らせ、同時に受けた別のダメージは即座に表示する。
+      if (oldHp !== undefined && otherHpLoss(oldHp, unit.currentHp, recentNormalDamage) > 1e-6) {
+        this.flashAt.set(unit.unitId, this.time.now);
+      }
+      if (oldHp !== unit.currentHp || (normalDamage && this.time.now - normalDamage.at >= 1000)) {
+        this.normalDamageByUnit.delete(unit.unitId);
+      }
+      this.lastUnitHp.set(unit.unitId, unit.currentHp);
 
       if (isSelected) {
         const bounds = this.fieldBounds();
@@ -956,8 +1026,7 @@ export class BattleScene extends Phaser.Scene {
       }
 
       if (unit.mode === "BuildingElemental") {
-        this.battlefieldOverlay.lineStyle(2, 0xfacc15, 0.95);
-        this.battlefieldOverlay.strokeCircle(screen.x, screen.y, 20);
+        this.drawBuildCircle(screen, color, 1 - unit.buildTimerSeconds / unit.stats.elementalBuildSeconds);
       }
       const rotation =
         this.unitCardRotations.get(unit.unitId) ??
@@ -966,7 +1035,8 @@ export class BattleScene extends Phaser.Scene {
         screen,
         rotation,
         unit.currentHp / unit.stats.maxHp,
-        color
+        color,
+        unit.unitId
       );
     }
   }
@@ -1364,14 +1434,67 @@ export class BattleScene extends Phaser.Scene {
       const attacker = state.units.find(
         (unit) => unit.unitId === event.attackerUnitId
       );
+      const targetUnitId = event.targetUnitId;
+      const lifeVersion = targetUnitId ? this.unitLifeVersions.get(targetUnitId) ?? 0 : 0;
+      if (targetUnitId && (event.targetDamage ?? 0) > 0) {
+        const previous = this.normalDamageByUnit.get(targetUnitId);
+        const amount = previous && this.time.now - previous.at < 1000 ? previous.amount : 0;
+        this.normalDamageByUnit.set(targetUnitId, { amount: amount + event.targetDamage!, at: this.time.now });
+      }
       drawAttackEvent(
         attacker?.unitType ?? null,
         event.origin,
         event.targetPosition,
         origin,
         target,
-        renderer
+        renderer,
+        () => {
+          if (this.session.state.result !== "InProgress") return;
+          this.impactEffects.add(event.targetPosition, this.time.now);
+          const targetUnit = this.session.state.units.find(unit => unit.unitId === targetUnitId);
+          if (targetUnit && isUnitAlive(targetUnit)
+            && (this.unitLifeVersions.get(targetUnit.unitId) ?? 0) === lifeVersion) {
+            this.flashAt.set(targetUnit.unitId, this.time.now);
+          }
+        }
       );
+    }
+  }
+
+  private drawHealingEffects(state: BattleState): void {
+    if (state.result !== "InProgress" || state.phase !== "InProgress") {
+      this.healingEffects.clear();
+      return;
+    }
+    const subjects: HealingSubject[] = [];
+    const add = (id: string, hp: number, image: Phaser.GameObjects.Image | undefined) => {
+      if (!image?.visible || hp <= 0) return;
+      const bounds = image.getBounds();
+      subjects.push({ id, hp, x: image.x, y: image.y, width: bounds.width, height: bounds.height });
+    };
+    for (const unit of state.units) {
+      if (isUnitAlive(unit)) add(unit.unitId, unit.currentHp, this.unitImages.get(unit.unitId));
+    }
+    for (const leader of state.leaders) add(`leader:${leader.team}`, leader.currentHp, this.leaderSprites.get(leader.team));
+    for (const elemental of state.elementals) add(`elemental:${elemental.elementalId}`, elemental.currentHp, this.elementalSprites.get(elemental.elementalId));
+    for (const summoned of state.summonedUnits) add(`summon:${summoned.summonedUnitId}`, summoned.currentHp, this.summonedUnitImages.get(summoned.summonedUnitId));
+    this.healingEffects.draw(subjects, this.time.now);
+  }
+
+  private drawHitFlashes(units: UnitState[]): void {
+    this.hitFlashOverlay.clear();
+    for (const unit of units) {
+      const alpha = hitFlashAlpha(this.flashAt.get(unit.unitId), this.time.now);
+      if (alpha <= 0 || !isUnitAlive(unit)) {
+        this.flashAt.delete(unit.unitId);
+        continue;
+      }
+      const image = this.unitImages.get(unit.unitId);
+      if (!image?.visible) continue;
+      this.hitFlashOverlay.fillStyle(0xffffff, alpha * image.alpha);
+      this.hitFlashOverlay.fillPoints([
+        image.getTopLeft(), image.getTopRight(), image.getBottomRight(), image.getBottomLeft()
+      ], true);
     }
   }
 
@@ -1379,34 +1502,63 @@ export class BattleScene extends Phaser.Scene {
     kind: BattlefieldHpBarKind,
     screen: Vec2,
     ratio: number,
-    color: number
+    color: number,
+    id: string
   ): void {
     const layout = battlefieldHpBarLayout(kind, screen);
     if (!layout) {
       return;
     }
-    this.drawHpBar(layout.x, layout.y, layout.width, ratio, color);
+    this.drawHpBar(layout.x, layout.y, layout.width, ratio, color, id);
   }
 
   private drawUnitCardHpBar(
     screen: Vec2,
     rotation: number,
     ratio: number,
-    color: number
+    color: number,
+    id: string
   ): void {
+    const trail = unitCardHpBarPresentation(screen, rotation, this.hpTrails.sample(id, ratio, this.time.now));
     const presentation = unitCardHpBarPresentation(screen, rotation, ratio);
     this.battlefieldOverlay.fillStyle(0x020617, 0.9);
     this.battlefieldOverlay.fillPoints(presentation.background, true);
+    this.battlefieldOverlay.fillStyle(0xffcb78, .95);
+    this.battlefieldOverlay.fillPoints(trail.fill, true);
     this.battlefieldOverlay.fillStyle(color, 1);
     this.battlefieldOverlay.fillPoints(presentation.fill, true);
   }
 
-  private drawHpBar(x: number, y: number, width: number, ratio: number, color: number): void {
+  private drawHpBar(x: number, y: number, width: number, ratio: number, color: number, id: string): void {
     const clampedRatio = Phaser.Math.Clamp(ratio, 0, 1);
     this.battlefieldOverlay.fillStyle(0x020617, 0.9);
     this.battlefieldOverlay.fillRect(x, y, width, 5);
+    this.battlefieldOverlay.fillStyle(0xffcb78, .95);
+    this.battlefieldOverlay.fillRect(x, y, width * this.hpTrails.sample(id, ratio, this.time.now), 5);
     this.battlefieldOverlay.fillStyle(color, 1);
     this.battlefieldOverlay.fillRect(x, y, width * clampedRatio, 5);
+  }
+
+  private drawBuildCircle(screen: Vec2, color: number, progress: number): void {
+    const graphic = this.battlefieldOverlay;
+    const rotation = this.time.now / 900;
+    graphic.lineStyle(1, color, .65);
+    graphic.strokeCircle(screen.x, screen.y, 21);
+    graphic.strokeCircle(screen.x, screen.y, 17);
+    graphic.lineStyle(2, color, .9);
+    graphic.beginPath();
+    graphic.arc(screen.x, screen.y, 25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Phaser.Math.Clamp(progress, 0, 1), false);
+    graphic.strokePath();
+    graphic.lineStyle(1, color, .5);
+    for (let i = 0; i < 6; i++) {
+      const a = rotation + i * Math.PI / 3;
+      const b = a + Math.PI * 2 / 3;
+      graphic.lineBetween(screen.x + Math.cos(a) * 21, screen.y + Math.sin(a) * 21,
+        screen.x + Math.cos(b) * 21, screen.y + Math.sin(b) * 21);
+      const r = 26 - ((this.time.now / 600 + i / 6) % 1) * 12;
+      graphic.fillStyle(color, .7);
+      graphic.fillCircle(screen.x + Math.cos(-a) * r, screen.y + Math.sin(-a) * r, 1.5);
+    }
   }
 
   private worldToScreen(position: Vec2): Vec2 {

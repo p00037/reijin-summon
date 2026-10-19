@@ -1,3 +1,4 @@
+import { HpTrail } from "../render/battleFeedback";
 import Phaser from "phaser";
 import type { BattleState, PlayerUnitId } from "../core/types";
 import { gameViewport } from "../gameViewport";
@@ -12,13 +13,14 @@ export type BattleHudCallbacks = {
   onSummon: () => void;
 };
 
-type Gauge = { fill: Phaser.GameObjects.Rectangle; text: Phaser.GameObjects.Text; width: number };
+type Gauge = { trail?: Phaser.GameObjects.Rectangle; fill: Phaser.GameObjects.Rectangle; text: Phaser.GameObjects.Text; width: number };
 type Button = { background: Phaser.GameObjects.Rectangle; icon: Phaser.GameObjects.Text; label: Phaser.GameObjects.Text; enabled: boolean };
 const depth = 3;
 const aqua = 0x70e5dc;
 const gold = 0xf1c968;
 
 export class BattleHud {
+  private readonly hpTrails = new HpTrail();
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
   private readonly playerHp: Gauge;
   private readonly cpuHp: Gauge;
@@ -130,12 +132,14 @@ export class BattleHud {
     if (label) this.text(x + width / 2, y, label, 8, "#9fc1d0");
     const trackY = y + (compact ? 7 : 38);
     this.rectangle({ x, y: trackY, width, height: compact ? 2 : 4 }, 0x03131f);
+    const trail = label.endsWith("HP") ? this.rectangle({ x, y: trackY, width: 0, height: 4 }, 0xffcb78) : undefined;
     const fill = this.rectangle({ x, y: trackY, width: 0, height: compact ? 2 : 4 }, color);
     const text = this.text(x + width / 2, y + (compact ? 0 : 21), "", compact ? 6 : 8, "#eaf8ff");
-    return { fill, text, width };
+    return { fill, text, width, trail };
   }
 
   private applyGauge(gauge: Gauge, model: HudGaugeModel, text: string): void {
+    if (gauge.trail) gauge.trail.width = gauge.width * this.hpTrails.sample(gauge === this.playerHp ? "player" : "cpu", model.ratio, this.scene.time.now);
     gauge.fill.width = gauge.width * model.ratio;
     gauge.text.setText(text);
   }

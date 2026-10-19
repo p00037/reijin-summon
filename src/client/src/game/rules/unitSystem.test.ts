@@ -4,6 +4,27 @@ import { createDefaultBattleConfig } from "../core/battleConfig";
 import { createDefaultBattleState, findLeader, findUnit } from "../core/battleState";
 import { applyMoveCommand, markDefeatedUnits, tickCombat, tickMovement, tickUnitHealing } from "./unitSystem";
 
+test("通常攻撃のイベントは移動後も被弾カードを識別できるIDを持つ", () => {
+  const config = createDefaultBattleConfig();
+  const state = createDefaultBattleState(config);
+  const attacker = findUnit(state, "PlayerRanged");
+  const target = findUnit(state, "CpuMelee");
+  for (const unit of state.units) {
+    if (unit !== attacker && unit !== target) { unit.currentHp = 0; unit.mode = "Defeated"; }
+  }
+  attacker.position = { x: 0, y: 0 };
+  attacker.destination = { ...attacker.position };
+  target.position = { x: 2, y: 0 };
+  target.destination = { ...target.position };
+  tickCombat(state, config, 0);
+  const event = state.recentAttackEvents.find(event => event.attackerUnitId === attacker.unitId);
+  assert.ok(event);
+  assert.equal(event.targetUnitId, target.unitId);
+  assert.equal(event.targetDamage, target.stats.maxHp - target.currentHp);
+  target.position = { x: 2.1, y: 0 };
+  assert.deepEqual(event.targetPosition, { x: 2, y: 0 });
+});
+
 test("移動コマンドは生成中を解除し、目標を戦場内にクランプする", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);

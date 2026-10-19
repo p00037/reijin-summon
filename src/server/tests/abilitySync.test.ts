@@ -5,6 +5,23 @@ import { createDefaultBattleConfig, createDefaultBattleState, tryUseAbility, tic
 import { ArenaState, publishBattle } from '../src/rooms/schema/ArenaState.js';
 import { MatchController } from '../src/online/matchController.js';
 
+test('通常攻撃の被弾カードIDを全量・差分配信で保持する', () => {
+  const battle = createDefaultBattleState(createDefaultBattleConfig());
+  const source = new ArenaState(), destination = new ArenaState();
+  const encoder = new Encoder(source), decoder = new Decoder(destination);
+  publishBattle(source, battle);
+  decoder.decode(encoder.encodeAll());
+  encoder.discardChanges();
+  battle.recentAttackEvents = [{ attackerUnitId: 'PlayerRanged', targetUnitId: 'CpuMelee', targetDamage: 36, origin: { x: 0, y: 0 }, targetPosition: { x: 2, y: 0 } }];
+  publishBattle(source, battle);
+  decoder.decode(encoder.encode());
+  assert.equal(destination.battle!.toJSON().recentAttackEvents[0].targetUnitId, 'CpuMelee');
+  assert.equal(destination.battle!.toJSON().recentAttackEvents[0].targetDamage, 36);
+  const full = new ArenaState();
+  new Decoder(full).decode(encoder.encodeAll());
+  assert.equal(full.battle!.toJSON().recentAttackEvents[0].targetUnitId, 'CpuMelee');
+});
+
 test('エンチャントの全実対象を空配列から差分配信し全量配信でも保持する', () => {
   const config = createDefaultBattleConfig(), battle = createDefaultBattleState(config);
   battle.phase = 'InProgress';
