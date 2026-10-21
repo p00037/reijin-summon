@@ -360,7 +360,7 @@ test("召喚ユニットは接触した敵通常ユニットへ攻撃し、移�
 
   assert.equal(enemyUnit.currentHp, enemyUnit.stats.maxHp - 90);
   assert.equal(state.summonedUnits[0].attackTimerSeconds, 0.5);
-  assert.equal(Number(state.summonedUnits[0].position.x.toFixed(2)), -5.67);
+  assert.equal(Number(state.summonedUnits[0].position.x.toFixed(2)), -5.7);
 });
 
 test("召喚ユニット同士は接触中に互いへ攻撃し、移動速度が低下する", () => {
@@ -421,8 +421,8 @@ test("召喚ユニット同士は接触中に互いへ攻撃し、移動速度�
   assert.equal(state.summonedUnits[1].currentHp, 60);
   assert.equal(state.summonedUnits[0].attackTimerSeconds, 0.5);
   assert.equal(state.summonedUnits[1].attackTimerSeconds, 0.5);
-  assert.equal(Number(state.summonedUnits[0].position.x.toFixed(2)), 0.33);
-  assert.equal(Number(state.summonedUnits[1].position.x.toFixed(2)), -0.13);
+  assert.equal(Number(state.summonedUnits[0].position.x.toFixed(2)), 0.3);
+  assert.equal(Number(state.summonedUnits[1].position.x.toFixed(2)), -0.1);
 });
 
 test("6個のエレメントで召喚ゲージが45秒で満タンになる", () => {
@@ -661,7 +661,7 @@ test("summon without completed elementals spawns at its leader position", () => 
   assert.deepEqual(state.summonedUnits[0].position, findLeader(state, "Player").position);
 });
 
-test("summoned units damage enemy units at the 0.63 attack boundary", () => {
+test("summoned units damage enemy units at the 0.85 attack boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   const enemy = findUnit(state, "CpuMelee");
@@ -676,7 +676,7 @@ test("summoned units damage enemy units at the 0.63 attack boundary", () => {
   summoned.position = { x: 0, y: 0 };
   summoned.moveSpeed = 0;
   summoned.healthDecayPerSecond = 0;
-  enemy.position = { x: 0.63, y: 0 };
+  enemy.position = { x: 0.85, y: 0 };
   enemy.destination = { ...enemy.position };
 
   tickSummonedUnits(state, config, 0);
@@ -684,7 +684,7 @@ test("summoned units damage enemy units at the 0.63 attack boundary", () => {
   assert.equal(enemy.currentHp, enemy.stats.maxHp - summoned.attackDamage);
 });
 
-test("summoned units damage each other at the 0.63 attack boundary", () => {
+test("summoned units damage each other at the 0.85 attack boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   addSummonedUnit(state, "Player", 100);
@@ -692,7 +692,7 @@ test("summoned units damage each other at the 0.63 attack boundary", () => {
   const playerSummoned = state.summonedUnits[0];
   const cpuSummoned = state.summonedUnits[1];
   playerSummoned.position = { x: 0, y: 0 };
-  cpuSummoned.position = { x: 0.63, y: 0 };
+  cpuSummoned.position = { x: 0.85, y: 0 };
   for (const summoned of state.summonedUnits) {
     summoned.moveSpeed = 0;
     summoned.healthDecayPerSecond = 0;
@@ -704,7 +704,7 @@ test("summoned units damage each other at the 0.63 attack boundary", () => {
   assert.ok(playerSummoned.currentHp < playerSummoned.maxHp);
 });
 
-test("summoned units attack leaders at 0.63 but not just outside the boundary", () => {
+test("summoned units attack leaders at 0.85 but not just outside the boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   addSummonedUnit(state, "Player", 100);
@@ -713,20 +713,20 @@ test("summoned units attack leaders at 0.63 but not just outside the boundary", 
   summoned.moveSpeed = 0;
   summoned.healthDecayPerSecond = 0;
   const leader = findLeader(state, "Cpu");
-  leader.position = { x: 0.63, y: 0 };
+  leader.position = { x: 0.85, y: 0 };
 
   tickSummonedUnits(state, config, 2);
   const hpAtBoundary = leader.currentHp;
 
   summoned.leaderAttackTimerSeconds = 0;
-  leader.position = { x: 0.63 + 0.0001, y: 0 };
+  leader.position = { x: 0.85 + 0.0001, y: 0 };
   tickSummonedUnits(state, config, 2);
 
   assert.equal(hpAtBoundary, leader.maxHp - summoned.leaderAttackDamage);
   assert.equal(leader.currentHp, hpAtBoundary);
 });
 
-test("summoned units attack elementals at 0.63 but not just outside the boundary", () => {
+test("summoned units attack elementals at 0.85 but not just outside the boundary", () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   addSummonedUnit(state, "Player", 100);
@@ -737,7 +737,7 @@ test("summoned units attack elementals at 0.63 but not just outside the boundary
   state.elementals.push({
     elementalId: "Elemental1",
     team: "Cpu",
-    position: { x: 0.63, y: 0 },
+    position: { x: 0.85, y: 0 },
     maxHp: 100,
     currentHp: 100,
     isComplete: true
@@ -748,7 +748,7 @@ test("summoned units attack elementals at 0.63 but not just outside the boundary
   const hpAtBoundary = elemental.currentHp;
 
   summoned.attackTimerSeconds = 0;
-  elemental.position = { x: 0.63 + 0.0001, y: 0 };
+  elemental.position = { x: 0.85 + 0.0001, y: 0 };
   tickSummonedUnits(state, config, 0);
 
   assert.equal(hpAtBoundary, 100 - summoned.attackDamage);

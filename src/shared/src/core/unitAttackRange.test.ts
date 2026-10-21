@@ -66,5 +66,5 @@ test('既定のLV3マスターにもLV別射程を適用する', () => {
 
 test('キーパーとシーカーの射程はカードLVによらず維持する', () => {
   const state = createDeckBattleState(createDefaultBattleConfig(), ['SC010', 'SC015'], ['SC007', 'SC019']);
-  assert.deepEqual(state.units.map(unit => unit.stats.attackRange), [0.63, 0.63, 0.63, 0.63]);
+  assert.deepEqual(state.units.map(unit => unit.stats.attackRange), [0.85, 0.85, 0.85, 0.85]);
 });

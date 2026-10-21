@@ -53,7 +53,7 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
         maxHp: 1100,
         moveSpeed: 8.2 / 40,
         attackDamage: 61,
-        attackRange: 0.63,
+        attackRange: 0.85,
         attackIntervalSeconds: 0.5,
         elementalBuildSeconds: 5.7,
         elementalAttackMultiplier: 2
@@ -64,7 +64,7 @@ test("既定状態は上下のリーダーと横一列に並ぶ各3体の通常�
         maxHp: 1060,
         moveSpeed: 8.2 / 22,
         attackDamage: 53,
-        attackRange: 0.63,
+        attackRange: 0.85,
         attackIntervalSeconds: 0.5,
         elementalBuildSeconds: 7.2,
         elementalAttackMultiplier: 1

@@ -7,8 +7,8 @@ import { tickSummonedUnits, tryExecuteSummon } from './summonSystem.js';
 
 for (const moverKind of ['Unit', 'SummonedUnit'] as const) {
   for (const targetKind of ['Unit', 'SummonedUnit', 'Elemental'] as const) {
-    for (const distance of [0.63, 0.630001]) {
-      test(`${moverKind}対${targetKind}のZOCは中心間${distance}で${distance === 0.63 ? '減速する' : '減速しない'}`, () => {
+    for (const distance of [0.85, 0.850001]) {
+      test(`${moverKind}対${targetKind}のZOCは中心間${distance}で${distance === 0.85 ? '減速する' : '減速しない'}`, () => {
         const config = createDefaultBattleConfig();
         const state = createDefaultBattleState(config);
         const unit = findUnit(state, 'PlayerMelee');
@@ -40,7 +40,7 @@ for (const moverKind of ['Unit', 'SummonedUnit'] as const) {
 
         if (moverKind === 'Unit') tickMovement(state, config, 0.1);
         else tickSummonedUnits(state, config, 0.1);
-        const expected = 0.1 * (distance === 0.63 ? config.contactSlowMultiplier : 1);
+        const expected = 0.1 * (distance === 0.85 ? config.contactSlowMultiplier : 1);
         assert.ok(Math.abs(mover.position.x - expected) < 1e-12);
       });
     }

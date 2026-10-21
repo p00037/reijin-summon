@@ -1,7 +1,7 @@
 import type { BattleConfig, UnitStats, UnitType } from "./types.js";
 
 const unitCardWorldHeight = 2.25;
-export const meleeAttackRange = 0.63;
+export const meleeAttackRange = 0.85;
 
 function rangedAttackRange(cardHeight: number, level: number): number {
   // LV1はカード縦1枚分、以降はLVごとにLV1の7.5%ずつ加算する。
@@ -84,7 +84,7 @@ export function createDefaultBattleConfig(): BattleConfig {
     battlefieldMax: { x: 6.3, y: 4.5 },
     unitCollisionRadius: 0.756,
     summonedUnitCollisionRadius: 0.9828,
-    contactSlowMultiplier: 1 / 3,
+    contactSlowMultiplier: 0.3,
     leaderVisualSize: 0.8,
     leaderHealingRadius: 0.8 * 2.5,
     unitCardWorldHeight,
