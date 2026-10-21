@@ -134,9 +134,9 @@ export function tickSummonedUnits(state: BattleState, config: BattleConfig, delt
     const touchingUnits = enemyUnitsInContact(state, summoned);
     const touchingSummonedUnits = enemySummonedUnitsInContact(state, summoned);
     const touchingElementals = enemyElementalsInContact(state, summoned);
-    const attackUnits = touchingUnits.filter(inAttackRange);
-    const attackSummonedUnits = touchingSummonedUnits.filter(inAttackRange);
-    const attackElementals = touchingElementals.filter(inAttackRange);
+    const attackUnits = state.units.filter(target => target.team !== summoned.team && isUnitAlive(target) && inAttackRange(target));
+    const attackSummonedUnits = state.summonedUnits.filter(target => target.team !== summoned.team && target.currentHp > 0 && inAttackRange(target));
+    const attackElementals = state.elementals.filter(target => target.team !== summoned.team && target.isComplete && target.currentHp > 0 && inAttackRange(target));
     const hasAttackTargets = attackUnits.length > 0 || attackSummonedUnits.length > 0 || attackElementals.length > 0;
     const normal = advanceAttackTimer(summoned.attackTimerSeconds, summoned.attackIntervalSeconds, deltaSeconds, hasAttackTargets);
     // 召喚士への攻撃間隔は射程内だけ進め、移動時間を初撃の待機時間に含めない。

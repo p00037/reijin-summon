@@ -175,7 +175,7 @@ test("接敵中の速度強化は1.5倍と接敵減速を両方適用する", ()
 
   tickMovement(state, config, 1);
 
-  assert.equal(Number(unit.position.x.toFixed(4)), 0.1025);
+  assert.equal(Number(unit.position.x.toFixed(4)), 0.0922);
 });
 
 test("HP0の通常ユニットの撤退順を記録して時間では復活しない", () => {
@@ -550,7 +550,7 @@ test("movement is slowed near a live enemy elemental", () => {
 
   tickMovement(state, config, 1);
 
-  assert.equal(Number(unit.position.x.toFixed(2)), -4.93);
+  assert.equal(Number(unit.position.x.toFixed(2)), -4.94);
 });
 
 test("movement is slowed at the Unit-to-Unit ZOC boundary", () => {
@@ -560,7 +560,7 @@ test("movement is slowed at the Unit-to-Unit ZOC boundary", () => {
   const enemy = findUnit(state, "CpuMelee");
   unit.position = { x: 0, y: 0 };
   unit.destination = { x: 3, y: 0 };
-  enemy.position = { x: 0.63, y: 0 };
+  enemy.position = { x: 0.85, y: 0 };
   for (const candidate of state.units.filter(
     (value) => value.team === "Cpu" && value.unitId !== enemy.unitId
   )) {
@@ -595,8 +595,8 @@ test("movement is slowed at the Unit-to-SummonedUnit ZOC boundary", () => {
 
     specialAttackTimerSeconds: 0,
     team: "Cpu",
-    position: { x: 0.63, y: 0 },
-    destination: { x: 0.63, y: 0 },
+    position: { x: 0.85, y: 0 },
+    destination: { x: 0.85, y: 0 },
     maxHp: 100,
     currentHp: 100,
     attackDamage: 0,
@@ -630,7 +630,7 @@ test("movement is not slowed just beyond the Unit-to-Point ZOC boundary", () => 
   state.elementals.push({
     elementalId: "Elemental1",
     team: "Cpu",
-    position: { x: 0.63 + 0.0001, y: 0 },
+    position: { x: 0.85 + 0.0001, y: 0 },
     maxHp: 100,
     currentHp: 100,
     isComplete: true
@@ -657,7 +657,7 @@ test("movement is slowed at the Unit-to-Point ZOC boundary", () => {
   state.elementals.push({
     elementalId: "Elemental1",
     team: "Cpu",
-    position: { x: 0.63, y: 0 },
+    position: { x: 0.85, y: 0 },
     maxHp: 100,
     currentHp: 100,
     isComplete: true

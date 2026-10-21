@@ -7,7 +7,7 @@ import { tickSummonedUnits, tryExecuteSummon } from './summonSystem.js';
 
 for (const attackerType of ['Melee', 'Speed', 'raphael', 'bahamut', 'dullahan', 'leviathan'] as const) {
   for (const targetType of ['Unit', 'Elemental', 'SummonedUnit', 'Leader'] as const) {
-    test(`${attackerType}の近接攻撃は${targetType}の中心間0.63まで届き、境界外には届かない`, () => {
+    test(`${attackerType}の近接攻撃は${targetType}の中心間0.85まで届き、境界外には届かない`, () => {
       const config = createDefaultBattleConfig();
       const state = createDefaultBattleState(config);
       const unit = findUnit(state, attackerType === 'Speed' ? 'PlayerSpeed' : 'PlayerMelee');
@@ -27,7 +27,7 @@ for (const attackerType of ['Melee', 'Speed', 'raphael', 'bahamut', 'dullahan', 
       state.summonedUnits = isUnit ? [] : [summon];
       state.elementals = [];
       state.recentSummonAttackEvents = [];
-      const position = { x: 0.630001, y: 0 };
+      const position = { x: 0.85001, y: 0 };
       let target: { position: typeof position; currentHp: number };
       if (targetType === 'Unit') {
         enemy.position = position;
@@ -54,7 +54,7 @@ for (const attackerType of ['Melee', 'Speed', 'raphael', 'bahamut', 'dullahan', 
       assert.equal(state.recentAttackEvents.length, 0);
       assert.equal(state.recentSummonAttackEvents.length, 0);
 
-      target.position.x = 0.63;
+      target.position.x = 0.85;
       tick();
       assert.ok(target.currentHp < initialHp);
       const events = isUnit ? state.recentAttackEvents : state.recentSummonAttackEvents;
@@ -63,7 +63,7 @@ for (const attackerType of ['Melee', 'Speed', 'raphael', 'bahamut', 'dullahan', 
   }
 }
 
-test('近接召喚獣は旧接触距離で停止せず、召喚士への射程0.63まで進む', () => {
+test('近接召喚獣は旧接触距離で停止せず、召喚士への射程0.85まで進む', () => {
   const config = createDefaultBattleConfig();
   const state = createDefaultBattleState(config);
   state.playerSummonGauge = 1;
@@ -72,12 +72,12 @@ test('近接召喚獣は旧接触距離で停止せず、召喚士への射程0.
   const summon = state.summonedUnits[0];
   const leader = findLeader(state, 'Cpu');
   leader.position = { x: 0, y: 0 };
-  summon.position = { x: 0.8, y: 0 };
+  summon.position = { x: 0.9, y: 0 };
   summon.moveSpeed = 0.2;
   summon.healthDecayPerSecond = 0;
 
   tickSummonedUnits(state, config, 1);
-  assert.ok(summon.position.x < 0.63);
+  assert.ok(summon.position.x < 0.85);
   const arrivedPosition = { ...summon.position };
   const hp = leader.currentHp;
   tickSummonedUnits(state, config, summon.leaderAttackIntervalSeconds);

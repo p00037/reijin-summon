@@ -145,7 +145,7 @@ test("レーザーは味方を減速せず遠い敵ユニットを減速させ�
   enemy.currentHp = 800;
   enemy.destination = { x: 0.5, y: 4.1 };
   tickMovement(state, config, 1);
-  assert.ok(Math.abs(enemy.position.x - 0.205 / 3) < 1e-8);
+  assert.ok(Math.abs(enemy.position.x - 0.205 * 0.3) < 1e-8);
 });
 
 test("召喚時ダメージの戦闘不能とMP・勝敗をコマンド内で反映する", () => {
