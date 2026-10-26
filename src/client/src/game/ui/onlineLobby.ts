@@ -43,15 +43,122 @@ export function mountOnlineLobby(session: OnlineSession, onDeck: () => void, onB
     return () => { off(); host.remove(); };
 }
 
-export function mountOnlineBattleStatus(session:OnlineSession,onEdit:()=>void,onExit:()=>void,showEdit=true){
- const host=document.createElement('aside');host.className='online-status';const message=document.createElement('p');message.setAttribute('role','status');
- const edit=document.createElement('button');edit.textContent='編成を変更';edit.onclick=()=>{session.ready(false);onEdit();};
- const cancel=document.createElement('button');cancel.textContent='準備を取り消す';cancel.onclick=()=>session.ready(false);
- const exit=document.createElement('button');exit.onclick=()=>{if(session.view?.phase==='Battle'&&!confirm('降参して退出しますか？'))return;void session.leave();onExit();};
- const hint=document.createElement('p');hint.className='online-portrait-hint';hint.textContent='横向きにすると戦場を広く表示できます。';
- host.append(message,edit,cancel,exit,hint);document.body.append(host);
- const resize=()=>{document.documentElement.style.setProperty('--online-status-height',host.offsetHeight+16+'px');window.dispatchEvent(new Event('resize'));};
- const observer=new ResizeObserver(resize);observer.observe(host);resize();
- const update=()=>{const model=onlineRoomPresentation(session.view,session.team);message.textContent='ルーム '+session.code+' ／ '+session.status+' ／ '+(session.view?.names?.Player??'')+' vs '+(session.view?.names?.Cpu??'')+' ／ '+(session.error||model.message)+' '+model.warning;edit.hidden=!showEdit||!model.canEdit;edit.disabled=!session.connected;cancel.hidden=!model.canCancelReady;cancel.disabled=!session.connected;exit.textContent=model.exitLabel;};
- const off=session.subscribe(update);update();return()=>{off();observer.disconnect();host.remove();document.documentElement.style.removeProperty('--online-status-height');window.dispatchEvent(new Event('resize'));};
+export function mountOnlineBattleStatus(session: OnlineSession, _onEdit: () => void, onExit: () => void, battleScreen = true) {
+    const host = document.createElement('aside');
+    host.className = 'online-status';
+    host.setAttribute('aria-label', 'オンライン対戦情報');
+    const header = document.createElement('div');
+    header.className = 'online-status__header';
+    const connection = document.createElement('span');
+    connection.setAttribute('role', 'status');
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.textContent = '⋯';
+    toggle.setAttribute('aria-label', 'ルーム情報と操作メニュー');
+    const details = document.createElement('div');
+    details.className = 'online-status__details';
+    details.id = 'online-room-details';
+    const room = document.createElement('p');
+    room.className = 'online-status__room';
+    const players = document.createElement('p');
+    players.className = 'online-status__players';
+    const message = document.createElement('p');
+    message.setAttribute('role', 'status');
+    details.append(room, players, message);
+    const actions = document.createElement('div');
+    actions.className = 'online-status__actions';
+    actions.id = 'online-room-actions';
+    toggle.setAttribute('aria-controls', `${details.id} ${actions.id}`);
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.textContent = '準備を取り消す';
+    cancel.onclick = () => session.ready(false);
+    const exit = document.createElement('button');
+    exit.type = 'button';
+    exit.onclick = () => {
+        if (session.view?.phase === 'Battle' && !confirm('降参して退出しますか？')) return;
+        void session.leave();
+        onExit();
+    };
+    actions.append(cancel, exit);
+    const warning = document.createElement('p');
+    warning.className = 'online-status__warning';
+    warning.setAttribute('role', 'status');
+    header.append(connection, toggle);
+    host.append(header, details, actions, warning);
+    document.body.append(host);
+    const canvas = document.querySelector('#game canvas');
+    let expanded = false;
+    let compact = true;
+    let frame = 0;
+    let lastPhase = session.view?.phase;
+    const renderExpansion = () => {
+        details.hidden = compact && !expanded;
+        actions.hidden = !expanded;
+        toggle.setAttribute('aria-expanded', String(expanded));
+        host.classList.toggle('online-status--compact', compact);
+    };
+    const position = () => {
+        const rect = canvas?.getBoundingClientRect();
+        const available = (rect?.left ?? 0) - 24;
+        compact = !battleScreen || available < 220 || ['Battle', 'Countdown'].includes(session.view?.phase ?? '');
+        host.style.width = compact ? '' : `${Math.min(260, available)}px`;
+        const top = battleScreen && rect ? Math.max(8, rect.top + 8) : 8;
+        host.style.top = `${top}px`;
+        host.style.maxHeight = `${Math.max(44, window.innerHeight - top - 8)}px`;
+        renderExpansion();
+    };
+    const schedulePosition = () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(position);
+    };
+    toggle.onclick = () => { expanded = !expanded; renderExpansion(); };
+    const dismiss = (event: PointerEvent) => {
+        if (event.target instanceof Node && !host.contains(event.target)) {
+            expanded = false;
+            renderExpansion();
+        }
+    };
+    const escape = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && expanded) {
+            expanded = false;
+            renderExpansion();
+            toggle.focus();
+        }
+    };
+    document.addEventListener('pointerdown', dismiss);
+    document.addEventListener('keydown', escape);
+    window.addEventListener('resize', schedulePosition);
+    const observer = new ResizeObserver(schedulePosition);
+    if (canvas) observer.observe(canvas);
+    const update = () => {
+        if (lastPhase !== session.view?.phase) expanded = false;
+        lastPhase = session.view?.phase;
+        const model = onlineRoomPresentation(session.view, session.team);
+        connection.textContent = (session.connected ? '● ' : '○ ') + session.status;
+        host.classList.toggle('online-status--disconnected', !session.connected);
+        room.textContent = 'ルーム ' + session.code;
+        const names = session.view?.names;
+        players.textContent = names ? (['Player', 'Cpu'] as const).map(team =>
+            `${names[team] || '参加待ち'}${team === session.team ? '（あなた）' : ''}：${session.view?.ready[team] ? '準備完了' : '未準備'}`
+        ).join('\n') : '対戦相手を待っています';
+        message.textContent = model.message;
+        cancel.hidden = !model.canCancelReady;
+        cancel.disabled = !session.connected;
+        exit.textContent = model.exitLabel;
+        warning.textContent = [session.error, model.warning].filter(Boolean).join('\n');
+        warning.hidden = !warning.textContent;
+        position();
+    };
+    const off = session.subscribe(update);
+    update();
+    return () => {
+        off();
+        observer.disconnect();
+        cancelAnimationFrame(frame);
+        window.removeEventListener('resize', schedulePosition);
+        document.removeEventListener('pointerdown', dismiss);
+        document.removeEventListener('keydown', escape);
+        host.remove();
+    };
 }
