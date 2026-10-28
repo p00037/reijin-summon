@@ -1,9 +1,10 @@
-import { isUnitAlive } from "../core/battleState";
+import { findLeader, isUnitAlive } from "../core/battleState";
 import type { BattleConfig, BattleState, UnitState, Vec2 } from "../core/types";
 import { distanceSq } from "@reijin-summon/shared/core/vector";
 import { effectiveAttackRange } from "../rules/abilitySystem";
 import { getSummonBeam, isCircleInBeam } from "@reijin-summon/shared/rules/summonGeometry";
 import { cpuFieldPosition } from "./cpuDeck";
+import { calculateSummonArea } from "../rules/areaCalculator";
 
 export function cpuBuildSites(config: BattleConfig, wide = false): Vec2[] {
   return [
@@ -47,8 +48,30 @@ export function chooseCpuBuildSite(
   ];
   const spacing = Math.max(.8, config.elementalPlacementRadius * 2);
   const wide = state.units.some(candidate => candidate.team === "Cpu" && candidate.cardId === "SC015");
-  return [...(sites ?? cpuBuildSites(config, wide))]
+  const completed = state.elementals.filter(elemental => elemental.team === "Cpu" && elemental.currentHp > 0);
+  const pending = state.units.filter(unit => unit.team === "Cpu" && unit.mode === "BuildingElemental" && isUnitAlive(unit));
+  if (completed.length + pending.length + reserved.length >= config.maxElementalsPerTeam) return undefined;
+  const candidates = [...(sites ?? cpuBuildSites(config, wide))];
+  // 陣形後衛の専用地点（1候補）と、建築担当でないカード（0候補）は広域探索しない。
+  if ((!sites || sites.length > 1) && completed.length >= 2) {
+    for (const advance of [.38, .58, .8]) {
+      for (const horizontal of [-.42, 0, .42]) candidates.push(cpuFieldPosition(config, horizontal, advance));
+    }
+  }
+  const points = [findLeader(state, "Cpu").position, ...completed.map(elemental => elemental.position),
+    ...pending.map(builder => builder.position), ...reserved];
+  const area = calculateSummonArea(points);
+  const fieldArea = (config.battlefieldMax.x - config.battlefieldMin.x) * (config.battlefieldMax.y - config.battlefieldMin.y);
+  const missingArea = Math.max(0, fieldArea * .12 - area);
+  return candidates
+    .filter(position => position.x >= config.battlefieldMin.x && position.x <= config.battlefieldMax.x
+      && position.y >= config.battlefieldMin.y && position.y <= config.battlefieldMax.y)
     .filter(position => occupied.every(other => distanceSq(position, other) > spacing ** 2))
     .filter(position => isCpuBuildSafe(state, config, position, unit.stats.elementalBuildSeconds))
-    .sort((left, right) => distanceSq(unit.position, left) - distanceSq(unit.position, right))[0];
+    .sort((left, right) => score(left) - score(right))[0];
+
+  function score(position: Vec2): number {
+    const gain = completed.length >= 2 ? Math.min(missingArea, calculateSummonArea([...points, position]) - area) : 0;
+    return Math.sqrt(distanceSq(unit.position, position)) - gain * 1.5;
+  }
 }

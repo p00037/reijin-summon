@@ -12,6 +12,7 @@ import { activeFormationBeams, avoidFormationBeams, formationBuildSites, formati
   inFormationBeam, plannedFormationBeam } from "./cpuFormationGeometry";
 import { shouldSummonCpuStationary } from "./cpuSummonTactics";
 import type { CpuPlannerMemory } from "./cpuPlanner";
+import { chooseCpuHealingPosition, cpuElementalAttackPosition, cpuElementalDefenders, cpuRetreatPosition, shouldRetreatFromSummon } from "./cpuDefense";
 
 type CpuUnit = UnitState & { unitId: CpuUnitId };
 
@@ -40,8 +41,10 @@ export function planFormationCpuCommands(state: BattleState, config: BattleConfi
   }
   for (const unit of allies) {
     const ratio = unit.currentHp / unit.stats.maxHp;
-    if (ratio <= .35) memory.retreating.add(unit.unitId);
-    else if (ratio >= .7) memory.retreating.delete(unit.unitId);
+    if (ratio <= .35 || shouldRetreatFromSummon(state, config, unit)) memory.retreating.add(unit.unitId);
+    else if (ratio >= (state.summonedUnits.some(summon => summon.team === "Player" && summon.currentHp > 0) ? .95 : .7)) {
+      memory.retreating.delete(unit.unitId);
+    }
   }
 
   const fieldArea = (config.battlefieldMax.x - config.battlefieldMin.x) * (config.battlefieldMax.y - config.battlefieldMin.y);
@@ -62,32 +65,45 @@ export function planFormationCpuCommands(state: BattleState, config: BattleConfi
   const freeRevival = summonNow && leader.currentHp <= leader.maxHp * .3
     && (state.cpuSummonId === "raphael" || state.cpuSummonId === "dullahan");
   const priority = threatened ? ["SC003", "SC010", "SC014", "SC013"] : ["SC014", "SC003", "SC013", "SC010"];
-  const revival = state.units.filter(unit => unit.team === "Cpu" && unit.mode === "Defeated")
+  const revivalPosition = chooseCpuHealingPosition(state, config, undefined, beams);
+  const revival = revivalPosition && state.units.filter(unit => unit.team === "Cpu" && unit.mode === "Defeated")
     .sort((left, right) => priority.indexOf(left.cardId!) - priority.indexOf(right.cardId!))
-    .find(unit => canReviveUnit(state, config, "Cpu", unit.unitId, leader.position));
+    .find(unit => canReviveUnit(state, config, "Cpu", unit.unitId, revivalPosition));
   if (revival && !freeRevival) commands.push({ commandType: "ReviveUnit", team: "Cpu", unitId: revival.unitId,
-    targetPosition: avoidFormationBeams(leader.position, leader.position, beams, config) });
+    targetPosition: { ...revivalPosition } });
 
   const sites = formationBuildSites(config), reserved: Vec2[] = [];
   const goals = new Map<UnitId, Vec2>();
   let buildingCount = allies.filter(unit => unit.mode === "BuildingElemental").length;
-  const canDevelop = !campThreat && !activeSummon && !wantSummon;
+  const canDevelop = !campThreat && !wantSummon;
+  const escort = advancing ? allies.filter(unit => unit.unitType === "Melee" && !memory.retreating.has(unit.unitId))
+    .sort((left, right) => distanceSq(left.position, activeSummon.position) - distanceSq(right.position, activeSummon.position))[0]
+    : undefined;
   // 前衛は一度に1体だけを外周の生成へ回し、もう1体を射手の護衛に残す。
   const frontBuilder = canDevelop && !allies.some(unit => unit.unitType === "Melee" && unit.mode === "BuildingElemental")
-    ? allies.filter(unit => unit.unitType === "Melee" && !memory.retreating.has(unit.unitId))
+    ? allies.filter(unit => unit.unitType === "Melee" && unit !== escort && !memory.retreating.has(unit.unitId))
       .map(unit => ({ unit, site: chooseCpuBuildSite(state, config, unit, [], sites.slice(2)) }))
       .filter((entry): entry is { unit: CpuUnit; site: Vec2 } => !!entry.site)
       .sort((left, right) => distanceSq(left.unit.position, left.site) - distanceSq(right.unit.position, right.site))[0]?.unit
     : undefined;
 
+  const defenders = threatened ? new Map<UnitId, Vec2>() : cpuElementalDefenders(state, config, memory.retreating);
   for (const unit of allies) {
     if (memory.retreating.has(unit.unitId)) {
-      setGoal(unit, leader.position);
+      if (unit.mode === "BuildingElemental") buildingCount--;
+      setGoal(unit, cpuRetreatPosition(state, config, unit, beams));
+      continue;
+    }
+    const intruder = defenders.get(unit.unitId);
+    if (intruder) {
+      if (unit.mode === "BuildingElemental") buildingCount--;
+      setGoal(unit, cpuElementalAttackPosition(unit, intruder, config));
       continue;
     }
     if (unit.mode === "BuildingElemental" && canDevelop
       && !inFormationBeam(unit.position, beams, config)
       && isCpuBuildSafe(state, config, unit.position, unit.buildTimerSeconds)) continue;
+    if (unit.mode === "BuildingElemental") buildingCount--;
     if (unit.unitType === "Ranged") {
       const nearest = [...enemies].sort((left, right) => distanceSq(unit.position, left.position) - distanceSq(unit.position, right.position))[0];
       if (nearest && distanceSq(unit.position, nearest.position) <= effectiveAttackRange(unit, config) ** 2) {

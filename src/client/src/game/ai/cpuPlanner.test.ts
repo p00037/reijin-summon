@@ -162,7 +162,7 @@ test("レッドアイとタイガーアイが近くの同じ敵へ向かう", ()
   assert.deepEqual(moveFor(commands, "Cpu:SC005")?.targetPosition, enemy.position);
 });
 
-test("敵召喚獣が召喚士へ迫ったら騎兵で迎撃し、陣地が小さくても召喚する", () => {
+test("敵召喚獣が召喚士へ迫ったら騎兵は無理な接触を避け、陣地が小さくても召喚する", () => {
   const f = fixture();
   addTerritory(f.state, 1);
   f.state.playerSummonGauge = 1;
@@ -175,8 +175,10 @@ test("敵召喚獣が召喚士へ迫ったら騎兵で迎撃し、陣地が小�
   }
   f.state.cpuSummonGauge = 1;
   const commands = f.plan();
-  assert.deepEqual(moveFor(commands, "Cpu:SC009")?.targetPosition, enemy.position);
-  assert.deepEqual(moveFor(commands, "Cpu:SC005")?.targetPosition, enemy.position);
+  for (const id of ["Cpu:SC009", "Cpu:SC005"] as const) {
+    const goal = moveFor(commands, id)?.targetPosition;
+    assert.ok(goal && Math.abs(goal.x) > .1, "生存できない正面接触を避けて側方へ移動する");
+  }
   assert.ok(commands.some(command => command.commandType === "Summon"));
 });
 
