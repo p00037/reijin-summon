@@ -10,6 +10,8 @@ import { chooseCpuBuildSite, isCpuBuildSafe } from "./cpuElementals";
 import { cpuFieldPosition } from "./cpuDeck";
 import { cpuClerkPosition, cpuWavePosition, shouldSummonCpuYggdrasil, shouldUseCpuWave } from "./cpuRainTactics";
 import { planFormationCpuCommands } from "./cpuFormationPlanner";
+import { chooseCpuHealingPosition, cpuElementalAttackPosition, cpuElementalDefenders, cpuRetreatPosition, shouldRetreatFromSummon } from "./cpuDefense";
+import { activeFormationBeams, avoidFormationBeams } from "./cpuFormationGeometry";
 
 export type CpuPlannerMemory = { retreating: Set<UnitId> };
 type CpuUnit = UnitState & { unitId: CpuUnitId };
@@ -51,9 +53,10 @@ export function planCpuCommands(
     const nearbyEnemies = enemies.filter(enemy => distanceSq(unit.position, enemy.position) < 3 ** 2).length;
     const nearbyAllies = cpuUnits.filter(ally => ally !== unit && distanceSq(unit.position, ally.position) < 3.5 ** 2).length;
     const hpRatio = unit.currentHp / unit.stats.maxHp;
-    if (hpRatio <= .35 || (hpRatio < .7 && nearbyEnemies >= 2 && nearbyAllies === 0)) {
+    if (hpRatio <= .35 || shouldRetreatFromSummon(state, config, unit)
+      || (hpRatio < .7 && nearbyEnemies >= 2 && nearbyAllies === 0)) {
       memory.retreating.add(unit.unitId);
-    } else if (hpRatio >= .7) {
+    } else if (hpRatio >= (enemySummons.length ? .95 : .7)) {
       memory.retreating.delete(unit.unitId);
     }
   }
@@ -63,8 +66,9 @@ export function planCpuCommands(
     : threatened ? ["SC009", "SC005", "SC012", "SC007"] : ["SC012", "SC009", "SC005", "SC007"];
   const defeated = state.units.filter(unit => unit.team === "Cpu" && unit.mode === "Defeated")
     .sort((left, right) => priority.indexOf(left.cardId!) - priority.indexOf(right.cardId!));
-  const revival = defeated.find(unit => canReviveUnit(state, config, "Cpu", unit.unitId, leader.position));
-  if (revival) commands.push({ commandType: "ReviveUnit", team: "Cpu", unitId: revival.unitId, targetPosition: { ...leader.position } });
+  const revivalPosition = chooseCpuHealingPosition(state, config);
+  const revival = revivalPosition && defeated.find(unit => canReviveUnit(state, config, "Cpu", unit.unitId, revivalPosition));
+  if (revival) commands.push({ commandType: "ReviveUnit", team: "Cpu", unitId: revival.unitId, targetPosition: { ...revivalPosition } });
   if (castRain) commands.push(abilityCommand(clerk!, 0));
 
   const goo = cpuUnits.find(unit => unit.cardId === "SC012");
@@ -97,13 +101,23 @@ export function planCpuCommands(
   // 建築担当を先に割り当て、同じ生成地点へ複数のカードを向かわせない。
   const builderPriority = rainDeck ? ["SC004", "SC007", "SC009", "SC015"] : ["SC012", "SC007", "SC005", "SC009"];
   const ordered = [...cpuUnits].sort((left, right) => builderPriority.indexOf(left.cardId!) - builderPriority.indexOf(right.cardId!));
+  const defenders = threatened ? new Map<UnitId, Vec2>() : cpuElementalDefenders(state, config, memory.retreating);
+  const beams = activeFormationBeams(state, config);
   for (const unit of ordered) {
     if (memory.retreating.has(unit.unitId)) {
-      setGoal(unit, leader.position);
+      if (unit.mode === "BuildingElemental") buildingCount--;
+      setGoal(unit, cpuRetreatPosition(state, config, unit));
+      continue;
+    }
+    const intruder = defenders.get(unit.unitId);
+    if (intruder) {
+      if (unit.mode === "BuildingElemental") buildingCount--;
+      setGoal(unit, cpuElementalAttackPosition(unit, intruder, config));
       continue;
     }
     if (unit.mode === "BuildingElemental"
       && isCpuBuildSafe(state, config, unit.position, unit.buildTimerSeconds) && !threatened) continue;
+    if (unit.mode === "BuildingElemental") buildingCount--;
 
     const initialBuild = elementals.length + buildingCount < 3;
     const canBuild = !threatened && (rainDeck
@@ -111,7 +125,7 @@ export function planCpuCommands(
         || unit.cardId === "SC004" && !enemies.some(enemy => distanceSq(enemy.position, unit.position) < 3 ** 2)
         || unit.cardId === "SC015" && !clerk)
       : unit.cardId === "SC012" || unit.cardId === "SC007" || unit.cardId === "SC005" && initialBuild);
-    if (canBuild && !activeSummon && !summonNow && elementals.length + buildingCount + reserved.length < config.maxElementalsPerTeam) {
+    if (canBuild && !summonNow && elementals.length + buildingCount + reserved.length < config.maxElementalsPerTeam) {
       const site = chooseCpuBuildSite(state, config, unit, reserved);
       if (site) {
         if (distanceSq(unit.position, site) <= .15 ** 2 && canPlaceElementalAtUnit(state, config, unit.unitId)) {
@@ -177,10 +191,11 @@ export function planCpuCommands(
   return commands;
 
   function setGoal(unit: CpuUnit, target: Vec2): void {
-    goals.set(unit.unitId, target);
+    const safe = avoidFormationBeams(unit.position, target, beams, config);
+    goals.set(unit.unitId, safe);
     // 同じ移動指示でも回復タイマーがリセットされるため、目標が変わる時だけ送る。
-    if (unit.mode === "BuildingElemental" || distanceSq(unit.destination, target) > .1 ** 2) {
-      commands.push({ commandType: "MoveUnit", team: "Cpu", unitId: unit.unitId, targetPosition: { ...target } });
+    if (unit.mode === "BuildingElemental" || distanceSq(unit.destination, safe) > .1 ** 2) {
+      commands.push({ commandType: "MoveUnit", team: "Cpu", unitId: unit.unitId, targetPosition: { ...safe } });
     }
   }
 }
